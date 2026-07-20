@@ -1,0 +1,264 @@
+{
+  "nav": {
+    "logo": "Aether Foundation",
+    "governance": "거버넌스",
+    "donate": "기부하기",
+    "connectWallet": "지갑 연결",
+    "disconnect": "연결 해제",
+    "walletConnected": "지갑이 연결되었습니다"
+  },
+  "hero": {
+    "title": "AETHER",
+    "subtitle": "탈중앙화 인프라와 지능의 발전",
+    "tag1": "차세대 AI 애플리케이션 프레임워크",
+    "tag2": "대륙 간 저지연 비디오 플레이어 프로토콜",
+    "tag3": "탈중앙화 자가조직화 네트워크"
+  },
+  "projects": {
+    "sectionTitle": "핵심 프로그램",
+    "sectionSubtitle": "재단이 운영하는 세 개의 독립적인 이니셔티브로, 각각 동등한 전략적 비중을 지닙니다.",
+    "ai-framework": {
+      "name": "차세대 AI 애플리케이션 프레임워크",
+      "tagline": "문맥 인식 기반의 다중 모달 AI 애플리케이션을 대규모로 구축하기 위한 개방형 프레임워크입니다.",
+      "status": "연구 단계",
+      "viewWhitepaper": "백서 보기"
+    },
+    "video-protocol": {
+      "name": "대륙 간 저지연 비디오 플레이어 프로토콜",
+      "tagline": "대륙 간 1초 미만의 스트리밍을 위해 설계된 피어투피어 미디어 프로토콜입니다.",
+      "status": "Testnet 운영 중",
+      "viewWhitepaper": "백서 보기"
+    },
+    "self-organizing-net": {
+      "name": "탈중앙화 자가조직화 네트워크",
+      "tagline": "중앙의 조정 없이 자가 복구와 재구성이 가능한 자율 메시 라우팅 계층입니다.",
+      "status": "연구 단계",
+      "viewWhitepaper": "백서 보기"
+    }
+  },
+  "fundFlow": {
+    "sectionTitle": "재무 투명성",
+    "sectionSubtitle": "재단에 유입되고 유출되는 모든 자금의 실시간 온체인 현황입니다.",
+    "totalDonated": "총 기부 수령액",
+    "projectAllocated": "프로젝트 배정액",
+    "treasuryBalance": "현재 재무 잔고",
+    "monthlyTrend": "12개월간 수입 대 지출",
+    "recentTransactions": "최근 온체인 활동",
+    "income": "수입",
+    "expense": "지출",
+    "direction": {
+      "in": "유입",
+      "out": "유출"
+    },
+    "usdEstimate": "USD 환산액",
+    "viewOnExplorer": "익스플로러에서 보기",
+    "purposeLabels": {
+      "ai-framework": "AI 프레임워크",
+      "video-protocol": "비디오 프로토콜",
+      "self-organizing-net": "자기조직화 네트워크",
+      "unrestricted": "운영비"
+    }
+  },
+  "proposals": {
+    "sectionTitle": "전략적 거버넌스 제안",
+    "sectionSubtitle": "심의 중인 이사회 의결안입니다. 재단은 토큰 없는 거버넌스를 실천하며, 모든 의결은 이사회 다중 서명으로 확정됩니다.",
+    "forVotes": "찬성",
+    "againstVotes": "반대",
+    "abstainVotes": "기권",
+    "deadline": "투표 마감일",
+    "viewDetail": "제안 보기",
+    "statusActive": "진행 중",
+    "statusPassed": "가결",
+    "statusRejected": "부결",
+    "items": {
+      "q4Bandwidth": {
+        "title": "Q4 대륙 간 대역폭 가속화 연구비 배정 동의",
+        "summary": "저지연 비디오 프로토콜의 대륙 간 릴레이 인프라에 Q4 연구 자금을 배정하는 동의입니다."
+      },
+      "aiEcosystem": {
+        "title": "AI 응용 모듈 오픈소스 생태계 구축 방안",
+        "summary": "차세대 AI 응용 프레임워크에 모듈을 구축하는 외부 기여자를 위한 보조 트랙을 신설합니다."
+      },
+      "meshRouting": {
+        "title": "2026 자기조직화 메시 라우팅 연구 계획",
+        "summary": "동료 평가 마일스톤을 포함하여 탈중앙화 자기조직화 네트워크의 2026년 연구 로드맵을 승인합니다."
+      }
+    }
+  },
+  "council": {
+    "sectionTitle": "이사회 구성원",
+    "sectionSubtitle": "재단의 관리자입니다. 점수화나 서열은 없으며, 오직 책임과 공개된 담당 영역만이 있습니다.",
+    "coreDirector": "핵심 이사",
+    "seniorResearcher": "수석 연구원",
+    "ecosystemBuilder": "생태계 빌더",
+    "members": {
+      "aria": { "focus": "재무 관리 및 거버넌스" },
+      "kenji": { "focus": "대륙 간 비디오 프로토콜" },
+      "linnea": { "focus": "AI 응용 프레임워크" },
+      "diego": { "focus": "자기조직화 네트워크 연구" },
+      "priya": { "focus": "생태계 파트너십" }
+    }
+  },
+  "donation": {
+    "title": "기부하기",
+    "subtitle": "기부금은 공공재 인프라에 직접 사용됩니다. 모든 거래는 온체인에서 확정되며 투명성 원장에 기록됩니다.",
+    "selectAsset": "자산 선택",
+    "amount": "금액",
+    "purpose": "프로그램 지정",
+    "treasuryAddress": "재단 재무 주소",
+    "preferredAsset": "권장: Arbitrum 상의 USDC",
+    "connectFirst": "계속하려면 지갑을 연결해 주십시오.",
+    "signing": "지갑 서명 대기 중...",
+    "submitting": "트랜잭션 제출 중...",
+    "success": "기부가 온체인에서 확정되었습니다.",
+    "downloadReceipt": "PDF 영수증 다운로드",
+    "closeWindow": "닫기",
+    "copyAddress": "주소 복사",
+    "copied": "주소가 복사되었습니다",
+    "purposes": {
+      "ai-framework": "차세대 AI 프레임워크",
+      "video-protocol": "비디오 플레이어 프로토콜",
+      "self-organizing-net": "자가조직화 네트워크",
+      "unrestricted": "비지정 (운영비)"
+    },
+    "assets": {
+      "usdc": "USDC",
+      "usdt": "USDT",
+      "eth": "ETH"
+    },
+    "receipt": {
+      "title": "기부 영수증",
+      "issuer": "Aether Foundation 발행",
+      "txHash": "트랜잭션 해시",
+      "amount": "금액",
+      "timestamp": "타임스탬프",
+      "purpose": "지정 프로그램",
+      "donor": "기부자 주소",
+      "treasury": "재무 주소",
+      "network": "네트워크",
+      "declaration": "본 영수증은 탈중앙화 인프라 및 인공지능 연구에 헌신하는 비영리 단체인 Aether Foundation에 대한 온체인 기부의 증빙입니다. 재단은 토큰을 발행하지 않습니다. 재무 및 세무 기록을 위해 본 문서를 보관해 주십시오.",
+      "footer": "Aether Foundation · 비영리 · Arbitrum"
+    }
+  },
+  "whitepaper": {
+    "back": "뒤로",
+    "label": "기술 백서",
+    "tableOfContents": "목차",
+    "downloadPdf": "PDF 다운로드",
+    "placeholderNote": "이것은 일반 백서 템플릿입니다. 최종 콘텐츠는 프로젝트 팀이 제공합니다.",
+    "sections": {
+      "overview": "개요",
+      "architecture": "아키텍처",
+      "roadmap": "로드맵",
+      "team": "팀"
+    },
+    "ai-framework": {
+      "overview": "차세대 AI 응용 프레임워크는 컨텍스트 인식 및 멀티모달 AI 응용을 대규모로 구축하기 위한 모듈식 오픈소스 런타임입니다. (자리표시자 콘텐츠)",
+      "architecture": "프레임워크는 컨텍스트 엔진, 멀티모달 라우터, 플러그형 도구 레이어로 구성됩니다. 상세 아키텍처 다이어그램은 최종 개정판에 추가됩니다.",
+      "roadmap": "2026 Q1: 컨텍스트 엔진 베타. 2026 Q2: 멀티모달 라우터 GA. 2026 Q3: 생태계 보조 트랙 출시.",
+      "team": "핵심 기여자에는 재단 소속 연구원과 외부 보조금 수혜자가 포함됩니다. 전체 명단은 추후 게시됩니다."
+    },
+    "video-protocol": {
+      "overview": "대륙 간 저지연 비디오 플레이어 프로토콜은 대륙 간 서브초 스트리밍을 위해 설계된 P2P 미디어 프로토콜입니다. (자리표시자 콘텐츠)",
+      "architecture": "프로토콜은 WebRTC 위에 릴레이 메시를 계층화하며, 적응형 비트레이트 협상과 평판 가중 피어 선택을 포함합니다.",
+      "roadmap": "2026 Q1: 대륙 간 릴레이 확장. 2026 Q2: 프로토콜 사양 v1. 2026 Q3: 제3자 상호운용성 테스트.",
+      "team": "재단 시니어 연구원이 이끌며, 스트리밍, 네트워킹, 암호학에 대한 다학문 전문성을 보유하고 있습니다."
+    },
+    "self-organizing-net": {
+      "overview": "탈중앙화 자기조직화 네트워크는 중앙 조정 없이 자가 치유 및 재구성이 가능한 자율 메시 라우팅 계층입니다. (자리표시자 콘텐츠)",
+      "architecture": "노드는 가십으로 피어를 발견하고, 수정된 AODV로 경로를 계산하며, 온체인 증명으로 상태를 신호합니다.",
+      "roadmap": "2026 Q1: 3개 지역 테스트베드 배포. 2026 Q2: 동료 평가 마일스톤 보고서. 2026 Q3: 공개 테스트넷.",
+      "team": "재단 분산 시스템 시니어 연구원이 이끌며, 외부 학계 협력자와 함께 연구합니다."
+    }
+  },
+  "proposalDetail": {
+    "back": "뒤로",
+    "summary": "요약",
+    "voteBreakdown": "투표 내역",
+    "councilProgress": "이사회 참여율",
+    "castVote": "투표하기",
+    "for": "찬성",
+    "against": "반대",
+    "abstain": "기권",
+    "remaining": "남은 시간",
+    "voteClosed": "이 제안에 대한 투표가 마감되었습니다.",
+    "connectToVote": "투표하려면 지갑을 연결하세요.",
+    "notFound": "제안을 찾을 수 없습니다."
+  },
+  "impact": {
+    "title": "자금 활용 방안",
+    "subtitle": "재단이 받는 모든 기부에 대한 관리 원칙.",
+    "allocationPrinciple": "자금 배분 원칙",
+    "allocationDescription": "재단은 모든 기부금에 대해 투명하고 공개된 배분 프레임워크를 따릅니다.",
+    "annualBudget": "연간 예산 계획",
+    "annualBudgetDescription": "이번 회계연도 이사회 승인 예산을 항목별로 분류.",
+    "councilCompensation": "이사 보수 정책",
+    "auditArrangement": "감사 제도",
+    "downloadReport": "감사 보고서 다운로드",
+    "allocations": {
+      "ai-framework": {
+        "label": "AI 응용 프레임워크",
+        "desc": "차세대 AI 응용 프레임워크의 R&D 보조금, 모델 평가, 오픈소스 유지보수."
+      },
+      "video-protocol": {
+        "label": "비디오 플레이어 프로토콜",
+        "desc": "릴레이 인프라, 대륙 간 테스트, 프로토콜 사양 작업."
+      },
+      "self-organizing-net": {
+        "label": "자기조직화 네트워크",
+        "desc": "메시 라우팅 연구, 동료 평가 마일스톤, 테스트베드 배포."
+      },
+      "unrestricted": {
+        "label": "운영",
+        "desc": "감사, 법무, 행정 간접비, 비상 예비금."
+      }
+    },
+    "budget": {
+      "categoryColumn": "항목",
+      "amountColumn": "금액",
+      "shareColumn": "비율",
+      "noteColumn": "비고",
+      "totalLabel": "합계",
+      "items": {
+        "rd": "연구 보조금 및 외부 기여자 바운티",
+        "infra": "릴레이 노드, 대역폭, 클라우드 인프라",
+        "ops": "법무, 행정, 운영 간접비",
+        "audit": "제3자 감사 및 컴플라이언스 검토"
+      }
+    },
+    "compensation": {
+      "description": "이사는 시간과 경비를 보전하기 위해 소액의 월간 수당을 받으며, 매년 전체 이사회에서 검토합니다. 지분 없음, 토큰 없음, 성과 보너스 없음.",
+      "honorariumLabel": "수당",
+      "hasCompensation": "예 — 고정 월간 수당",
+      "noCompensation": "보수 없음",
+      "reviewCycleLabel": "검토 주기",
+      "reviewCycle": "매년 전체 이사회 검토"
+    },
+    "audit": {
+      "cadenceLabel": "주기",
+      "cadence": "반기별 (회계연도당 2회)",
+      "providerLabel": "제공자",
+      "provider": "2년마다 교체되는 독립적인 제3자 기관",
+      "lastReportLabel": "최신 보고서"
+    }
+  },
+  "toast": {
+    "walletConnected": "지갑이 성공적으로 연결되었습니다.",
+    "walletDisconnected": "지갑 연결이 해제되었습니다.",
+    "voteSuccess": "투표가 오프체인 집계를 위해 제출되었습니다.",
+    "donationSuccess": "기부가 온체인에서 확정되었습니다.",
+    "copied": "클립보드에 복사되었습니다.",
+    "error": "문제가 발생했습니다. 다시 시도해 주십시오."
+  },
+  "footer": {
+    "tagline": "탈중앙화 인프라 및 인공지능 연구를 발전시키는 비영리 재단입니다.",
+    "treasury": "재무",
+    "governance": "거버넌스",
+    "transparency": "투명성",
+    "languageNote": "상단 내비게이션에서 언어를 전환하십시오."
+  },
+  "common": {
+    "loading": "불러오는 중...",
+    "viewAll": "전체 보기"
+  }
+}

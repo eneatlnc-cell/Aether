@@ -1,0 +1,142 @@
+@import "tailwindcss";
+
+/* ===== Aether Foundation 设计 Token ===== */
+@theme {
+  /* 品牌色板 */
+  --color-bg: #F4F6F9;
+  --color-card: #FFFFFF;
+  --color-ink: #1A1A1A;
+  --color-muted: #64748B;
+  --color-accent: #2B3A67;
+  --color-gold: #C9A96E;
+  --color-border: #E8ECF0;
+
+  /* 字体族（系统无衬线优先） */
+  --font-sans: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC",
+    "Hiragino Sans GB", "Microsoft YaHei", "Helvetica Neue", Arial, sans-serif;
+
+  /* 阴影 */
+  --shadow-card: 0 4px 12px rgba(0, 0, 0, 0.04);
+  --shadow-card-hover: 0 8px 24px rgba(0, 0, 0, 0.08);
+
+  /* 圆角 */
+  --radius-card: 12px;
+  --radius-btn: 8px;
+
+  /* 过渡 */
+  --ease-foundation: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* ===== 全局基础 ===== */
+:root {
+  --background: #F4F6F9;
+  --foreground: #1A1A1A;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background: var(--color-bg);
+  color: var(--color-ink);
+  font-family: var(--font-sans);
+  line-height: 1.7;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== 卡片质感 ===== */
+@layer components {
+  .aether-card {
+    background-color: var(--color-card);
+    border: 1px solid var(--color-border);
+    border-radius: var(--radius-card);
+    padding: 1.5rem;
+    box-shadow: var(--shadow-card);
+    transition: transform 0.4s var(--ease-foundation),
+      box-shadow 0.4s var(--ease-foundation);
+  }
+
+  @media (min-width: 768px) {
+    .aether-card {
+      padding: 2rem;
+    }
+  }
+
+  .aether-card-hover:hover {
+    transform: translateY(-2px);
+    box-shadow: var(--shadow-card-hover);
+  }
+}
+
+/* ===== 骨架屏脉冲光泽 ===== */
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    background-position: -200% 0;
+  }
+  50% {
+    background-position: 200% 0;
+  }
+}
+
+.skeleton {
+  background: linear-gradient(
+    90deg,
+    #e8ecf0 25%,
+    #f4f6f9 50%,
+    #e8ecf0 75%
+  );
+  background-size: 200% 100%;
+  animation: skeleton-pulse 2s ease-in-out infinite;
+  border-radius: 6px;
+}
+
+/* ===== 进行中状态点 pulse ===== */
+@keyframes status-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(43, 58, 103, 0.5);
+  }
+  70% {
+    box-shadow: 0 0 0 8px rgba(43, 58, 103, 0);
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(43, 58, 103, 0);
+  }
+}
+
+.status-pulse {
+  animation: status-pulse 2s infinite;
+}
+
+/* ===== Toast 滑入 ===== */
+@keyframes toast-in {
+  from {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes toast-out {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(120%);
+    opacity: 0;
+  }
+}
+
+.toast-enter {
+  animation: toast-in 0.4s var(--ease-foundation) forwards;
+}
+
+.toast-leave {
+  animation: toast-out 0.4s var(--ease-foundation) forwards;
+}

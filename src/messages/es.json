@@ -1,0 +1,264 @@
+{
+  "nav": {
+    "logo": "Aether Foundation",
+    "governance": "Gobernanza",
+    "donate": "Donar",
+    "connectWallet": "Conectar Wallet",
+    "disconnect": "Desconectar",
+    "walletConnected": "Wallet conectada"
+  },
+  "hero": {
+    "title": "AETHER",
+    "subtitle": "Avances en Infraestructura Descentralizada e Inteligencia",
+    "tag1": "Framework de Aplicaciones de AI de Próxima Generación",
+    "tag2": "Protocolo de Reproductor de Video Intercontinental de Baja Latencia",
+    "tag3": "Red Descentralizada Autoorganizada"
+  },
+  "projects": {
+    "sectionTitle": "Programas Emblemáticos",
+    "sectionSubtitle": "Tres iniciativas independientes operadas bajo la Fundación, cada una con igual peso estratégico.",
+    "ai-framework": {
+      "name": "Framework de Aplicaciones de AI de Próxima Generación",
+      "tagline": "Un framework abierto para construir aplicaciones de AI contextuales y multimodales a escala.",
+      "status": "En Investigación",
+      "viewWhitepaper": "Ver Libro Blanco"
+    },
+    "video-protocol": {
+      "name": "Protocolo de Reproductor de Video Intercontinental de Baja Latencia",
+      "tagline": "Un protocolo de medios peer-to-peer diseñado para transmisión transcontinental con latencia sub-segundo.",
+      "status": "Testnet en Vivo",
+      "viewWhitepaper": "Ver Libro Blanco"
+    },
+    "self-organizing-net": {
+      "name": "Red Descentralizada Autoorganizada",
+      "tagline": "Una capa de enrutamiento en malla autónoma que se auto-repara y se reconfigura sin coordinación central.",
+      "status": "En Investigación",
+      "viewWhitepaper": "Ver Libro Blanco"
+    }
+  },
+  "fundFlow": {
+    "sectionTitle": "Transparencia de la Tesorería",
+    "sectionSubtitle": "Vista en cadena en tiempo real de cada dólar que entra y sale de la Fundación.",
+    "totalDonated": "Donaciones Totales Recibidas",
+    "projectAllocated": "Asignaciones a Proyectos",
+    "treasuryBalance": "Saldo Actual de la Tesorería",
+    "monthlyTrend": "Ingresos vs. Gastos de 12 Meses",
+    "recentTransactions": "Actividad Reciente en Cadena",
+    "income": "Ingreso",
+    "expense": "Gasto",
+    "direction": {
+      "in": "Entrante",
+      "out": "Saliente"
+    },
+    "usdEstimate": "Estimación en USD",
+    "viewOnExplorer": "Ver en Explorer",
+    "purposeLabels": {
+      "ai-framework": "Framework de AI",
+      "video-protocol": "Protocolo de Video",
+      "self-organizing-net": "Red Autoorganizada",
+      "unrestricted": "Operaciones"
+    }
+  },
+  "proposals": {
+    "sectionTitle": "Propuestas Estratégicas de Gobernanza",
+    "sectionSubtitle": "Mociones del consejo en revisión. La Fundación practica una gobernanza sin tokens — cada moción se resuelve mediante multifirma del consejo.",
+    "forVotes": "A Favor",
+    "againstVotes": "En Contra",
+    "abstainVotes": "Abstención",
+    "deadline": "Fecha límite de votación",
+    "viewDetail": "Ver Propuesta",
+    "statusActive": "Activa",
+    "statusPassed": "Aprobada",
+    "statusRejected": "Rechazada",
+    "items": {
+      "q4Bandwidth": {
+        "title": "Moción de asignación de fondos Q4 para I+D de ancho de banda intercontinental",
+        "summary": "Moción para asignar fondos de investigación de Q4 a la infraestructura de relés intercontinentales del protocolo de video de baja latencia."
+      },
+      "aiEcosystem": {
+        "title": "Plan de construcción del ecosistema open-source para el módulo de aplicaciones de AI",
+        "summary": "Establecer una línea de subvención para contribuyentes externos que desarrollen módulos sobre el Framework de Aplicaciones de AI de Próxima Generación."
+      },
+      "meshRouting": {
+        "title": "Plan de investigación 2026 de enrutamiento mesh autoorganizado",
+        "summary": "Aprobar la hoja de ruta de investigación 2026 para la red descentralizada autoorganizada, incluyendo hitos de revisión por pares."
+      }
+    }
+  },
+  "council": {
+    "sectionTitle": "Miembros del Consejo",
+    "sectionSubtitle": "Custodios de la Fundación. Sin puntuaciones gamificadas, sin rangos — solo responsabilidad y dominios divulgados.",
+    "coreDirector": "Director Principal",
+    "seniorResearcher": "Investigador Senior",
+    "ecosystemBuilder": "Constructor de Ecosistema",
+    "members": {
+      "aria": { "focus": "Gestión de tesorería y gobernanza" },
+      "kenji": { "focus": "Protocolo de video intercontinental" },
+      "linnea": { "focus": "Framework de aplicaciones de AI" },
+      "diego": { "focus": "Investigación de red autoorganizada" },
+      "priya": { "focus": "Alianzas del ecosistema" }
+    }
+  },
+  "donation": {
+    "title": "Hacer una Donación",
+    "subtitle": "Su contribución financia directamente infraestructura de bien público. Cada transacción se liquida en cadena y se registra en el libro de transparencia.",
+    "selectAsset": "Seleccionar Activo",
+    "amount": "Monto",
+    "purpose": "Directo al Programa",
+    "treasuryAddress": "Dirección de la Tesorería de la Fundación",
+    "preferredAsset": "Preferido: USDC en Arbitrum",
+    "connectFirst": "Por favor conecte su wallet para continuar.",
+    "signing": "Esperando firma en la wallet...",
+    "submitting": "Enviando transacción...",
+    "success": "Donación confirmada en cadena.",
+    "downloadReceipt": "Descargar Recibo PDF",
+    "closeWindow": "Cerrar",
+    "copyAddress": "Copiar dirección",
+    "copied": "Dirección copiada",
+    "purposes": {
+      "ai-framework": "Framework de AI de Próxima Generación",
+      "video-protocol": "Protocolo de Reproductor de Video",
+      "self-organizing-net": "Red Autoorganizada",
+      "unrestricted": "Sin Restricciones (Operaciones)"
+    },
+    "assets": {
+      "usdc": "USDC",
+      "usdt": "USDT",
+      "eth": "ETH"
+    },
+    "receipt": {
+      "title": "Recibo de Donación",
+      "issuer": "Emitido por Aether Foundation",
+      "txHash": "Hash de Transacción",
+      "amount": "Monto",
+      "timestamp": "Marca de Tiempo",
+      "purpose": "Programa Dirigido",
+      "donor": "Dirección del Donante",
+      "treasury": "Dirección de la Tesorería",
+      "network": "Red",
+      "declaration": "Este recibo sirve como comprobante de una donación en cadena a la Aether Foundation, una organización sin fines de lucro dedicada a la infraestructura descentralizada y la investigación en inteligencia artificial. La Fundación no emite tokens. Conserve este documento para sus registros financieros y fiscales.",
+      "footer": "Aether Foundation · Sin Fines de Lucro · Arbitrum"
+    }
+  },
+  "whitepaper": {
+    "back": "Atrás",
+    "label": "Whitepaper Técnico",
+    "tableOfContents": "Índice",
+    "downloadPdf": "Descargar PDF",
+    "placeholderNote": "Esta es una plantilla genérica de whitepaper. El contenido final será proporcionado por el equipo del proyecto.",
+    "sections": {
+      "overview": "Descripción general",
+      "architecture": "Arquitectura",
+      "roadmap": "Hoja de ruta",
+      "team": "Equipo"
+    },
+    "ai-framework": {
+      "overview": "El Framework de Aplicaciones de AI de Próxima Generación es un runtime modular y de código abierto para construir aplicaciones AI contextuales y multimodales a escala. (Contenido de marcador de posición)",
+      "architecture": "El framework consta de un motor de contexto, un enrutador multimodal y una capa de herramientas conectable. Los diagramas de arquitectura detallados se añadirán en la revisión final.",
+      "roadmap": "Q1 2026: beta del motor de contexto. Q2 2026: GA del enrutador multimodal. Q3 2026: lanzamiento de la vía de subvención del ecosistema.",
+      "team": "Los contribuyentes centrales incluyen investigadores afiliados a la Fundación y beneficiarios externos. La lista completa se publicará."
+    },
+    "video-protocol": {
+      "overview": "El Protocolo de Reproductor de Video Intercontinental de Baja Latencia es un protocolo de medios P2P diseñado para streaming intercontinental sub-segundo. (Contenido de marcador de posición)",
+      "architecture": "El protocolo superpone una malla de relés sobre WebRTC, con negociación de bitrate adaptativa y selección de peers ponderada por reputación.",
+      "roadmap": "Q1 2026: expansión de relés intercontinentales. Q2 2026: especificación del protocolo v1. Q3 2026: pruebas de interoperabilidad de terceros.",
+      "team": "Liderado por investigadores senior de la Fundación con experiencia interdisciplinaria en streaming, redes y criptografía."
+    },
+    "self-organizing-net": {
+      "overview": "La Red Autoorganizada Descentralizada es una capa de enrutamiento mesh autónoma capaz de auto-repararse y reconfigurarse sin coordinación central. (Contenido de marcador de posición)",
+      "architecture": "Los nodos descubren pares vía gossip, calculan rutas vía una variante modificada de AODV y señalan salud vía atestaciones on-chain.",
+      "roadmap": "Q1 2026: despliegue de banco de pruebas en 3 regiones. Q2 2026: informe de hito de revisión por pares. Q3 2026: testnet público.",
+      "team": "Liderado en investigación por investigadores senior de la Fundación en sistemas distribuidos, con colaboradores académicos externos."
+    }
+  },
+  "proposalDetail": {
+    "back": "Atrás",
+    "summary": "Resumen",
+    "voteBreakdown": "Desglose de votos",
+    "councilProgress": "Participación del consejo",
+    "castVote": "Emitir voto",
+    "for": "A favor",
+    "against": "En contra",
+    "abstain": "Abstención",
+    "remaining": "Tiempo restante",
+    "voteClosed": "La votación para esta propuesta ha cerrado.",
+    "connectToVote": "Conecte su wallet para votar.",
+    "notFound": "Propuesta no encontrada."
+  },
+  "impact": {
+    "title": "Cómo se usan los fondos",
+    "subtitle": "Principios de administración para cada contribución recibida por la Fundación.",
+    "allocationPrinciple": "Principio de asignación",
+    "allocationDescription": "La Fundación se compromete a un marco de asignación transparente y público para todas las donaciones recibidas.",
+    "annualBudget": "Plan de presupuesto anual",
+    "annualBudgetDescription": "El presupuesto aprobado por el consejo para el año fiscal en curso, desglosado por categoría.",
+    "councilCompensation": "Política de compensación del consejo",
+    "auditArrangement": "Disposición de auditoría",
+    "downloadReport": "Descargar informe de auditoría",
+    "allocations": {
+      "ai-framework": {
+        "label": "Framework de aplicaciones de AI",
+        "desc": "Subvenciones de I+D, evaluación de modelos y mantenimiento open-source para el framework de aplicaciones de AI de próxima generación."
+      },
+      "video-protocol": {
+        "label": "Protocolo de reproductor de video",
+        "desc": "Infraestructura de relés, pruebas intercontinentales y trabajo de especificación del protocolo."
+      },
+      "self-organizing-net": {
+        "label": "Red autoorganizada",
+        "desc": "Investigación de enrutamiento mesh, hitos de revisión por pares y despliegue de banco de pruebas."
+      },
+      "unrestricted": {
+        "label": "Operaciones",
+        "desc": "Auditoría, legal, gastos administrativos y reserva de contingencia."
+      }
+    },
+    "budget": {
+      "categoryColumn": "Categoría",
+      "amountColumn": "Importe",
+      "shareColumn": "Proporción",
+      "noteColumn": "Nota",
+      "totalLabel": "Total",
+      "items": {
+        "rd": "Subvenciones de investigación y recompensas para contribuyentes externos",
+        "infra": "Nodos de relé, ancho de banda e infraestructura en la nube",
+        "ops": "Legal, administrativo y gastos operativos",
+        "audit": "Auditoría de terceros y revisión de cumplimiento"
+      }
+    },
+    "compensation": {
+      "description": "Los miembros del consejo reciben un modesto honorario mensual para cubrir tiempo y gastos, revisado anualmente por el consejo completo. Sin capital, sin tokens, sin bonos de desempeño.",
+      "honorariumLabel": "Honorario",
+      "hasCompensation": "Sí — honorario mensual fijo",
+      "noCompensation": "Sin compensación",
+      "reviewCycleLabel": "Ciclo de revisión",
+      "reviewCycle": "Revisión anual por el consejo completo"
+    },
+    "audit": {
+      "cadenceLabel": "Cadencia",
+      "cadence": "Semestral (dos veces por año fiscal)",
+      "providerLabel": "Proveedor",
+      "provider": "Firma independiente de terceros rotada cada 2 años",
+      "lastReportLabel": "Último informe"
+    }
+  },
+  "toast": {
+    "walletConnected": "Wallet conectada exitosamente.",
+    "walletDisconnected": "Wallet desconectada.",
+    "voteSuccess": "Voto enviado para agregación fuera de cadena.",
+    "donationSuccess": "Donación confirmada en cadena.",
+    "copied": "Copiado al portapapeles.",
+    "error": "Algo salió mal. Por favor, inténtelo de nuevo."
+  },
+  "footer": {
+    "tagline": "Una fundación sin fines de lucro que promueve la infraestructura descentralizada y la investigación en inteligencia artificial.",
+    "treasury": "Tesorería",
+    "governance": "Gobernanza",
+    "transparency": "Transparencia",
+    "languageNote": "Cambie el idioma en la navegación superior."
+  },
+  "common": {
+    "loading": "Cargando...",
+    "viewAll": "Ver todo"
+  }
+}

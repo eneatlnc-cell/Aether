@@ -1,0 +1,19 @@
+# Build artifacts
+out/
+cache/
+broadcast/
+
+# Dependencies (forge install 后生成)
+lib/
+
+# 环境
+.env
+.env.local
+
+# 编辑器
+.idea/
+.vscode/
+*.swp
+
+# 状态文件
+*.state.json

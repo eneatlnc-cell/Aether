@@ -1,0 +1,264 @@
+{
+  "nav": {
+    "logo": "Aether Foundation",
+    "governance": "Governance",
+    "donate": "Donate",
+    "connectWallet": "Connect Wallet",
+    "disconnect": "Disconnect",
+    "walletConnected": "Wallet connected"
+  },
+  "hero": {
+    "title": "AETHER",
+    "subtitle": "Advancing Decentralized Infrastructure & Intelligence",
+    "tag1": "Next-Gen AI Application Framework",
+    "tag2": "Intercontinental Low-Latency Video Player Protocol",
+    "tag3": "Decentralized Self-Organizing Network"
+  },
+  "projects": {
+    "sectionTitle": "Flagship Programs",
+    "sectionSubtitle": "Three independent initiatives operated under the Foundation, each holding equal strategic weight.",
+    "ai-framework": {
+      "name": "Next-Gen AI Application Framework",
+      "tagline": "An open framework for building context-aware, multi-modal AI applications at scale.",
+      "status": "In Research",
+      "viewWhitepaper": "View Whitepaper"
+    },
+    "video-protocol": {
+      "name": "Intercontinental Low-Latency Video Player Protocol",
+      "tagline": "A peer-to-peer media protocol engineered for sub-second cross-continental streaming.",
+      "status": "Testnet Live",
+      "viewWhitepaper": "View Whitepaper"
+    },
+    "self-organizing-net": {
+      "name": "Decentralized Self-Organizing Network",
+      "tagline": "An autonomous mesh routing layer that self-heals and reconfigures without central coordination.",
+      "status": "In Research",
+      "viewWhitepaper": "View Whitepaper"
+    }
+  },
+  "fundFlow": {
+    "sectionTitle": "Treasury Transparency",
+    "sectionSubtitle": "Real-time on-chain view of every dollar that enters and leaves the Foundation.",
+    "totalDonated": "Total Donations Received",
+    "projectAllocated": "Project Allocations",
+    "treasuryBalance": "Current Treasury Balance",
+    "monthlyTrend": "12-Month Income vs. Expense",
+    "recentTransactions": "Recent On-Chain Activity",
+    "income": "Income",
+    "expense": "Expense",
+    "direction": {
+      "in": "Incoming",
+      "out": "Outgoing"
+    },
+    "usdEstimate": "USD estimate",
+    "viewOnExplorer": "View on Explorer",
+    "purposeLabels": {
+      "ai-framework": "AI Framework",
+      "video-protocol": "Video Protocol",
+      "self-organizing-net": "Self-Organizing Net",
+      "unrestricted": "Operations"
+    }
+  },
+  "proposals": {
+    "sectionTitle": "Strategic Governance Proposals",
+    "sectionSubtitle": "Council motions under review. The Foundation practices tokenless governance — every motion is settled by council multi-signature.",
+    "forVotes": "For",
+    "againstVotes": "Against",
+    "abstainVotes": "Abstain",
+    "deadline": "Voting deadline",
+    "viewDetail": "View Proposal",
+    "statusActive": "Active",
+    "statusPassed": "Passed",
+    "statusRejected": "Rejected",
+    "items": {
+      "q4Bandwidth": {
+        "title": "Q4 Cross-Continental Bandwidth R&D Allocation",
+        "summary": "Motion to allocate Q4 research funds toward the low-latency video protocol's cross-continental relay infrastructure."
+      },
+      "aiEcosystem": {
+        "title": "Open-Source Ecosystem Building for the AI Application Module",
+        "summary": "Establish a grant track for external contributors building modules on the Next-Gen AI Application Framework."
+      },
+      "meshRouting": {
+        "title": "2026 Self-Organizing Mesh Routing Research Plan",
+        "summary": "Approve the 2026 research roadmap for the decentralized self-organizing network, including peer-review milestones."
+      }
+    }
+  },
+  "council": {
+    "sectionTitle": "Council Members",
+    "sectionSubtitle": "Stewards of the Foundation. No gamified scores, no rank — only responsibility and disclosed domains.",
+    "coreDirector": "Core Director",
+    "seniorResearcher": "Senior Researcher",
+    "ecosystemBuilder": "Ecosystem Builder",
+    "members": {
+      "aria": { "focus": "Treasury stewardship & governance" },
+      "kenji": { "focus": "Intercontinental video protocol" },
+      "linnea": { "focus": "AI application framework" },
+      "diego": { "focus": "Self-organizing network research" },
+      "priya": { "focus": "Ecosystem partnerships" }
+    }
+  },
+  "donation": {
+    "title": "Make a Donation",
+    "subtitle": "Your contribution directly funds public-good infrastructure. Every transaction is settled on-chain and recorded on the transparency ledger.",
+    "selectAsset": "Select Asset",
+    "amount": "Amount",
+    "purpose": "Direct to Program",
+    "treasuryAddress": "Foundation Treasury Address",
+    "preferredAsset": "Preferred: USDC on Arbitrum",
+    "connectFirst": "Please connect your wallet to continue.",
+    "signing": "Awaiting signature in wallet...",
+    "submitting": "Submitting transaction...",
+    "success": "Donation confirmed on-chain.",
+    "downloadReceipt": "Download PDF Receipt",
+    "closeWindow": "Close",
+    "copyAddress": "Copy address",
+    "copied": "Address copied",
+    "purposes": {
+      "ai-framework": "Next-Gen AI Framework",
+      "video-protocol": "Video Player Protocol",
+      "self-organizing-net": "Self-Organizing Network",
+      "unrestricted": "Unrestricted (Operations)"
+    },
+    "assets": {
+      "usdc": "USDC",
+      "usdt": "USDT",
+      "eth": "ETH"
+    },
+    "receipt": {
+      "title": "Donation Receipt",
+      "issuer": "Issued by Aether Foundation",
+      "txHash": "Transaction Hash",
+      "amount": "Amount",
+      "timestamp": "Timestamp",
+      "purpose": "Directed Program",
+      "donor": "Donor Address",
+      "treasury": "Treasury Address",
+      "network": "Network",
+      "declaration": "This receipt serves as proof of an on-chain donation to the Aether Foundation, a non-profit organization dedicated to decentralized infrastructure and artificial intelligence research. The Foundation does not issue tokens. Please retain this document for your financial and tax records.",
+      "footer": "Aether Foundation · Non-Profit · Arbitrum"
+    }
+  },
+  "whitepaper": {
+    "back": "Back",
+    "label": "Technical Whitepaper",
+    "tableOfContents": "Table of Contents",
+    "downloadPdf": "Download PDF",
+    "placeholderNote": "This is a generic whitepaper template. Final content to be supplied by the project team.",
+    "sections": {
+      "overview": "Overview",
+      "architecture": "Architecture",
+      "roadmap": "Roadmap",
+      "team": "Team"
+    },
+    "ai-framework": {
+      "overview": "The Next-Gen AI Application Framework is a modular, open-source runtime for building context-aware, multimodal AI applications at scale. (Placeholder content.)",
+      "architecture": "The framework consists of a context engine, a multimodal router, and a pluggable tool layer. Detailed architecture diagrams will be added in the final revision.",
+      "roadmap": "Q1 2026: context engine beta. Q2 2026: multimodal router GA. Q3 2026: ecosystem grant track launch.",
+      "team": "Core contributors include Foundation-affiliated researchers and external grantees. Full roster to be published."
+    },
+    "video-protocol": {
+      "overview": "The Intercontinental Low-Latency Video Player Protocol is a peer-to-peer media protocol designed for sub-second cross-continental streaming. (Placeholder content.)",
+      "architecture": "The protocol layers a relay mesh over WebRTC, with adaptive bitrate negotiation and reputation-weighted peer selection.",
+      "roadmap": "Q1 2026: cross-continental relay expansion. Q2 2026: protocol specification v1. Q3 2026: third-party interoperability tests.",
+      "team": "Led by Foundation senior researchers with cross-disciplinary expertise in streaming, networking, and cryptography."
+    },
+    "self-organizing-net": {
+      "overview": "The Decentralized Self-Organizing Network is an autonomous mesh routing layer capable of self-healing and reconfiguration without central coordination. (Placeholder content.)",
+      "architecture": "Nodes discover peers via gossip, compute routes via a modified AODV variant, and signal health via on-chain attestations.",
+      "roadmap": "Q1 2026: testbed deployment in 3 regions. Q2 2026: peer-reviewed milestone report. Q3 2026: public testnet.",
+      "team": "Research-led by Foundation senior researchers in distributed systems, with external academic collaborators."
+    }
+  },
+  "proposalDetail": {
+    "back": "Back",
+    "summary": "Summary",
+    "voteBreakdown": "Vote Breakdown",
+    "councilProgress": "Council participation",
+    "castVote": "Cast Your Vote",
+    "for": "For",
+    "against": "Against",
+    "abstain": "Abstain",
+    "remaining": "Time remaining",
+    "voteClosed": "Voting on this proposal has closed.",
+    "connectToVote": "Connect your wallet to cast a vote.",
+    "notFound": "Proposal not found."
+  },
+  "impact": {
+    "title": "How Funds Are Used",
+    "subtitle": "Stewardship principles for every contribution received by the Foundation.",
+    "allocationPrinciple": "Allocation Principle",
+    "allocationDescription": "The Foundation commits to a transparent, public allocation framework for all received donations.",
+    "annualBudget": "Annual Budget Plan",
+    "annualBudgetDescription": "The council-approved budget for the current fiscal year, broken down by category.",
+    "councilCompensation": "Council Compensation Policy",
+    "auditArrangement": "Audit Arrangement",
+    "downloadReport": "Download Audit Report",
+    "allocations": {
+      "ai-framework": {
+        "label": "AI Application Framework",
+        "desc": "R&D grants, model evaluation, and open-source maintenance for the next-gen AI application framework."
+      },
+      "video-protocol": {
+        "label": "Video Player Protocol",
+        "desc": "Relay infrastructure, cross-continental testing, and protocol specification work."
+      },
+      "self-organizing-net": {
+        "label": "Self-Organizing Network",
+        "desc": "Mesh routing research, peer-review milestones, and testbed deployment."
+      },
+      "unrestricted": {
+        "label": "Operations",
+        "desc": "Audit, legal, administrative overhead, and contingency reserve."
+      }
+    },
+    "budget": {
+      "categoryColumn": "Category",
+      "amountColumn": "Amount",
+      "shareColumn": "Share",
+      "noteColumn": "Note",
+      "totalLabel": "Total",
+      "items": {
+        "rd": "Research grants and external contributor bounties",
+        "infra": "Relay nodes, bandwidth, and cloud infrastructure",
+        "ops": "Legal, administrative, and operational overhead",
+        "audit": "Third-party audit and compliance review"
+      }
+    },
+    "compensation": {
+      "description": "Council members receive a modest monthly honorarium to cover time and expenses, reviewed annually by the full council. No equity, no tokens, no performance bonuses.",
+      "honorariumLabel": "Honorarium",
+      "hasCompensation": "Yes — fixed monthly honorarium",
+      "noCompensation": "No compensation",
+      "reviewCycleLabel": "Review Cycle",
+      "reviewCycle": "Annual review by the full council"
+    },
+    "audit": {
+      "cadenceLabel": "Cadence",
+      "cadence": "Semi-annual (twice per fiscal year)",
+      "providerLabel": "Provider",
+      "provider": "Independent third-party firm rotated every 2 years",
+      "lastReportLabel": "Latest Report"
+    }
+  },
+  "toast": {
+    "walletConnected": "Wallet connected successfully.",
+    "walletDisconnected": "Wallet disconnected.",
+    "voteSuccess": "Vote submitted for off-chain aggregation.",
+    "donationSuccess": "Donation confirmed on-chain.",
+    "copied": "Copied to clipboard.",
+    "error": "Something went wrong. Please try again."
+  },
+  "footer": {
+    "tagline": "A non-profit foundation advancing decentralized infrastructure and artificial intelligence research.",
+    "treasury": "Treasury",
+    "governance": "Governance",
+    "transparency": "Transparency",
+    "languageNote": "Switch language in the top navigation."
+  },
+  "common": {
+    "loading": "Loading...",
+    "viewAll": "View all"
+  }
+}

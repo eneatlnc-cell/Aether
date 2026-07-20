@@ -1,0 +1,163 @@
+export type AssetCode = "USDC" | "USDT" | "ETH";
+
+export type DonationPurpose =
+  | "ai-framework"
+  | "video-protocol"
+  | "self-organizing-net"
+  | "unrestricted";
+
+export interface AssetHolding {
+  asset: AssetCode;
+  amount: number;
+  /** USD 估值 */
+  usdValue: number;
+}
+
+export interface ProjectFund {
+  projectId: "ai-framework" | "video-protocol" | "self-organizing-net";
+  allocatedUsd: number;
+  spentUsd: number;
+  /** 预算上限 USD */
+  budgetUsd: number;
+}
+
+export interface TreasuryTransaction {
+  id: string;
+  /** ISO 时间 */
+  timestamp: string;
+  direction: "in" | "out";
+  asset: AssetCode;
+  amount: number;
+  usdValue: number;
+  purpose: DonationPurpose;
+  counterparty: string;
+  txHash: string;
+}
+
+export interface MonthlyFlowPoint {
+  /** 月份标签，如 "2025-08" */
+  month: string;
+  incomeUsd: number;
+  expenseUsd: number;
+}
+
+export interface FundFlowSnapshot {
+  totalDonated: AssetHolding[];
+  projectFunds: ProjectFund[];
+  treasuryBalanceUsd: number;
+  monthlyFlow: MonthlyFlowPoint[];
+}
+
+/**
+ * 基金会金库多签地址占位
+ * 真实接入时由 useFundFlow/useDonation 内部读取链上合约
+ */
+export const TREASURY_ADDRESSES: Record<"arbitrum" | "ethereum", string> = {
+  arbitrum: "0x000000000000000000000000000000000000AeTh",
+  ethereum: "0x000000000000000000000000000000000000AeTh",
+};
+
+export const PREFERRED_ASSET: AssetCode = "USDC";
+
+export const fundFlow: FundFlowSnapshot = {
+  totalDonated: [
+    { asset: "USDC", amount: 512_340, usdValue: 512_340 },
+    { asset: "USDT", amount: 88_500, usdValue: 88_500 },
+    { asset: "ETH", amount: 124.6, usdValue: 312_876 },
+  ],
+  projectFunds: [
+    {
+      projectId: "ai-framework",
+      allocatedUsd: 280_000,
+      spentUsd: 184_500,
+      budgetUsd: 300_000,
+    },
+    {
+      projectId: "video-protocol",
+      allocatedUsd: 240_000,
+      spentUsd: 162_300,
+      budgetUsd: 300_000,
+    },
+    {
+      projectId: "self-organizing-net",
+      allocatedUsd: 180_000,
+      spentUsd: 91_200,
+      budgetUsd: 300_000,
+    },
+  ],
+  treasuryBalanceUsd: 412_540,
+  monthlyFlow: buildMonthlyFlow(),
+};
+
+function buildMonthlyFlow(): MonthlyFlowPoint[] {
+  const now = new Date("2026-07-01");
+  const points: MonthlyFlowPoint[] = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const month = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}`;
+    // 用确定性伪随机，避免每次渲染抖动
+    const seed = d.getFullYear() * 12 + d.getMonth();
+    const income = 38_000 + ((seed * 7) % 26_000);
+    const expense = 22_000 + ((seed * 13) % 18_000);
+    points.push({ month, incomeUsd: income, expenseUsd: expense });
+  }
+  return points;
+}
+
+export const treasuryTransactions: TreasuryTransaction[] = [
+  {
+    id: "tx-001",
+    timestamp: "2026-07-18T09:24:00Z",
+    direction: "in",
+    asset: "USDC",
+    amount: 25_000,
+    usdValue: 25_000,
+    purpose: "ai-framework",
+    counterparty: "0x7a3F…b29C",
+    txHash: "0xab12cd34ef56ab12cd34ef56ab12cd34ef56ab12cd34ef56ab12cd34ef56",
+  },
+  {
+    id: "tx-002",
+    timestamp: "2026-07-15T14:11:00Z",
+    direction: "out",
+    asset: "USDC",
+    amount: 18_400,
+    usdValue: 18_400,
+    purpose: "video-protocol",
+    counterparty: "0x4d2A…91fE",
+    txHash: "0xcd34ef56ab12cd34ef56ab12cd34ef56ab12cd34ef56ab12cd34ef56ab12",
+  },
+  {
+    id: "tx-003",
+    timestamp: "2026-07-12T03:48:00Z",
+    direction: "in",
+    asset: "ETH",
+    amount: 6.2,
+    usdValue: 15_568,
+    purpose: "unrestricted",
+    counterparty: "0x9b1E…44d2",
+    txHash: "0xef56ab12cd34ef56ab12cd34ef56ab12cd34ef56ab12cd34ef56ab12cd34",
+  },
+  {
+    id: "tx-004",
+    timestamp: "2026-07-08T18:32:00Z",
+    direction: "out",
+    asset: "USDC",
+    amount: 12_000,
+    usdValue: 12_000,
+    purpose: "self-organizing-net",
+    counterparty: "0x2c8D…77ab",
+    txHash: "0x56ab12cd34ef56ab12cd34ef56ab12cd34ef56ab12cd34ef56ab12cd34ef",
+  },
+  {
+    id: "tx-005",
+    timestamp: "2026-07-03T11:05:00Z",
+    direction: "in",
+    asset: "USDT",
+    amount: 10_000,
+    usdValue: 10_000,
+    purpose: "ai-framework",
+    counterparty: "0xa5F2…3b91",
+    txHash: "0x12cd34ef56ab12cd34ef56ab12cd34ef56ab12cd34ef56ab12cd34ef56ab",
+  },
+];

@@ -1,0 +1,264 @@
+{
+  "nav": {
+    "logo": "Aether Foundation",
+    "governance": "Governance",
+    "donate": "Spenden",
+    "connectWallet": "Wallet verbinden",
+    "disconnect": "Trennen",
+    "walletConnected": "Wallet verbunden"
+  },
+  "hero": {
+    "title": "AETHER",
+    "subtitle": "Fortschritt dezentraler Infrastruktur und Intelligenz",
+    "tag1": "KI-Anwendungsframework der nächsten Generation",
+    "tag2": "Interkontinentales Niedriglatenz-Video-Player-Protokoll",
+    "tag3": "Dezentrales selbstorganisierendes Netzwerk"
+  },
+  "projects": {
+    "sectionTitle": "Leitprogramme",
+    "sectionSubtitle": "Drei unabhängige Initiativen unter der Trägerschaft der Stiftung, jede mit gleichem strategischem Gewicht.",
+    "ai-framework": {
+      "name": "KI-Anwendungsframework der nächsten Generation",
+      "tagline": "Ein offenes Framework zur skalierbaren Erstellung kontextbewusster, multimodaler KI-Anwendungen.",
+      "status": "In Forschung",
+      "viewWhitepaper": "Whitepaper ansehen"
+    },
+    "video-protocol": {
+      "name": "Interkontinentales Niedriglatenz-Video-Player-Protokoll",
+      "tagline": "Ein Peer-to-Peer-Medienprotokoll, entwickelt für subsekundenübergreifendes kontinentales Streaming.",
+      "status": "Testnet Live",
+      "viewWhitepaper": "Whitepaper ansehen"
+    },
+    "self-organizing-net": {
+      "name": "Dezentrales selbstorganisierendes Netzwerk",
+      "tagline": "Eine autonome Mesh-Routing-Schicht, die sich selbst repariert und ohne zentrale Koordination neu konfiguriert.",
+      "status": "In Forschung",
+      "viewWhitepaper": "Whitepaper ansehen"
+    }
+  },
+  "fundFlow": {
+    "sectionTitle": "Transparenz der Staatsfinanzen",
+    "sectionSubtitle": "Echtzeit-On-Chain-Anzeige jedes Dollars, der in die Stiftung fließt oder diese verlässt.",
+    "totalDonated": "Erhaltene Spenden gesamt",
+    "projectAllocated": "Projektzuweisungen",
+    "treasuryBalance": "Aktuelle Kassenbestand",
+    "monthlyTrend": "Einnahmen vs. Ausgaben über 12 Monate",
+    "recentTransactions": "Aktuelle On-Chain-Aktivität",
+    "income": "Einnahmen",
+    "expense": "Ausgaben",
+    "direction": {
+      "in": "Eingehend",
+      "out": "Ausgehend"
+    },
+    "usdEstimate": "USD-Schätzung",
+    "viewOnExplorer": "Im Explorer ansehen",
+    "purposeLabels": {
+      "ai-framework": "KI-Framework",
+      "video-protocol": "Videoprotokoll",
+      "self-organizing-net": "Selbstorganisierendes Netz",
+      "unrestricted": "Betrieb"
+    }
+  },
+  "proposals": {
+    "sectionTitle": "Strategische Governance-Anträge",
+    "sectionSubtitle": "Anträge des Rats in Überprüfung. Die Stiftung praktiziert tokenlose Governance — jeder Beschluss wird durch Rats-Multisignatur abschlossen.",
+    "forVotes": "Dafür",
+    "againstVotes": "Dagegen",
+    "abstainVotes": "Enthaltung",
+    "deadline": "Abstimmungsschluss",
+    "viewDetail": "Antrag ansehen",
+    "statusActive": "Aktiv",
+    "statusPassed": "Angenommen",
+    "statusRejected": "Abgelehnt",
+    "items": {
+      "q4Bandwidth": {
+        "title": "Antrag auf Q4-Forschungsmittel für kontinentübergreifende Bandbreite",
+        "summary": "Antrag auf Bereitstellung von Q4-Forschungsmitteln für die Relay-Infrastruktur des Low-Latency-Video-Protokolls."
+      },
+      "aiEcosystem": {
+        "title": "Open-Source-Ökosystemaufbau für das KI-Anwendungsmodul",
+        "summary": "Einrichtung eines Förderprogramms für externe Mitwirkende, die Module für das Next-Gen-KI-Anwendungsframework entwickeln."
+      },
+      "meshRouting": {
+        "title": "Forschungsplan 2026 für selbstorganisierendes Mesh-Routing",
+        "summary": "Verabschiedung der Forschungs-Roadmap 2026 für das dezentrale selbstorganisierende Netzwerk einschließlich Peer-Review-Meilensteine."
+      }
+    }
+  },
+  "council": {
+    "sectionTitle": "Ratsmitglieder",
+    "sectionSubtitle": "Verwalter der Stiftung. Keine gamifizierten Scores, kein Rang — nur Verantwortung und offengelegte Domänen.",
+    "coreDirector": "Hauptdirektor",
+    "seniorResearcher": "Senior-Forscher",
+    "ecosystemBuilder": "Ökosystem-Entwickler",
+    "members": {
+      "aria": { "focus": "Finanzverwaltung & Governance" },
+      "kenji": { "focus": "Kontinentübergreifendes Videoprotokoll" },
+      "linnea": { "focus": "KI-Anwendungsframework" },
+      "diego": { "focus": "Selbstorganisierende Netzwerkforschung" },
+      "priya": { "focus": "Ökosystem-Partnerschaften" }
+    }
+  },
+  "donation": {
+    "title": "Eine Spende tätigen",
+    "subtitle": "Ihr Beitrag finanziert direkt gemeinnützige Infrastruktur. Jede Transaktion wird On-Chain abgewickelt und im Transparenz-Hauptbuch erfasst.",
+    "selectAsset": "Asset auswählen",
+    "amount": "Betrag",
+    "purpose": "Direkt an Programm",
+    "treasuryAddress": "Adresse der Stiftungskasse",
+    "preferredAsset": "Bevorzugt: USDC auf Arbitrum",
+    "connectFirst": "Bitte verbinden Sie Ihre Wallet, um fortzufahren.",
+    "signing": "Warte auf Signatur in Wallet...",
+    "submitting": "Transaktion wird übermittelt...",
+    "success": "Spende On-Chain bestätigt.",
+    "downloadReceipt": "PDF-Quittung herunterladen",
+    "closeWindow": "Schließen",
+    "copyAddress": "Adresse kopieren",
+    "copied": "Adresse kopiert",
+    "purposes": {
+      "ai-framework": "KI-Framework der nächsten Generation",
+      "video-protocol": "Video-Player-Protokoll",
+      "self-organizing-net": "Selbstorganisierendes Netzwerk",
+      "unrestricted": "Zweckungebunden (Betrieb)"
+    },
+    "assets": {
+      "usdc": "USDC",
+      "usdt": "USDT",
+      "eth": "ETH"
+    },
+    "receipt": {
+      "title": "Spendenquittung",
+      "issuer": "Ausgestellt von Aether Foundation",
+      "txHash": "Transaktions-Hash",
+      "amount": "Betrag",
+      "timestamp": "Zeitstempel",
+      "purpose": "Zugewiesenes Programm",
+      "donor": "Spenderadresse",
+      "treasury": "Kassenadresse",
+      "network": "Netzwerk",
+      "declaration": "Diese Quittung dient als Nachweis einer On-Chain-Spende an die Aether Foundation, einer Non-Profit-Organisation, die sich der dezentralen Infrastruktur und der Erforschung künstlicher Intelligenz widmet. Die Stiftung gibt keine Token aus. Bitte bewahren Sie dieses Dokument für Ihre Finanz- und Steuerunterlagen auf.",
+      "footer": "Aether Foundation · Non-Profit · Arbitrum"
+    }
+  },
+  "whitepaper": {
+    "back": "Zurück",
+    "label": "Technisches Whitepaper",
+    "tableOfContents": "Inhaltsverzeichnis",
+    "downloadPdf": "PDF herunterladen",
+    "placeholderNote": "Dies ist eine generische Whitepaper-Vorlage. Endgültige Inhalte werden vom Projektteam geliefert.",
+    "sections": {
+      "overview": "Überblick",
+      "architecture": "Architektur",
+      "roadmap": "Roadmap",
+      "team": "Team"
+    },
+    "ai-framework": {
+      "overview": "Das Next-Gen-KI-Anwendungsframework ist eine modulare Open-Source-Laufzeitumgebung für kontextbewusste, multimodale KI-Anwendungen im großen Maßstab. (Platzhalterinhalt)",
+      "architecture": "Das Framework besteht aus einer Kontext-Engine, einem multimodalen Router und einer plug-baren Tool-Schicht. Detaillierte Architekturdiagramme werden in der Endfassung ergänzt.",
+      "roadmap": "Q1 2026: Kontext-Engine-Beta. Q2 2026: Multimodaler Router GA. Q3 2026: Start des Ökosystem-Förderprogramms.",
+      "team": "Zu den Kernmitwirkenden gehören Stiftungsnahe Forscher und externe Stipendiaten. Vollständiges Verzeichnis wird veröffentlicht."
+    },
+    "video-protocol": {
+      "overview": "Das kontinentübergreifende Low-Latency-Videoplayer-Protokoll ist ein P2P-Medienprotokoll für sub-sekundenübergreifendes Streaming. (Platzhalterinhalt)",
+      "architecture": "Das Protokoll schichtet ein Relay-Mesh über WebRTC, mit adaptiver Bitratenverhandlung und reputationsgewichteter Peer-Auswahl.",
+      "roadmap": "Q1 2026: Kontinentübergreifende Relay-Erweiterung. Q2 2026: Protokollspezifikation v1. Q3 2026: Drittpartei-Interoperabilitätstests.",
+      "team": "Geleitet von Stiftungs-Seniorforschern mit fachübergreifender Expertise in Streaming, Netzwerken und Kryptographie."
+    },
+    "self-organizing-net": {
+      "overview": "Das dezentrale selbstorganisierende Netzwerk ist eine autonome Mesh-Routing-Schicht, die ohne zentrale Koordination selbstheilend und rekonfigurierbar ist. (Platzhalterinhalt)",
+      "architecture": "Knoten entdecken Peers via Gossip, berechnen Routen via modifiziertem AODV und signalisieren Gesundheit via On-Chain-Attestationen.",
+      "roadmap": "Q1 2026: Testbed-Bereitstellung in 3 Regionen. Q2 2026: Peer-Review-Meilenstein-Bericht. Q3 2026: Öffentliches Testnetz.",
+      "team": "Forschungsgeleitet von Stiftungs-Seniorforschern für verteilte Systeme, mit externen akademischen Mitarbeitern."
+    }
+  },
+  "proposalDetail": {
+    "back": "Zurück",
+    "summary": "Zusammenfassung",
+    "voteBreakdown": "Stimmenverteilung",
+    "councilProgress": "Ratsbeteiligung",
+    "castVote": "Abstimmung",
+    "for": "Dafür",
+    "against": "Dagegen",
+    "abstain": "Enthaltung",
+    "remaining": "Verbleibende Zeit",
+    "voteClosed": "Die Abstimmung zu diesem Antrag ist geschlossen.",
+    "connectToVote": "Verbinden Sie Ihr Wallet, um abzustimmen.",
+    "notFound": "Antrag nicht gefunden."
+  },
+  "impact": {
+    "title": "Wie Mittel verwendet werden",
+    "subtitle": "Grundsätze der Mittelverwendung für jede Zuwendung an die Stiftung.",
+    "allocationPrinciple": "Zuweisungsgrundsatz",
+    "allocationDescription": "Die Stiftung verpflichtet sich zu einem transparenten, öffentlichen Zuweisungsrahmen für alle eingegangenen Spenden.",
+    "annualBudget": "Jahresbudgetplan",
+    "annualBudgetDescription": "Das vom Rat genehmigte Budget für das laufende Geschäftsjahr, nach Kategorien gegliedert.",
+    "councilCompensation": "Vergütungsrichtlinie des Rats",
+    "auditArrangement": "Revisionsregelung",
+    "downloadReport": "Revisionsbericht herunterladen",
+    "allocations": {
+      "ai-framework": {
+        "label": "KI-Anwendungsframework",
+        "desc": "Forschungsbeihilfen, Modellbewertung und Open-Source-Wartung für das Next-Gen-KI-Anwendungsframework."
+      },
+      "video-protocol": {
+        "label": "Videoplayer-Protokoll",
+        "desc": "Relay-Infrastruktur, kontinentübergreifende Tests und Protokollspezifikation."
+      },
+      "self-organizing-net": {
+        "label": "Selbstorganisierendes Netzwerk",
+        "desc": "Mesh-Routing-Forschung, Peer-Review-Meilensteine und Testbed-Bereitstellung."
+      },
+      "unrestricted": {
+        "label": "Betrieb",
+        "desc": "Revision, Rechtswesen, Verwaltungsgemeinkosten und Rücklage."
+      }
+    },
+    "budget": {
+      "categoryColumn": "Kategorie",
+      "amountColumn": "Betrag",
+      "shareColumn": "Anteil",
+      "noteColumn": "Notiz",
+      "totalLabel": "Gesamt",
+      "items": {
+        "rd": "Forschungsbeihilfen und Bountys für externe Mitwirkende",
+        "infra": "Relay-Knoten, Bandbreite und Cloud-Infrastruktur",
+        "ops": "Recht, Verwaltung und Betriebsgemeinkosten",
+        "audit": "Drittpartei-Revision und Compliance-Prüfung"
+      }
+    },
+    "compensation": {
+      "description": "Ratsmitglieder erhalten ein bescheidenes monatliches Ehrensalär für Zeit und Aufwand, jährlich vom Gesamtrat überprüft. Keine Anteile, keine Token, keine Leistungsboni.",
+      "honorariumLabel": "Ehrensalär",
+      "hasCompensation": "Ja — festes monatliches Ehrensalär",
+      "noCompensation": "Keine Vergütung",
+      "reviewCycleLabel": "Überprüfungszyklus",
+      "reviewCycle": "Jährliche Überprüfung durch den Gesamtrat"
+    },
+    "audit": {
+      "cadenceLabel": "Rhythmus",
+      "cadence": "Halbjährlich (zweimal pro Geschäftsjahr)",
+      "providerLabel": "Anbieter",
+      "provider": "Unabhängige Drittpartei, alle 2 Jahre rotiert",
+      "lastReportLabel": "Neuester Bericht"
+    }
+  },
+  "toast": {
+    "walletConnected": "Wallet erfolgreich verbunden.",
+    "walletDisconnected": "Wallet getrennt.",
+    "voteSuccess": "Stimme zur Off-Chain-Aggregation übermittelt.",
+    "donationSuccess": "Spende On-Chain bestätigt.",
+    "copied": "In die Zwischenablage kopiert.",
+    "error": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+  },
+  "footer": {
+    "tagline": "Eine Non-Profit-Stiftung, die dezentrale Infrastruktur und Erforschung künstlicher Intelligenz vorantreibt.",
+    "treasury": "Kasse",
+    "governance": "Governance",
+    "transparency": "Transparenz",
+    "languageNote": "Sprache in der oberen Navigation wechseln."
+  },
+  "common": {
+    "loading": "Wird geladen...",
+    "viewAll": "Alle ansehen"
+  }
+}

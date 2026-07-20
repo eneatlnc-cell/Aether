@@ -1,0 +1,264 @@
+{
+  "nav": {
+    "logo": "Aether Foundation",
+    "governance": "ガバナンス",
+    "donate": "寄付する",
+    "connectWallet": "Wallet を接続",
+    "disconnect": "切断する",
+    "walletConnected": "Wallet が接続されました"
+  },
+  "hero": {
+    "title": "AETHER",
+    "subtitle": "分散型インフラとインテリジェンスの進展",
+    "tag1": "次世代 AI アプリケーションフレームワーク",
+    "tag2": "大陸間低遅延ビデオプレーヤープロトコル",
+    "tag3": "分散型自己組織化ネットワーク"
+  },
+  "projects": {
+    "sectionTitle": "主要プログラム",
+    "sectionSubtitle": "財団が運営する三つの独立したイニシアチブであり、それぞれが同等の戦略的重要性を有します。",
+    "ai-framework": {
+      "name": "次世代 AI アプリケーションフレームワーク",
+      "tagline": "コンテキスト対応型のマルチモーダル AI アプリケーションを大規模に構築するためのオープンフレームワークです。",
+      "status": "研究段階",
+      "viewWhitepaper": "ホワイトペーパーを参照"
+    },
+    "video-protocol": {
+      "name": "大陸間低遅延ビデオプレーヤープロトコル",
+      "tagline": "大陸間でのサブ秒級ストリーミングを実現するために設計されたピアツーピアメディアプロトコルです。",
+      "status": "Testnet 運用中",
+      "viewWhitepaper": "ホワイトペーパーを参照"
+    },
+    "self-organizing-net": {
+      "name": "分散型自己組織化ネットワーク",
+      "tagline": "中央の調整機関を必要とせず、自己修復および再構成を行う自律的メッシュルーティング層です。",
+      "status": "研究段階",
+      "viewWhitepaper": "ホワイトペーパーを参照"
+    }
+  },
+  "fundFlow": {
+    "sectionTitle": "トレジャリーの透明性",
+    "sectionSubtitle": "財団に流入および流出するすべての資金のオンチェーン上のリアルタイム表示です。",
+    "totalDonated": "受領した寄付総額",
+    "projectAllocated": "プロジェクトへの配分",
+    "treasuryBalance": "現在のトレジャリー残高",
+    "monthlyTrend": "過去12か月の収支",
+    "recentTransactions": "最近のオンチェーンアクティビティ",
+    "income": "収入",
+    "expense": "支出",
+    "direction": {
+      "in": "受領",
+      "out": "送出"
+    },
+    "usdEstimate": "USD 換算概算",
+    "viewOnExplorer": "エクスプローラーで表示",
+    "purposeLabels": {
+      "ai-framework": "AIフレームワーク",
+      "video-protocol": "ビデオプロトコル",
+      "self-organizing-net": "自己組織化ネットワーク",
+      "unrestricted": "運営費"
+    }
+  },
+  "proposals": {
+    "sectionTitle": "戦略的ガバナンス提案",
+    "sectionSubtitle": "審議中の評議会動議です。財団はトークンレス・ガバナンスを実践しており、すべての動議は評議会のマルチシグネチャによって決定されます。",
+    "forVotes": "賛成",
+    "againstVotes": "反対",
+    "abstainVotes": "棄権",
+    "deadline": "投票締切",
+    "viewDetail": "提案を表示",
+    "statusActive": "進行中",
+    "statusPassed": "可決",
+    "statusRejected": "否決",
+    "items": {
+      "q4Bandwidth": {
+        "title": "Q4 大陸間帯域幅加速研究費拠出動議",
+        "summary": "低遅延ビデオプロトコルの大陸間リレーインフラにQ4研究資金を拠出する動議。"
+      },
+      "aiEcosystem": {
+        "title": "AI応用モジュールのオープンソース生態系構築案",
+        "summary": "次世代AIアプリケーションフレームワーク上にモジュールを構築する外部貢献者向けの助成トラックを新設。"
+      },
+      "meshRouting": {
+        "title": "2026年自己組織化メッシュルーティング研究計画",
+        "summary": "ピアレビューのマイルストーンを含む、分散型自己組織化ネットワークの2026年研究ロードマップを承認。"
+      }
+    }
+  },
+  "council": {
+    "sectionTitle": "評議会メンバー",
+    "sectionSubtitle": "財団のスチュワードです。ゲーミフィケーションによる評価や順位は存在せず、責任と開示された担当領域のみが存在します。",
+    "coreDirector": "コアディレクター",
+    "seniorResearcher": "シニアリサーチャー",
+    "ecosystemBuilder": "エコシステムビルダー",
+    "members": {
+      "aria": { "focus": "財務管理およびガバナンス" },
+      "kenji": { "focus": "大陸間ビデオプロトコル" },
+      "linnea": { "focus": "AIアプリケーションフレームワーク" },
+      "diego": { "focus": "自己組織化ネットワーク研究" },
+      "priya": { "focus": "エコシステムパートナーシップ" }
+    }
+  },
+  "donation": {
+    "title": "寄付を行う",
+    "subtitle": "お客様のご寄付は、直接パブリックグッド・インフラの資金として充当されます。すべての取引はオンチェーンで決済され、透明性台帳に記録されます。",
+    "selectAsset": "アセットを選択",
+    "amount": "金額",
+    "purpose": "プログラムを指定",
+    "treasuryAddress": "財団トレジャリーアドレス",
+    "preferredAsset": "推奨: Arbitrum 上の USDC",
+    "connectFirst": "続行するには Wallet を接続してください。",
+    "signing": "Wallet での署名を待機しています...",
+    "submitting": "取引を送信しています...",
+    "success": "寄付がオンチェーンで確定しました。",
+    "downloadReceipt": "PDF 領収書をダウンロード",
+    "closeWindow": "閉じる",
+    "copyAddress": "アドレスをコピー",
+    "copied": "アドレスをコピーしました",
+    "purposes": {
+      "ai-framework": "次世代 AI フレームワーク",
+      "video-protocol": "ビデオプレーヤープロトコル",
+      "self-organizing-net": "自己組織化ネットワーク",
+      "unrestricted": "用途制限なし（運営費）"
+    },
+    "assets": {
+      "usdc": "USDC",
+      "usdt": "USDT",
+      "eth": "ETH"
+    },
+    "receipt": {
+      "title": "寄付領収書",
+      "issuer": "Aether Foundation が発行",
+      "txHash": "トランザクションハッシュ",
+      "amount": "金額",
+      "timestamp": "タイムスタンプ",
+      "purpose": "指定プログラム",
+      "donor": "寄付者アドレス",
+      "treasury": "トレザリーアドレス",
+      "network": "ネットワーク",
+      "declaration": "本領収書は、分散型インフラおよび人工知能研究に専念する非営利団体である Aether Foundation へのオンチェーン寄付の証明となります。財団はトークンを発行いたしません。財務および税務記録として本書類を保管してください。",
+      "footer": "Aether Foundation · 非営利 · Arbitrum"
+    }
+  },
+  "whitepaper": {
+    "back": "戻る",
+    "label": "技術白書",
+    "tableOfContents": "目次",
+    "downloadPdf": "PDFをダウンロード",
+    "placeholderNote": "これは汎用白書テンプレートです。最終内容はプロジェクトチームが提供します。",
+    "sections": {
+      "overview": "概要",
+      "architecture": "アーキテクチャ",
+      "roadmap": "ロードマップ",
+      "team": "チーム"
+    },
+    "ai-framework": {
+      "overview": "次世代AIアプリケーションフレームワークは、コンテキスト認識およびマルチモーダルAIアプリケーションを大規模に構築するためのモジュラー式オープンソースランタイムです。（プレースホルダー内容）",
+      "architecture": "フレームワークはコンテキストエンジン、マルチモーダルルーター、プラグ可能なツールレイヤーで構成されます。詳細なアーキテクチャ図は最終改訂版で追加されます。",
+      "roadmap": "2026 Q1：コンテキストエンジンベータ。2026 Q2：マルチモーダルルーターGA。2026 Q3：エコシステム助成トラック開始。",
+      "team": "コア貢献者には財団所属の研究員と外部助成金受領者が含まれます。完全な名簿は後日公開予定。"
+    },
+    "video-protocol": {
+      "overview": "大陸間低遅延ビデオプレイヤープロトコルは、大陸間サブ秒ストリーミングのために設計されたP2Pメディアプロトコルです。（プレースホルダー内容）",
+      "architecture": "プロトコルはWebRTC上にリレーメッシュをレイヤー化し、適応型ビットレート交渉と評判加重ピア選択を含みます。",
+      "roadmap": "2026 Q1：大陸間リレー拡張。2026 Q2：プロトコル仕様v1。2026 Q3：第三者相互運用性テスト。",
+      "team": "財団シニア研究員が主導し、ストリーミング、ネットワーキング、暗号学の学際的専門性を備えています。"
+    },
+    "self-organizing-net": {
+      "overview": "分散型自己組織化ネットワークは、中央調整なしで自己修復と再構成が可能な自律メッシュルーティングレイヤーです。（プレースホルダー内容）",
+      "architecture": "ノードはゴシップでピアを発見し、修正AODVでルートを計算し、オンチェーン証明で健全性を通知します。",
+      "roadmap": "2026 Q1：3地域テストベッド展開。2026 Q2：ピアレビューマイルストン報告書。2026 Q3：公開テストネット。",
+      "team": "財団の分散システムシニア研究員が主導し、外部学術協力者と共に研究します。"
+    }
+  },
+  "proposalDetail": {
+    "back": "戻る",
+    "summary": "要約",
+    "voteBreakdown": "投票内訳",
+    "councilProgress": "理事会参加率",
+    "castVote": "投票する",
+    "for": "賛成",
+    "against": "反対",
+    "abstain": "棄権",
+    "remaining": "残り時間",
+    "voteClosed": "この提案の投票は終了しました。",
+    "connectToVote": "投票するにはウォレットを接続してください。",
+    "notFound": "提案が見つかりません。"
+  },
+  "impact": {
+    "title": "資金の使途",
+    "subtitle": "財団が受けるすべての寄付に対する管理原則。",
+    "allocationPrinciple": "資金配分原則",
+    "allocationDescription": "財団はすべての寄付に対して透明かつ公開された配分フレームワークに従うことを約束します。",
+    "annualBudget": "年間予算計画",
+    "annualBudgetDescription": "現在の会計年度の理事会承認予算をカテゴリ別に分類。",
+    "councilCompensation": "理事報酬ポリシー",
+    "auditArrangement": "監査制度",
+    "downloadReport": "監査報告書をダウンロード",
+    "allocations": {
+      "ai-framework": {
+        "label": "AIアプリケーションフレームワーク",
+        "desc": "次世代AIアプリケーションフレームワークのR&D助成、モデル評価、オープンソース維持。"
+      },
+      "video-protocol": {
+        "label": "ビデオプレイヤープロトコル",
+        "desc": "リレーインフラ、大陸間テスト、プロトコル仕様作業。"
+      },
+      "self-organizing-net": {
+        "label": "自己組織化ネットワーク",
+        "desc": "メッシュルーティング研究、ピアレビューマイルストーン、テストベッド展開。"
+      },
+      "unrestricted": {
+        "label": "運営",
+        "desc": "監査、法務、行政経費、 contingency reserve。"
+      }
+    },
+    "budget": {
+      "categoryColumn": "カテゴリ",
+      "amountColumn": "金額",
+      "shareColumn": "比率",
+      "noteColumn": "備考",
+      "totalLabel": "合計",
+      "items": {
+        "rd": "研究助成および外部貢献者バウンティ",
+        "infra": "リレーノード、帯域幅、クラウドインフラ",
+        "ops": "法務、行政、運営経費",
+        "audit": "第三者監査およびコンプライアンスレビュー"
+      }
+    },
+    "compensation": {
+      "description": "理事は時間と経費を補填するための少額の月額謝礼を受け取り、毎年全理事会で見直されます。持分なし、トークンなし、業績ボーナスなし。",
+      "honorariumLabel": "謝礼",
+      "hasCompensation": "あり — 固定月額謝礼",
+      "noCompensation": "報酬なし",
+      "reviewCycleLabel": "見直し周期",
+      "reviewCycle": "毎年全理事会で見直し"
+    },
+    "audit": {
+      "cadenceLabel": "頻度",
+      "cadence": "半期ごと（会計年度あたり2回）",
+      "providerLabel": "提供者",
+      "provider": "2年ごとに交代する独立した第三者機関",
+      "lastReportLabel": "最新報告書"
+    }
+  },
+  "toast": {
+    "walletConnected": "Wallet が正常に接続されました。",
+    "walletDisconnected": "Wallet が切断されました。",
+    "voteSuccess": "投票がオフチェーン集計に送信されました。",
+    "donationSuccess": "寄付がオンチェーンで確定しました。",
+    "copied": "クリップボードにコピーしました。",
+    "error": "エラーが発生しました。再度お試しください。"
+  },
+  "footer": {
+    "tagline": "分散型インフラおよび人工知能研究の進展に取り組む非営利財団です。",
+    "treasury": "トレザリー",
+    "governance": "ガバナンス",
+    "transparency": "透明性",
+    "languageNote": "上部ナビゲーションから言語を切り替えることができます。"
+  },
+  "common": {
+    "loading": "読み込み中...",
+    "viewAll": "すべて表示"
+  }
+}

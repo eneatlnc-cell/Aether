@@ -1,0 +1,264 @@
+{
+  "nav": {
+    "logo": "Aether Foundation",
+    "governance": "治理入口",
+    "donate": "捐贈",
+    "connectWallet": "連接錢包",
+    "disconnect": "斷開錢包",
+    "walletConnected": "錢包已連接"
+  },
+  "hero": {
+    "title": "AETHER",
+    "subtitle": "推進去中心化基礎設施與智慧研究",
+    "tag1": "下一代 AI 應用框架",
+    "tag2": "跨洲際低延遲視訊播放器協定",
+    "tag3": "去中心化自組織網路"
+  },
+  "projects": {
+    "sectionTitle": "旗艦計畫",
+    "sectionSubtitle": "基金會旗下三個獨立營運的計畫，各自承擔同等的戰略權重。",
+    "ai-framework": {
+      "name": "下一代 AI 應用框架",
+      "tagline": "一個開放框架，用於大規模打造具備上下文感知與多模態能力的 AI 應用。",
+      "status": "研發中",
+      "viewWhitepaper": "查看技術白皮書"
+    },
+    "video-protocol": {
+      "name": "跨洲際低延遲視訊播放器協定",
+      "tagline": "一個點對點媒體協定，專為跨洲際次秒級串流而設計。",
+      "status": "測試網運行中",
+      "viewWhitepaper": "查看技術白皮書"
+    },
+    "self-organizing-net": {
+      "name": "去中心化自組織網路",
+      "tagline": "一個自主網狀路由層，能夠自我修復並在無中央協調下重新組態。",
+      "status": "研發中",
+      "viewWhitepaper": "查看技術白皮書"
+    }
+  },
+  "fundFlow": {
+    "sectionTitle": "金庫透明度",
+    "sectionSubtitle": "每一筆進出基金會的資金，皆可在鏈上即時檢視。",
+    "totalDonated": "累計受捐金額",
+    "projectAllocated": "各計畫已撥付資金",
+    "treasuryBalance": "目前金庫餘額",
+    "monthlyTrend": "過去 12 個月收入與支出",
+    "recentTransactions": "近期鏈上活動",
+    "income": "收入",
+    "expense": "支出",
+    "direction": {
+      "in": "流入",
+      "out": "流出"
+    },
+    "usdEstimate": "美元估值",
+    "viewOnExplorer": "於區塊瀏覽器檢視",
+    "purposeLabels": {
+      "ai-framework": "AI 框架",
+      "video-protocol": "視訊協定",
+      "self-organizing-net": "自組織網路",
+      "unrestricted": "行政經費"
+    }
+  },
+  "proposals": {
+    "sectionTitle": "戰略治理提案",
+    "sectionSubtitle": "審議中的理事動議。基金會採取無代幣治理模式——每項動議皆由理事會多簽決行。",
+    "forVotes": "贊成",
+    "againstVotes": "反對",
+    "abstainVotes": "棄權",
+    "deadline": "投票截止",
+    "viewDetail": "查看提案",
+    "statusActive": "進行中",
+    "statusPassed": "已通過",
+    "statusRejected": "已否決",
+    "items": {
+      "q4Bandwidth": {
+        "title": "Q4 跨洲際頻寬加速研發經費撥付動議",
+        "summary": "動議撥付 Q4 研究經費，用於低延遲視訊協定的跨洲際中繼基礎設施。"
+      },
+      "aiEcosystem": {
+        "title": "AI 應用模組開源生態建設方案",
+        "summary": "為在外部貢獻者打造下一代 AI 應用框架模組建立一筆資助軌道。"
+      },
+      "meshRouting": {
+        "title": "2026 自組織網狀路由研究計畫",
+        "summary": "通過 2026 年去中心化自組織網路研究路線圖，包含同儕審查里程碑。"
+      }
+    }
+  },
+  "council": {
+    "sectionTitle": "理事會成員",
+    "sectionSubtitle": "基金會的守護者。不展示任何遊戲化分數或等級——僅有責任與公開之研究領域。",
+    "coreDirector": "核心理事",
+    "seniorResearcher": "高級研究員",
+    "ecosystemBuilder": "生態建設者",
+    "members": {
+      "aria": { "focus": "金庫管理與治理" },
+      "kenji": { "focus": "跨洲際視訊協定" },
+      "linnea": { "focus": "AI 應用框架" },
+      "diego": { "focus": "自組織網路研究" },
+      "priya": { "focus": "生態夥伴關係" }
+    }
+  },
+  "donation": {
+    "title": "進行捐贈",
+    "subtitle": "您的捐款將直接資助公共財基礎設施。每筆交易皆在鏈上結算並記錄於透明帳本。",
+    "selectAsset": "選擇資產",
+    "amount": "金額",
+    "purpose": "指定用途",
+    "treasuryAddress": "基金會金庫地址",
+    "preferredAsset": "偏好：Arbitrum 上的 USDC",
+    "connectFirst": "請先連接您的錢包以繼續。",
+    "signing": "等待錢包簽名中...",
+    "submitting": "交易提交中...",
+    "success": "捐贈已在鏈上確認。",
+    "downloadReceipt": "下載 PDF 收據",
+    "closeWindow": "關閉",
+    "copyAddress": "複製地址",
+    "copied": "地址已複製",
+    "purposes": {
+      "ai-framework": "下一代 AI 框架",
+      "video-protocol": "視訊播放器協定",
+      "self-organizing-net": "自組織網路",
+      "unrestricted": "無定向（行政經費）"
+    },
+    "assets": {
+      "usdc": "USDC",
+      "usdt": "USDT",
+      "eth": "ETH"
+    },
+    "receipt": {
+      "title": "捐贈收據",
+      "issuer": "由 Aether Foundation 開立",
+      "txHash": "交易雜湊",
+      "amount": "金額",
+      "timestamp": "時間戳",
+      "purpose": "指定計畫",
+      "donor": "捐贈者地址",
+      "treasury": "金庫地址",
+      "network": "網路",
+      "declaration": "本收據作為捐贈者向 Aether Foundation（一家致力於去中心化基礎設施與人工智慧研究的非營利組織）進行鏈上捐贈之證明。基金會不發行任何代幣。請妥善保存本文件作為您的財務與稅務紀錄。",
+      "footer": "Aether Foundation · 非營利 · Arbitrum"
+    }
+  },
+  "whitepaper": {
+    "back": "返回",
+    "label": "技術白皮書",
+    "tableOfContents": "目錄",
+    "downloadPdf": "下載 PDF",
+    "placeholderNote": "此為通用白皮書範本，最終內容將由計畫團隊提供。",
+    "sections": {
+      "overview": "概述",
+      "architecture": "架構",
+      "roadmap": "路線圖",
+      "team": "團隊"
+    },
+    "ai-framework": {
+      "overview": "下一代 AI 應用框架是一個模組化、開源的執行階層，用於大規模打造具備上下文感知與多模態能力的 AI 應用。（占位內容）",
+      "architecture": "框架由上下文引擎、多模態路由器與可插拔工具層組成。詳細架構圖將於最終版補充。",
+      "roadmap": "2026 Q1：上下文引擎測試版。2026 Q2：多模態路由器正式版。2026 Q3：生態資助軌道啟動。",
+      "team": "核心貢獻者包含基金會研究員與外部受贊助者。完整名單後續公布。"
+    },
+    "video-protocol": {
+      "overview": "跨洲際低延遲視訊播放器協定是一個點對點媒體協定，專為跨洲際次秒級串流而設計。（占位內容）",
+      "architecture": "協定在 WebRTC 上層建構中繼網狀結構，含自適應位元率協商與信譽加權節點選擇。",
+      "roadmap": "2026 Q1：跨洲中繼擴展。2026 Q2：協定規格 v1。2026 Q3：第三方互通性測試。",
+      "team": "由基金會高級研究員領銜，跨領域專長涵蓋串流、網路與密碼學。"
+    },
+    "self-organizing-net": {
+      "overview": "去中心化自組織網路是一個自主網狀路由層，能夠自我修復並在無中央協調下重新組態。（占位內容）",
+      "architecture": "節點透過 gossip 發現對等點，以修改版 AODV 計算路由，並透過鏈上證明回報健康狀態。",
+      "roadmap": "2026 Q1：3 區域測試床部署。2026 Q2：同儕審查里程碑報告。2026 Q3：公開測試網。",
+      "team": "由基金會分散式系統高級研究員領銜，與外部學術合作者共同研究。"
+    }
+  },
+  "proposalDetail": {
+    "back": "返回",
+    "summary": "簡述",
+    "voteBreakdown": "投票分佈",
+    "councilProgress": "理事參與度",
+    "castVote": "進行投票",
+    "for": "贊成",
+    "against": "反對",
+    "abstain": "棄權",
+    "remaining": "剩餘時間",
+    "voteClosed": "本提案投票已結束。",
+    "connectToVote": "請連接錢包以投票。",
+    "notFound": "找不到提案。"
+  },
+  "impact": {
+    "title": "資金如何運用",
+    "subtitle": "基金會對每一筆捐款的管理原則。",
+    "allocationPrinciple": "資金分配原則",
+    "allocationDescription": "基金會承諾對所有受捐款項遵循透明且公開的分配框架。",
+    "annualBudget": "年度預算計畫",
+    "annualBudgetDescription": "本會計年度經理事會通過的預算，按類別細分。",
+    "councilCompensation": "理事薪酬政策",
+    "auditArrangement": "審計安排",
+    "downloadReport": "下載審計報告",
+    "allocations": {
+      "ai-framework": {
+        "label": "AI 應用框架",
+        "desc": "下一代 AI 應用框架的研發資助、模型評估與開源維護。"
+      },
+      "video-protocol": {
+        "label": "視訊播放器協定",
+        "desc": "中繼基礎設施、跨洲測試與協定規格工作。"
+      },
+      "self-organizing-net": {
+        "label": "自組織網路",
+        "desc": "網狀路由研究、同儕審查里程碑與測試床部署。"
+      },
+      "unrestricted": {
+        "label": "行政營運",
+        "desc": "審計、法務、行政開銷與應急儲備。"
+      }
+    },
+    "budget": {
+      "categoryColumn": "類別",
+      "amountColumn": "金額",
+      "shareColumn": "占比",
+      "noteColumn": "備註",
+      "totalLabel": "合計",
+      "items": {
+        "rd": "研究資助與外部貢獻者獎金",
+        "infra": "中繼節點、頻寬與雲端基礎設施",
+        "ops": "法務、行政與營運開銷",
+        "audit": "第三方審計與合規審查"
+      }
+    },
+    "compensation": {
+      "description": "理事領取象徵性月度車馬費，以支應時間與開銷，每年由全體理事覆審。無股權、無代幣、無績效獎金。",
+      "honorariumLabel": "車馬費",
+      "hasCompensation": "是 — 固定月度車馬費",
+      "noCompensation": "無薪酬",
+      "reviewCycleLabel": "覆審週期",
+      "reviewCycle": "每年由全體理事覆審"
+    },
+    "audit": {
+      "cadenceLabel": "頻率",
+      "cadence": "每半年一次（每會計年度兩次）",
+      "providerLabel": "提供者",
+      "provider": "獨立第三方事務所，每兩年輪換",
+      "lastReportLabel": "最近報告"
+    }
+  },
+  "toast": {
+    "walletConnected": "錢包連接成功。",
+    "walletDisconnected": "錢包已斷開。",
+    "voteSuccess": "投票已提交至鏈下聚合。",
+    "donationSuccess": "捐贈已在鏈上確認。",
+    "copied": "已複製至剪貼簿。",
+    "error": "發生錯誤，請再試一次。"
+  },
+  "footer": {
+    "tagline": "一家推進去中心化基礎設施與人工智慧研究的非營利基金會。",
+    "treasury": "金庫",
+    "governance": "治理",
+    "transparency": "透明度",
+    "languageNote": "請於上方導覽列切換語言。"
+  },
+  "common": {
+    "loading": "載入中...",
+    "viewAll": "查看全部"
+  }
+}
