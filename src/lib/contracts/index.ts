@@ -4,7 +4,9 @@
 import { AetherRingABI } from "./AetherRing.abi";
 import { AetherGovernanceABI } from "./AetherGovernance.abi";
 import { AetherElectionABI } from "./AetherElection.abi";
-import { getContracts } from "./config";
+import { getContracts, getSafeWalletAddress, getIpfsGateway } from "./config";
+
+export { getSafeWalletAddress, getIpfsGateway };
 
 // ──────────── 道环权级枚举（与合约 RingTier 对齐） ────────────
 export enum RingTier {
@@ -114,4 +116,8 @@ export function electionAddress(chainId: number): `0x${string}` | null {
   if (!c) return null;
   if (c.AetherElection === "0x0000000000000000000000000000000000000000") return null;
   return c.AetherElection;
+}
+
+export function safeWalletAddress(chainId: number): `0x${string}` | null {
+  return getSafeWalletAddress(chainId);
 }
