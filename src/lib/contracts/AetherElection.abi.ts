@@ -36,6 +36,11 @@ export const AetherElectionABI = [
   },
   {
     "inputs": [],
+    "name": "AlreadyApproved",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "AlreadyFinalized",
     "type": "error"
   },
@@ -51,7 +56,22 @@ export const AetherElectionABI = [
   },
   {
     "inputs": [],
+    "name": "CandidateAlreadyApproved",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "CandidateAlreadyRejected",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "CandidateNotRegistered",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "CouncilReviewNotEnded",
     "type": "error"
   },
   {
@@ -61,7 +81,32 @@ export const AetherElectionABI = [
   },
   {
     "inputs": [],
+    "name": "ElectionNotCouncilReview",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "ElectionNotEnded",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ElectionNotParliamentApproval",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ElectionNotPartiallyFilled",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ElectionNotPending",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ExtensionAlreadyApplied",
     "type": "error"
   },
   {
@@ -86,6 +131,16 @@ export const AetherElectionABI = [
   },
   {
     "inputs": [],
+    "name": "NoVacancy",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotCouncilChair",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "NotEligibleCandidate",
     "type": "error"
   },
@@ -96,17 +151,22 @@ export const AetherElectionABI = [
   },
   {
     "inputs": [],
-    "name": "NotReelectionType",
-    "type": "error"
-  },
-  {
-    "inputs": [],
     "name": "NotRingBearer",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "TargetNotRegistered",
+    "name": "ParliamentApprovalNotMet",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "RegistrationNotEnded",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ZeroAddress",
     "type": "error"
   },
   {
@@ -125,7 +185,58 @@ export const AetherElectionABI = [
         "type": "address"
       }
     ],
+    "name": "CandidateApproved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "electionId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "candidate",
+        "type": "address"
+      }
+    ],
     "name": "CandidateRegistered",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "electionId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "candidate",
+        "type": "address"
+      }
+    ],
+    "name": "CandidateRejected",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "electionId",
+        "type": "uint256"
+      }
+    ],
+    "name": "CouncilReviewFinalized",
     "type": "event"
   },
   {
@@ -159,7 +270,13 @@ export const AetherElectionABI = [
       {
         "indexed": false,
         "internalType": "uint8",
-        "name": "targetChamber",
+        "name": "chamber",
+        "type": "uint8"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum IAetherElection.CouncilTargetTier",
+        "name": "councilTarget",
         "type": "uint8"
       },
       {
@@ -171,7 +288,7 @@ export const AetherElectionABI = [
       {
         "indexed": false,
         "internalType": "uint256",
-        "name": "votingEndAt",
+        "name": "registrationEndAt",
         "type": "uint256"
       }
     ],
@@ -192,9 +309,110 @@ export const AetherElectionABI = [
         "internalType": "address[]",
         "name": "winners",
         "type": "address[]"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "unfilledSeats",
+        "type": "uint256"
       }
     ],
     "name": "ElectionFinalized",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "electionId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "approver",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "count",
+        "type": "uint256"
+      }
+    ],
+    "name": "ParliamentApprovalCast",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "electionId",
+        "type": "uint256"
+      }
+    ],
+    "name": "ParliamentApprovalPassed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "oldThreshold",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newThreshold",
+        "type": "uint256"
+      }
+    ],
+    "name": "ParliamentThresholdUpdated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "electionId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "newRegistrationEndAt",
+        "type": "uint256"
+      }
+    ],
+    "name": "RegistrationExtended",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "oldRing",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "newRing",
+        "type": "address"
+      }
+    ],
+    "name": "RingContractUpdated",
     "type": "event"
   },
   {
@@ -278,6 +496,44 @@ export const AetherElectionABI = [
       {
         "indexed": true,
         "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "unfilledSeats",
+        "type": "uint256"
+      }
+    ],
+    "name": "SeatsUnfilled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "candidate",
+        "type": "address"
+      }
+    ],
+    "name": "VacancyFilled",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
         "name": "electionId",
         "type": "uint256"
       },
@@ -298,6 +554,25 @@ export const AetherElectionABI = [
     "type": "event"
   },
   {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "electionId",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "votingEndAt",
+        "type": "uint256"
+      }
+    ],
+    "name": "VotingStarted",
+    "type": "event"
+  },
+  {
     "inputs": [],
     "name": "ADMIN_ROLE",
     "outputs": [
@@ -305,6 +580,32 @@ export const AetherElectionABI = [
         "internalType": "bytes32",
         "name": "",
         "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "COUNCIL_CHAIR_ROLE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "COUNCIL_REVIEW_PERIOD",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -338,7 +639,7 @@ export const AetherElectionABI = [
   },
   {
     "inputs": [],
-    "name": "GRASSROOTS_TERM",
+    "name": "MAX_SEATS_COUNCIL",
     "outputs": [
       {
         "internalType": "uint256",
@@ -351,7 +652,59 @@ export const AetherElectionABI = [
   },
   {
     "inputs": [],
-    "name": "MID_TERM",
+    "name": "MAX_SEATS_GRASSROOTS",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "MAX_SEATS_MID",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "NO_CANDIDATE_EXTENSION",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "PARLIAMENT_APPROVAL_PERIOD",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "REGISTRATION_PERIOD",
     "outputs": [
       {
         "internalType": "uint256",
@@ -383,7 +736,7 @@ export const AetherElectionABI = [
         "type": "uint256"
       }
     ],
-    "name": "cancelElection",
+    "name": "advanceToCouncilReview",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -396,7 +749,56 @@ export const AetherElectionABI = [
         "type": "uint256"
       }
     ],
-    "name": "castReelectionAgainst",
+    "name": "advanceToParliamentApproval",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "electionId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "candidate",
+        "type": "address"
+      }
+    ],
+    "name": "appointToVacancy",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "electionId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "candidate",
+        "type": "address"
+      }
+    ],
+    "name": "approveCandidate",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "electionId",
+        "type": "uint256"
+      }
+    ],
+    "name": "cancelElection",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -428,23 +830,18 @@ export const AetherElectionABI = [
       },
       {
         "internalType": "uint8",
-        "name": "targetChamber",
+        "name": "chamber",
+        "type": "uint8"
+      },
+      {
+        "internalType": "enum IAetherElection.CouncilTargetTier",
+        "name": "councilTarget",
         "type": "uint8"
       },
       {
         "internalType": "uint256",
         "name": "seatCount",
         "type": "uint256"
-      },
-      {
-        "internalType": "address[]",
-        "name": "candidates",
-        "type": "address[]"
-      },
-      {
-        "internalType": "address",
-        "name": "reelectionTarget",
-        "type": "address"
       }
     ],
     "name": "createElection",
@@ -479,9 +876,84 @@ export const AetherElectionABI = [
         "type": "uint256"
       }
     ],
+    "name": "extendRegistrationIfNoCandidates",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "electionId",
+        "type": "uint256"
+      }
+    ],
     "name": "finalizeElection",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "electionId",
+        "type": "uint256"
+      }
+    ],
+    "name": "forceAdvanceToVoting",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "electionId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "candidate",
+        "type": "address"
+      }
+    ],
+    "name": "getCandidateInfo",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "isNominated",
+        "type": "bool"
+      },
+      {
+        "internalType": "bool",
+        "name": "isRegistered",
+        "type": "bool"
+      },
+      {
+        "internalType": "bool",
+        "name": "isRejected",
+        "type": "bool"
+      },
+      {
+        "internalType": "uint256",
+        "name": "voteCount",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "won",
+        "type": "bool"
+      },
+      {
+        "internalType": "uint256",
+        "name": "registeredAt",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -503,6 +975,25 @@ export const AetherElectionABI = [
         "internalType": "uint256",
         "name": "",
         "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "electionId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getCandidates",
+    "outputs": [
+      {
+        "internalType": "address[]",
+        "name": "",
+        "type": "address[]"
       }
     ],
     "stateMutability": "view",
@@ -552,6 +1043,11 @@ export const AetherElectionABI = [
         "internalType": "uint256",
         "name": "seatCount",
         "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "unfilledSeats",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -565,22 +1061,37 @@ export const AetherElectionABI = [
         "type": "uint256"
       }
     ],
-    "name": "getReelectionResult",
+    "name": "getElectionTimelines",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "forVotes",
+        "name": "registrationStartAt",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "againstVotes",
+        "name": "registrationEndAt",
         "type": "uint256"
       },
       {
-        "internalType": "bool",
-        "name": "passed",
-        "type": "bool"
+        "internalType": "uint256",
+        "name": "councilReviewEndAt",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "parliamentApprovalEndAt",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "votingStartAt",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "votingEndAt",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -627,6 +1138,19 @@ export const AetherElectionABI = [
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "chair",
+        "type": "address"
+      }
+    ],
+    "name": "grantCouncilChairRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "bytes32",
         "name": "role",
         "type": "bytes32"
@@ -640,6 +1164,30 @@ export const AetherElectionABI = [
     "name": "grantRole",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "electionId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "approver",
+        "type": "address"
+      }
+    ],
+    "name": "hasParliamentApproved",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -691,6 +1239,63 @@ export const AetherElectionABI = [
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "parliamentApprovalThreshold",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "electionId",
+        "type": "uint256"
+      }
+    ],
+    "name": "parliamentApproveCandidateList",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "electionId",
+        "type": "uint256"
+      }
+    ],
+    "name": "registerCandidate",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "electionId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "candidate",
+        "type": "address"
+      }
+    ],
+    "name": "rejectCandidate",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "bytes32",
@@ -737,6 +1342,19 @@ export const AetherElectionABI = [
       }
     ],
     "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "_threshold",
+        "type": "uint256"
+      }
+    ],
+    "name": "setParliamentApprovalThreshold",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {

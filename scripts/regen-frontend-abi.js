@@ -6,6 +6,7 @@
  *   src/lib/contracts/AetherRing.abi.ts
  *   src/lib/contracts/AetherGovernance.abi.ts
  *   src/lib/contracts/AetherElection.abi.ts
+ *   src/lib/contracts/AetherDonation.abi.ts
  */
 
 const fs = require("fs");
@@ -19,6 +20,7 @@ const CONTRACTS = [
   { name: "AetherRing", abiKey: "AetherRing" },
   { name: "AetherGovernance", abiKey: "AetherGovernance" },
   { name: "AetherElection", abiKey: "AetherElection" },
+  { name: "AetherDonation", abiKey: "AetherDonation" },
 ];
 
 function main() {

@@ -4,63 +4,33 @@ pragma solidity ^0.8.26;
 import {AccessControl} from "@openzeppelin/contracts/access/AccessControl.sol";
 import {AetherRing} from "./AetherRing.sol";
 import {IAetherRing} from "./interfaces/IAetherRing.sol";
-import {ISafe} from "./interfaces/ISafe.sol";
 
 /**
- * @title AetherGovernance — Aether DAO 三院分权制衡治理主合约 v2
+ * @title AetherGovernance — Aether DAO 三院分权制衡治理主合约 v3
  * @author Aether Foundation
  *
  * ═══════════════════════════════════════════════════════════════
- *  v2 升级
+ *  v3 核心机制
  * ═══════════════════════════════════════════════════════════════
  *
- *  1. 提案权限收紧：tier ≥ 1（即三院成员，去掉普通会员 tier=10）
- *  2. 新增 IMPEACHMENT 弹劾提案类型
- *     - 联署：100 名活跃会员签名
- *     - 多签审查：Safe 5/3 确认（msg.sender == safeWallet）
- *     - 会员投票：参与率 ≥ 50%、反对率 ≥ 70% 即通过
- *     - 通过后：调 ring.revokeRing(target) 撤销道环，触发 retireToEmeritus 流程
- *  3. PARAM execute 白名单：只允许以下 4 个 selector
- *     - setVotingPeriod
- *     - setTimelocks
- *     - setInternalWeight
- *     - setChamberWeights
- *  4. ExecutionRecord 事件：执行交易哈希上链公示
+ *  1. 七阶段提案流程（12 状态）：
+ *     Drafting → PendingFirstVote → FirstVoteActive → PendingFormal
+ *              → PendingCompliance → PublicVoteActive → PendingVeto
+ *              → Queued → Executed
+ *     （失败路径 → Defeated / Canceled / ReturnedToDraft）
  *
- * ═══════════════════════════════════════════════════════════════
- *  计票规则（方案 B，仅普通提案用）
- * ═══════════════════════════════════════════════════════════════
+ *  2. 三院内部权重 1/3/10（基层/中层/高层），每院多数决出 FOR/AGAINST/NEUTRAL
  *
- *  1. 三院内部计票：按 internalWeight 加权，每院多数决出 FOR/AGAINST/NEUTRAL
- *  2. 院方共识：≥2 院一致才形成立场，否则 NEUTRAL → 自动失败
- *  3. 会员门槛：参与率 ≥ 30%，反对率 < 60%（绝对否决）
- *  4. 加权通过：院方(1/0) × (2/3) + 会员赞成率 × (1/3) > 50%
- *  5. 万分比 BPS 避免浮点
+ *  3. 加权计票：三院各 20%（共 60%）+ 公民 60%，通过门槛 >50%
+ *     公民 quorum：普通 20%，章程修订 50%
  *
- *  IMPEACHMENT 不走方案 B 计票，单独走会员 50%/70% 门槛
+ *  4. 元老否决：3 任命元老联署，72h 窗口（V5: 弹劾不可否决）
  *
- * ═══════════════════════════════════════════════════════════════
- *  提案类型
- * ═══════════════════════════════════════════════════════════════
+ *  5. 弹劾：3 任命元老发起 → 公投 → 公民参与≥40% + 反对率≥60%
  *
- *  - SIGNAL      信号性提案（无链上执行）         Timelock 12h
- *  - PARAM       参数修改（白名单 4 个 setter）   Timelock 12h
- *  - TREASURY    资金拨款（target+calldata）      Timelock 48h（预留）
- *  - IMPEACHMENT 弹劾提案（撤销道环 → 退休）     Timelock 24h
+ *  6. 理事长信任投票：8 理事联署触发 → 理事投票 → 不通过 30 天辞职
  *
- * ═══════════════════════════════════════════════════════════════
- *  生命周期
- * ═══════════════════════════════════════════════════════════════
- *
- *  普通提案（SIGNAL/PARAM/TREASURY）：
- *    Active → finalize → Defeated 或 Queued → Executed/Canceled
- *
- *  弹劾提案（IMPEACHMENT）多一个联署阶段：
- *    Draft (联署中) → 多签审查通过 → Active (投票) → finalize → Defeated/Queued → Executed
- *    ├─ 联署未达 100：可继续联署，无法进入投票
- *    ├─ 联署达 100：等待多签审查
- *    ├─ 多签审查通过：自动进入 Active 投票阶段
- *    └─ 多签审查拒绝：Canceled
+ *  7. 紧急拨款：3 元老快速批准 + 12h Timelock（普通 48h）
  */
 contract AetherGovernance is AccessControl {
     // ──────────── 角色 ────────────
@@ -69,41 +39,33 @@ contract AetherGovernance is AccessControl {
 
     // ──────────── 引用 ────────────
     IAetherRing public ringContract;
-    ISafe public safeWallet;
 
     // ═══════════════════════════════════════════════════════════
     //                       类型定义
     // ═══════════════════════════════════════════════════════════
 
-    enum VoteOption {
-        NONE, // 0
-        FOR, // 1
-        AGAINST, // 2
-        ABSTAIN // 3
-    }
+    enum VoteOption { NONE, FOR, AGAINST, ABSTAIN }
 
-    enum ChamberStance {
-        NEUTRAL, // 0
-        FOR, // 1
-        AGAINST // 2
-    }
+    enum ChamberStance { NEUTRAL, FOR, AGAINST }
 
-    enum ProposalType {
-        SIGNAL, // 0
-        PARAM, // 1
-        TREASURY, // 2
-        IMPEACHMENT // 3
-    }
+    enum ProposalType { SIGNAL, PARAM, TREASURY, IMPEACHMENT }
 
     enum ProposalStatus {
-        Active, // 0 投票中（普通提案创建后直接进入）
-        Defeated, // 1
-        Queued, // 2 通过，等 Timelock
-        Executed, // 3 终态
-        Canceled, // 4
-        Drafting, // 5 弹劾联署中（仅 IMPEACHMENT）
-        PendingMultisig // 6 弹劾联署满，等 Safe 审查
+        Drafting,           // 0  草案（理事会推进/退回）
+        PendingFirstVote,   // 1  待开始一审
+        FirstVoteActive,    // 2  议会一审中
+        PendingFormal,      // 3  一审通过，待正式提交
+        PendingCompliance,  // 4  法庭合规审查中
+        PublicVoteActive,   // 5  公投中
+        PendingVeto,        // 6  待元老否决
+        Queued,             // 7  Timelock 排队
+        Executed,           // 8  已执行
+        Defeated,           // 9  未通过
+        Canceled,           // 10 被否决/取消
+        ReturnedToDraft     // 11 退回草案
     }
+
+    enum TreasuryUrgency { Normal, Emergency }
 
     struct Proposal {
         uint256 id;
@@ -112,38 +74,72 @@ contract AetherGovernance is AccessControl {
         string title;
         string ipfsHash;
         uint256 createdAt;
-        uint256 votingStartAt;
-        uint256 votingEndAt;
-        // ─ 三院内部权重累积 ─
+        // ── 时间窗口 ──
+        uint256 firstVoteStartAt;
+        uint256 firstVoteEndAt;
+        uint256 complianceVoteEndAt;
+        uint256 publicVoteStartAt;
+        uint256 publicVoteEndAt;
+        uint256 vetoWindowEndAt;
+        // ── 三院内部权重累积 ──
         uint256 parliamentFor;
         uint256 parliamentAgainst;
         uint256 federationFor;
         uint256 federationAgainst;
-        uint256 senateFor;
-        uint256 senateAgainst;
-        // ─ 会员直接投票 ─
-        uint256 memberFor;
-        uint256 memberAgainst;
-        uint256 memberAbstain;
-        uint256 memberTotalSnapshot;
-        // ─ finalize 结果 ─
-        uint256 totalForWeighted;
-        uint256 totalAgainstWeighted;
-        ChamberStance chamberConsensus;
-        bool memberQuorumMet;
-        bool memberVetoTriggered;
+        uint256 tribunalFor;
+        uint256 tribunalAgainst;
+        // ── 公民投票 ──
+        uint256 citizenFor;
+        uint256 citizenAgainst;
+        uint256 citizenAbstain;
+        uint256 citizenTotalSnapshot;
+        // ── 法庭合规审查 ──
+        uint256 complianceFor;
+        uint256 complianceAgainst;
+        // ── finalize 结果 ──
+        ChamberStance parliamentStance;
+        ChamberStance federationStance;
+        ChamberStance tribunalStance;
+        bool citizenQuorumMet;
+        bool passed;
         ProposalStatus status;
-        // ─ execute 扩展槽 ─
+        // ── execute 扩展 ──
         address target;
         bytes calldataPayload;
         uint256 queuedAt;
         uint256 executeAfter;
-        bool isFinalized;
-        // ─ IMPEACHMENT 专用 ─
-        address impeachedTarget; // 弹劾目标地址
-        uint256 requiredSignatures; // 联署门槛（100）
-        uint256 currentSignatures; // 当前联署数
-        mapping(address => bool) hasSigned; // 联署记录
+        bool isExecuted;
+        bool isConstitutional;
+        TreasuryUrgency urgency;
+        // ── IMPEACHMENT 专用 ──
+        address impeachedTarget;
+        uint256 requiredImpeachSignatures;
+        uint256 currentImpeachSignatures;
+        // ── 元老否决 ──
+        uint256 requiredVetoSignatures;
+        uint256 currentVetoSignatures;
+        // ── 理事会退回联署 ──
+        uint256 requiredReturnSignatures;
+        uint256 currentReturnSignatures;
+        // ── 紧急拨款批准 ──
+        uint256 emergencyApprovals;
+        // ── mappings（必须在末尾） ──
+        mapping(address => bool) hasFirstVoted;
+        mapping(address => bool) hasPublicVoted;
+        mapping(address => bool) hasComplianceVoted;
+        mapping(address => bool) hasImpeachSigned;
+        mapping(address => bool) hasVetoed;
+        mapping(address => bool) hasSignedReturn;
+        mapping(address => bool) hasEmergencyApproved;
+    }
+
+    struct ConfidenceVote {
+        address chair;
+        uint256 startedAt;
+        uint256 forVotes;
+        uint256 againstVotes;
+        bool resolved;
+        mapping(address => bool) hasVoted;
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -151,96 +147,130 @@ contract AetherGovernance is AccessControl {
     // ═══════════════════════════════════════════════════════════
 
     mapping(uint256 => Proposal) public proposals;
-    mapping(uint256 => mapping(address => VoteOption)) public votes;
     uint256 public proposalCount;
 
     mapping(uint8 => uint256) public internalWeight;
 
-    // ─ 常量 ─
+    mapping(uint256 => ConfidenceVote) public confidenceVotes;
+    uint256 public confidenceVoteCount;
+    mapping(address => uint256) public councilTriggerSignatures;
+    mapping(address => mapping(address => bool)) public hasSignedConfidenceTrigger;
+    mapping(address => uint256) public chairPendingResign;
+
+    // ── 常量 ──
     uint256 public constant BPS_DENOMINATOR = 10_000;
-    uint256 public constant CHAMBER_WEIGHT_BPS = 6_667; // 2/3
-    uint256 public constant MEMBER_WEIGHT_BPS = 3_333; // 1/3
-    uint256 public constant PASS_THRESHOLD_BPS = 5_000; // >50%
-    uint256 public constant MEMBER_QUORUM_BPS = 3_000; // ≥30%
-    uint256 public constant MEMBER_VETO_BPS = 6_000; // ≥60% 否决
+    uint256 public constant CHAMBER_WEIGHT_BPS = 2_000;        // 每院 20%
+    uint256 public constant CITIZEN_WEIGHT_BPS = 6_000;        // 公民 60%
+    uint256 public constant PASS_THRESHOLD_BPS = 5_000;        // >50%
+    uint256 public constant CITIZEN_QUORUM_BPS = 2_000;        // ≥20%
+    uint256 public constant CONSTITUTIONAL_QUORUM_BPS = 5_000; // 章程修订 50%
 
-    // IMPEACHMENT 专用门槛
-    uint256 public constant IMPEACHMENT_SIGNATURES_REQUIRED = 100;
-    uint256 public constant IMPEACHMENT_QUORUM_BPS = 5_000; // ≥50%
-    uint256 public constant IMPEACHMENT_VETO_BPS = 7_000; // ≥70% 反对即弹劾成立
+    uint256 public constant FIRST_VOTE_PERIOD = 5 days;
+    uint256 public constant PUBLIC_VOTE_PERIOD = 7 days;
+    uint256 public constant COMPLIANCE_VOTE_PERIOD = 3 days;
+    uint256 public constant VETO_WINDOW = 72 hours;
+    uint256 public constant TIMELOCK_NORMAL = 48 hours;
+    uint256 public constant TIMELOCK_EMERGENCY = 12 hours;
 
-    uint256 public votingPeriod = 7 days;
-    uint256 public timelockSignal = 12 hours;
-    uint256 public timelockTreasury = 48 hours;
-    uint256 public timelockImpeachment = 24 hours;
+    uint256 public constant IMPEACHMENT_SIGNATURES = 3;
+    uint256 public constant IMPEACHMENT_QUORUM_BPS = 4_000;    // 公民参与 ≥40%
+    uint256 public constant IMPEACHMENT_PASS_BPS = 6_000;      // 反对率 ≥60%
+    uint256 public constant VETO_SIGNATURES = 3;
+    uint256 public constant RETURN_SIGNATURES = 2;
+    uint256 public constant EMERGENCY_ELDER_APPROVALS = 3;
+    uint256 public constant CONFIDENCE_TRIGGER_SIGNATURES = 8;
+    uint256 public constant CONFIDENCE_VOTE_PERIOD = 7 days;
+    uint256 public constant CONFIDENCE_RESIGN_WINDOW = 30 days;
 
-    // ─ PARAM 白名单 selector ─
-    bytes4 private constant SEL_SET_VOTING_PERIOD = bytes4(keccak256("setVotingPeriod(uint256)"));
+    // ── PARAM 白名单 selector ──
+    bytes4 private constant SEL_SET_VOTING_PERIODS = bytes4(keccak256("setVotingPeriods(uint256,uint256,uint256)"));
     bytes4 private constant SEL_SET_TIMELOCKS = bytes4(keccak256("setTimelocks(uint256,uint256)"));
     bytes4 private constant SEL_SET_INTERNAL_WEIGHT = bytes4(keccak256("setInternalWeight(uint8,uint256)"));
-    bytes4 private constant SEL_SET_CHAMBER_WEIGHTS =
-        bytes4(keccak256("setChamberWeights(uint256,uint256,uint256,uint256)"));
+
+    // ── 可调参数（PARAM 可修改） ──
+    uint256 public firstVotePeriod = FIRST_VOTE_PERIOD;
+    uint256 public publicVotePeriod = PUBLIC_VOTE_PERIOD;
+    uint256 public complianceVotePeriod = COMPLIANCE_VOTE_PERIOD;
+    uint256 public timelockNormal = TIMELOCK_NORMAL;
+    uint256 public timelockEmergency = TIMELOCK_EMERGENCY;
 
     // ──────────── 事件 ────────────
     event ProposalCreated(uint256 indexed id, address proposer, ProposalType pType, string title);
-    event VoteCast(uint256 indexed proposalId, address indexed voter, uint8 tier, VoteOption option);
-    event ProposalFinalized(
-        uint256 indexed id,
-        bool passed,
-        ChamberStance consensus,
-        uint256 forWeighted,
-        uint256 againstWeighted,
-        bool memberQuorumMet,
-        bool memberVeto
-    );
+    event ProposalAdvanced(uint256 indexed id);
+    event ProposalReturned(uint256 indexed id);
+    event ProposalResubmitted(uint256 indexed id);
+    event FirstVoteStarted(uint256 indexed id);
+    event FirstVoteCast(uint256 indexed id, address voter, VoteOption option);
+    event FirstVoteFinalized(uint256 indexed id, bool passed);
+    event FormalProposalSubmitted(uint256 indexed id);
+    event ComplianceVoteCast(uint256 indexed id, address voter, VoteOption option);
+    event ComplianceFinalized(uint256 indexed id, bool compliant);
+    event PublicVoteCast(uint256 indexed id, address voter, VoteOption option);
+    event ProposalFinalized(uint256 indexed id, bool passed);
+    event ProposalVetoed(uint256 indexed id);
     event ProposalQueued(uint256 indexed id, uint256 executeAfter);
-    event ProposalExecuted(uint256 indexed id, bytes returnData);
+    event ProposalExecuted(uint256 indexed id);
     event ProposalCanceled(uint256 indexed id);
-    event ImpeachmentSignatureAdded(uint256 indexed id, address indexed signer, uint256 current, uint256 required);
-    event ImpeachmentSubmittedToMultisig(uint256 indexed id);
-    event ImpeachmentApprovedByMultisig(uint256 indexed id);
-    event ImpeachmentRejectedByMultisig(uint256 indexed id);
-    event SafeWalletUpdated(address indexed oldSafe, address indexed newSafe);
+    event ImpeachmentSigned(uint256 indexed id, address signer, uint256 current, uint256 required);
+    event ImpeachmentToPublicVote(uint256 indexed id);
+    event ImpeachmentFinalized(uint256 indexed id, bool passed);
+    event EmergencyApproved(uint256 indexed id, address elder);
+    event ConfidenceTriggerSigned(address indexed chair, address signer, uint256 current);
+    event ConfidenceVoteTriggered(uint256 indexed id, address chair);
+    event ConfidenceVoteCast(uint256 indexed id, address voter, bool support);
+    event ConfidenceVoteFinalized(uint256 indexed id, bool passed);
+    event ChairConfidenceFailed(uint256 indexed id, address chair);
+    event RingContractUpdated(address oldRing, address newRing);
 
     // ──────────── 错误 ────────────
-    error NotRingBearer();
-    error NotChamberMember(); // tier < 1 或 > 9（普通会员无提案权）
+    error NotChamberMember();
     error EmptyTitle();
     error EmptyIpfs();
-    error InvalidVoteOption();
-    error AlreadyVoted();
-    error UnknownTier(uint8 tier);
-    error NotInVotingPeriod();
-    error VotingNotEnded();
-    error AlreadyFinalized();
-    error ProposalNotQueued();
-    error TimelockNotElapsed();
-    error AlreadyExecuted();
     error TreasuryTargetZero();
-    error InvalidChamberWeights();
-    error ParamSelectorNotWhitelisted(bytes4 selector);
-    error NotSafeWallet(address sender);
-    error SafeWalletNotSet();
-    error ImpeachmentTargetInvalid();
-    error NotEligibleSigner();
-    error AlreadySigned();
+    error ConstitutionalOnlyForParam();
+    error UseCreateImpeachmentProposal();
     error NotDrafting();
-    error NotPendingMultisig();
-    error SignaturesNotMet(uint256 current, uint256 required);
-    error NotImpeachmentType();
+    error NotCouncilChair();
+    error NotCouncilMember();
+    error AlreadySigned();
+    error NotReturnedToDraft();
+    error NotProposer();
+    error NotPendingFirstVote();
+    error NotFirstVoteActive();
+    error FirstVoteNotEnded();
+    error NotParliamentMember();
+    error NotPendingFormal();
+    error NotAuthorized();
+    error NotPendingCompliance();
+    error ComplianceNotEnded();
+    error NotTribunalMember();
+    error NotPublicVoteActive();
+    error PublicVoteNotEnded();
+    error NotEligibleVoter();
+    error NotPendingVeto();
+    error CannotVetoImpeachment();
+    error NotAppointedElder();
+    error AlreadyVetoed();
+    error VetoWindowNotEnded();
+    error NotQueued();
+    error TimelockNotElapsed();
+    error NotEmergency();
+    error EmergencyApprovalNotMet();
+    error AlreadyApproved();
+    error ImpeachmentTargetInvalid();
+    error ExecutionFailed(bytes ret);
+    error ParamSelectorNotWhitelisted(bytes4 selector);
+    error NotRingBearer();
+    error UnknownTier(uint8 tier);
+    error AlreadyVoted();
+    error AlreadyResolved();
+    error ConfidenceVoteNotEnded();
+    error NotEnoughSignatures(uint256 current, uint256 required);
 
     // ──────────── 修饰器 ────────────
     modifier onlyChamberMember() {
         uint8 tier = ringContract.getTier(msg.sender);
         if (tier < 1 || tier > 9) revert NotChamberMember();
-        _;
-    }
-
-    modifier inVotingPeriod(uint256 proposalId) {
-        Proposal storage p = proposals[proposalId];
-        if (block.timestamp < p.votingStartAt || block.timestamp > p.votingEndAt) {
-            revert NotInVotingPeriod();
-        }
         _;
     }
 
@@ -254,80 +284,377 @@ contract AetherGovernance is AccessControl {
         _grantRole(PROPOSER_ROLE, msg.sender);
         ringContract = IAetherRing(_ringAddress);
 
-        internalWeight[1] = 2;
-        internalWeight[2] = 5;
-        internalWeight[3] = 20;
-        internalWeight[4] = 2;
-        internalWeight[5] = 5;
-        internalWeight[6] = 20;
-        internalWeight[7] = 2;
-        internalWeight[8] = 5;
-        internalWeight[9] = 20;
-        internalWeight[10] = 1;
+        // 三院内部权重：1/3/10（基层/中层/高层）
+        internalWeight[1] = 1;  // 议员
+        internalWeight[2] = 3;  // 参议员
+        internalWeight[3] = 10; // 议长
+        internalWeight[4] = 1;  // 委员
+        internalWeight[5] = 3;  // 委员长
+        internalWeight[6] = 10; // 执政
+        internalWeight[7] = 1;  // 法官
+        internalWeight[8] = 3;  // 大法官
+        internalWeight[9] = 10; // 首席
+        internalWeight[14] = 1; // 公民（公投一人一票，权重不用于累积）
     }
 
     // ═══════════════════════════════════════════════════════════
-    //                       提案创建（普通类型）
+    //               普通提案创建（步骤 3.4）
     // ═══════════════════════════════════════════════════════════
 
-    /**
-     * @notice 创建普通提案（SIGNAL/PARAM/TREASURY）
-     *         权限：PROPOSER_ROLE + 三院成员（tier 1-9）
-     *         普通会员 tier=10 不能创建
-     */
     function createProposal(
         ProposalType pType,
         string calldata title,
         string calldata ipfsHash,
         address target,
-        bytes calldata calldataPayload
+        bytes calldata calldataPayload,
+        bool isConstitutional,
+        TreasuryUrgency urgency
     ) external onlyRole(PROPOSER_ROLE) onlyChamberMember returns (uint256) {
-        if (pType == ProposalType.IMPEACHMENT) revert NotImpeachmentType();
+        if (pType == ProposalType.IMPEACHMENT) revert UseCreateImpeachmentProposal();
         if (bytes(title).length == 0) revert EmptyTitle();
         if (bytes(ipfsHash).length == 0) revert EmptyIpfs();
         if (pType == ProposalType.TREASURY && target == address(0)) revert TreasuryTargetZero();
         if (pType == ProposalType.PARAM) _checkParamWhitelist(calldataPayload);
+        if (isConstitutional && pType != ProposalType.PARAM) revert ConstitutionalOnlyForParam();
 
         uint256 id = proposalCount++;
-        _initProposal(
-            id,
-            msg.sender,
-            pType,
-            title,
-            ipfsHash,
-            target,
-            calldataPayload,
-            address(0) // impeachedTarget
-        );
+        Proposal storage p = proposals[id];
+        p.id = id;
+        p.proposer = msg.sender;
+        p.pType = pType;
+        p.title = title;
+        p.ipfsHash = ipfsHash;
+        p.createdAt = block.timestamp;
+        p.status = ProposalStatus.Drafting;
+        p.target = target;
+        p.calldataPayload = calldataPayload;
+        p.isConstitutional = isConstitutional;
+        p.urgency = urgency;
+        p.requiredReturnSignatures = RETURN_SIGNATURES;
+        p.requiredVetoSignatures = VETO_SIGNATURES;
+        p.requiredImpeachSignatures = IMPEACHMENT_SIGNATURES;
 
         emit ProposalCreated(id, msg.sender, pType, title);
         return id;
     }
 
-    /**
-     * @notice 创建弹劾提案（IMPEACHMENT）
-     *         任何活跃会员（tier==10）可发起，进入 Drafting 联署阶段
-     * @param target  弹劾目标地址（须为高层 tier 3/6/9）
-     * @param title   标题
-     * @param ipfsHash 弹劾理由 IPFS 哈希
-     */
-    function createImpeachmentProposal(address target, string calldata title, string calldata ipfsHash)
-        external
-        returns (uint256)
-    {
-        // 任何活跃会员可发起弹劾
+    // ═══════════════════════════════════════════════════════════
+    //               理事会推进/退回（步骤 3.5）
+    // ═══════════════════════════════════════════════════════════
+
+    function advanceProposal(uint256 proposalId) external {
+        Proposal storage p = proposals[proposalId];
+        if (p.status != ProposalStatus.Drafting) revert NotDrafting();
+        if (ringContract.getTier(msg.sender) != uint8(AetherRing.RingTier.COUNCIL_CHAIR)) revert NotCouncilChair();
+
+        p.status = ProposalStatus.PendingFirstVote;
+        emit ProposalAdvanced(proposalId);
+    }
+
+    function returnProposal(uint256 proposalId) external {
+        Proposal storage p = proposals[proposalId];
+        if (p.status != ProposalStatus.Drafting) revert NotDrafting();
+        uint8 tier = ringContract.getTier(msg.sender);
+        if (tier < uint8(AetherRing.RingTier.COUNCIL_MEMBER) || tier > uint8(AetherRing.RingTier.COUNCIL_CHAIR)) {
+            revert NotCouncilMember();
+        }
+        if (p.hasSignedReturn[msg.sender]) revert AlreadySigned();
+
+        p.hasSignedReturn[msg.sender] = true;
+        p.currentReturnSignatures += 1;
+
+        if (p.currentReturnSignatures >= p.requiredReturnSignatures) {
+            p.status = ProposalStatus.ReturnedToDraft;
+            emit ProposalReturned(proposalId);
+        }
+    }
+
+    function resubmitFromReturn(uint256 proposalId, string calldata newTitle, string calldata newIpfs) external {
+        Proposal storage p = proposals[proposalId];
+        if (p.status != ProposalStatus.ReturnedToDraft) revert NotReturnedToDraft();
+        if (msg.sender != p.proposer) revert NotProposer();
+
+        p.title = newTitle;
+        p.ipfsHash = newIpfs;
+        p.currentReturnSignatures = 0;
+        p.status = ProposalStatus.Drafting;
+        emit ProposalResubmitted(proposalId);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //               议会一审（步骤 3.6）
+    // ═══════════════════════════════════════════════════════════
+
+    function startFirstVote(uint256 proposalId) external {
+        Proposal storage p = proposals[proposalId];
+        if (p.status != ProposalStatus.PendingFirstVote) revert NotPendingFirstVote();
+
+        p.status = ProposalStatus.FirstVoteActive;
+        p.firstVoteStartAt = block.timestamp;
+        p.firstVoteEndAt = block.timestamp + firstVotePeriod;
+        emit FirstVoteStarted(proposalId);
+    }
+
+    function castFirstVote(uint256 proposalId, VoteOption option) external {
+        Proposal storage p = proposals[proposalId];
+        if (p.status != ProposalStatus.FirstVoteActive) revert NotFirstVoteActive();
+        if (block.timestamp > p.firstVoteEndAt) revert NotFirstVoteActive();
+        if (option != VoteOption.FOR && option != VoteOption.AGAINST) revert NotEligibleVoter();
+        if (p.hasFirstVoted[msg.sender]) revert AlreadyVoted();
+
+        uint8 tier = ringContract.getTier(msg.sender);
+        if (!_isParliamentMember(tier)) revert NotParliamentMember();
+
+        p.hasFirstVoted[msg.sender] = true;
+        uint256 weight = internalWeight[tier];
+        if (option == VoteOption.FOR) p.parliamentFor += weight;
+        else p.parliamentAgainst += weight;
+
+        ringContract.markVoteActivity(msg.sender);
+        emit FirstVoteCast(proposalId, msg.sender, option);
+    }
+
+    function finalizeFirstVote(uint256 proposalId) external {
+        Proposal storage p = proposals[proposalId];
+        if (p.status != ProposalStatus.FirstVoteActive) revert NotFirstVoteActive();
+        if (block.timestamp < p.firstVoteEndAt) revert FirstVoteNotEnded();
+
+        bool passed = p.parliamentFor > p.parliamentAgainst;
+        p.status = passed ? ProposalStatus.PendingFormal : ProposalStatus.Defeated;
+        emit FirstVoteFinalized(proposalId, passed);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //               正式提交 + 法庭合规审查（步骤 3.7）
+    // ═══════════════════════════════════════════════════════════
+
+    function submitFormalProposal(uint256 proposalId) external {
+        Proposal storage p = proposals[proposalId];
+        if (p.status != ProposalStatus.PendingFormal) revert NotPendingFormal();
+        if (msg.sender != p.proposer && ringContract.getTier(msg.sender) != uint8(AetherRing.RingTier.COUNCIL_CHAIR)) {
+            revert NotAuthorized();
+        }
+
+        p.status = ProposalStatus.PendingCompliance;
+        p.complianceVoteEndAt = block.timestamp + complianceVotePeriod;
+        emit FormalProposalSubmitted(proposalId);
+    }
+
+    function castComplianceVote(uint256 proposalId, VoteOption option) external {
+        Proposal storage p = proposals[proposalId];
+        if (p.status != ProposalStatus.PendingCompliance) revert NotPendingCompliance();
+        if (block.timestamp > p.complianceVoteEndAt) revert NotPendingCompliance();
+        if (option != VoteOption.FOR && option != VoteOption.AGAINST) revert NotEligibleVoter();
+        if (p.hasComplianceVoted[msg.sender]) revert AlreadyVoted();
+
+        uint8 tier = ringContract.getTier(msg.sender);
+        if (!_isTribunalMember(tier)) revert NotTribunalMember();
+
+        p.hasComplianceVoted[msg.sender] = true;
+        uint256 weight = internalWeight[tier];
+        if (option == VoteOption.FOR) p.complianceFor += weight;
+        else p.complianceAgainst += weight;
+
+        emit ComplianceVoteCast(proposalId, msg.sender, option);
+    }
+
+    function finalizeCompliance(uint256 proposalId) external {
+        Proposal storage p = proposals[proposalId];
+        if (p.status != ProposalStatus.PendingCompliance) revert NotPendingCompliance();
+        if (block.timestamp < p.complianceVoteEndAt) revert ComplianceNotEnded();
+
+        bool compliant = p.complianceFor > p.complianceAgainst;
+        if (compliant) {
+            // 合规通过 → 进入公投，重置三院计数（公投是独立阶段）
+            p.parliamentFor = 0;
+            p.parliamentAgainst = 0;
+            p.federationFor = 0;
+            p.federationAgainst = 0;
+            p.tribunalFor = 0;
+            p.tribunalAgainst = 0;
+            p.status = ProposalStatus.PublicVoteActive;
+            p.publicVoteStartAt = block.timestamp;
+            p.publicVoteEndAt = block.timestamp + publicVotePeriod;
+            p.citizenTotalSnapshot = ringContract.getActiveCitizens();
+        } else {
+            p.status = ProposalStatus.ReturnedToDraft;
+        }
+        emit ComplianceFinalized(proposalId, compliant);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //               公投投票（步骤 3.8）
+    // ═══════════════════════════════════════════════════════════
+
+    function castPublicVote(uint256 proposalId, VoteOption option) external {
+        Proposal storage p = proposals[proposalId];
+        if (p.status != ProposalStatus.PublicVoteActive) revert NotPublicVoteActive();
+        if (block.timestamp > p.publicVoteEndAt) revert NotPublicVoteActive();
+        if (option != VoteOption.FOR && option != VoteOption.AGAINST && option != VoteOption.ABSTAIN) {
+            revert NotEligibleVoter();
+        }
+        if (p.hasPublicVoted[msg.sender]) revert AlreadyVoted();
+
         uint8 tier = ringContract.getTier(msg.sender);
         if (tier == 0) revert NotRingBearer();
 
+        uint256 weight = internalWeight[tier];
+
+        if (_isParliamentMember(tier)) {
+            if (option == VoteOption.FOR) p.parliamentFor += weight;
+            else if (option == VoteOption.AGAINST) p.parliamentAgainst += weight;
+        } else if (_isFederationMember(tier)) {
+            if (option == VoteOption.FOR) p.federationFor += weight;
+            else if (option == VoteOption.AGAINST) p.federationAgainst += weight;
+        } else if (_isTribunalMember(tier)) {
+            if (option == VoteOption.FOR) p.tribunalFor += weight;
+            else if (option == VoteOption.AGAINST) p.tribunalAgainst += weight;
+        } else if (tier == uint8(AetherRing.RingTier.CITIZEN)) {
+            if (option == VoteOption.FOR) p.citizenFor += 1;
+            else if (option == VoteOption.AGAINST) p.citizenAgainst += 1;
+            else p.citizenAbstain += 1;
+        } else {
+            revert NotEligibleVoter();
+        }
+
+        p.hasPublicVoted[msg.sender] = true;
+        ringContract.markVoteActivity(msg.sender);
+        emit PublicVoteCast(proposalId, msg.sender, option);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //               finalizeProposal 新计票（步骤 3.9）
+    // ═══════════════════════════════════════════════════════════
+
+    function finalizeProposal(uint256 proposalId) external {
+        Proposal storage p = proposals[proposalId];
+        if (p.pType == ProposalType.IMPEACHMENT) revert NotPublicVoteActive();
+        if (p.status != ProposalStatus.PublicVoteActive) revert NotPublicVoteActive();
+        if (block.timestamp < p.publicVoteEndAt) revert PublicVoteNotEnded();
+
+        // 1. 每院内部多数决
+        p.parliamentStance = _stanceOf(p.parliamentFor, p.parliamentAgainst);
+        p.federationStance = _stanceOf(p.federationFor, p.federationAgainst);
+        p.tribunalStance = _stanceOf(p.tribunalFor, p.tribunalAgainst);
+
+        // 2. 公民参与率检查
+        uint256 citizenVotes = p.citizenFor + p.citizenAgainst + p.citizenAbstain;
+        uint256 requiredQuorum = p.isConstitutional ? CONSTITUTIONAL_QUORUM_BPS : CITIZEN_QUORUM_BPS;
+        p.citizenQuorumMet = p.citizenTotalSnapshot > 0
+            && (citizenVotes * BPS_DENOMINATOR) / p.citizenTotalSnapshot >= requiredQuorum;
+
+        // 3. 加权计算：三院 FOR 数 × 20% + 公民赞成率 × 60%
+        uint256 chamberForCount = _countStance(p.parliamentStance, ChamberStance.FOR)
+            + _countStance(p.federationStance, ChamberStance.FOR)
+            + _countStance(p.tribunalStance, ChamberStance.FOR);
+        uint256 chamberForBps = chamberForCount * CHAMBER_WEIGHT_BPS;
+
+        uint256 citizenForBps = citizenVotes > 0
+            ? (p.citizenFor * BPS_DENOMINATOR) / citizenVotes : 0;
+
+        uint256 totalForBps = chamberForBps + (citizenForBps * CITIZEN_WEIGHT_BPS) / BPS_DENOMINATOR;
+
+        p.passed = p.citizenQuorumMet && totalForBps > PASS_THRESHOLD_BPS;
+
+        if (p.passed) {
+            p.status = ProposalStatus.PendingVeto;
+            p.vetoWindowEndAt = block.timestamp + VETO_WINDOW;
+        } else {
+            p.status = ProposalStatus.Defeated;
+        }
+
+        emit ProposalFinalized(proposalId, p.passed);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //               元老否决（步骤 3.10）
+    // ═══════════════════════════════════════════════════════════
+
+    function vetoProposal(uint256 proposalId) external {
+        Proposal storage p = proposals[proposalId];
+        if (p.status != ProposalStatus.PendingVeto) revert NotPendingVeto();
+        if (p.pType == ProposalType.IMPEACHMENT) revert CannotVetoImpeachment();
+        if (!ringContract.isElderActive(msg.sender)) revert NotAppointedElder();
+        if (p.hasVetoed[msg.sender]) revert AlreadyVetoed();
+
+        p.hasVetoed[msg.sender] = true;
+        p.currentVetoSignatures += 1;
+
+        if (p.currentVetoSignatures >= p.requiredVetoSignatures) {
+            p.status = ProposalStatus.Canceled;
+            emit ProposalVetoed(proposalId);
+        }
+    }
+
+    function finalizeVetoWindow(uint256 proposalId) external {
+        Proposal storage p = proposals[proposalId];
+        if (p.status != ProposalStatus.PendingVeto) revert NotPendingVeto();
+        if (block.timestamp < p.vetoWindowEndAt) revert VetoWindowNotEnded();
+
+        p.status = ProposalStatus.Queued;
+        p.queuedAt = block.timestamp;
+        p.executeAfter = block.timestamp + (
+            p.urgency == TreasuryUrgency.Emergency ? timelockEmergency : timelockNormal
+        );
+        emit ProposalQueued(proposalId, p.executeAfter);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //               executeProposal（步骤 3.11）
+    // ═══════════════════════════════════════════════════════════
+
+    function executeProposal(uint256 proposalId) external payable {
+        Proposal storage p = proposals[proposalId];
+        if (p.status != ProposalStatus.Queued) revert NotQueued();
+        if (block.timestamp < p.executeAfter) revert TimelockNotElapsed();
+
+        if (p.pType == ProposalType.SIGNAL) {
+            // 信号性提案，无链上执行
+        } else if (p.pType == ProposalType.PARAM) {
+            _checkParamWhitelist(p.calldataPayload);
+            (bool ok, bytes memory ret) = address(this).call(p.calldataPayload);
+            if (!ok) revert ExecutionFailed(ret);
+        } else if (p.pType == ProposalType.TREASURY) {
+            if (p.urgency == TreasuryUrgency.Emergency && p.emergencyApprovals < EMERGENCY_ELDER_APPROVALS) {
+                revert EmergencyApprovalNotMet();
+            }
+            (bool ok, bytes memory ret) = p.target.call{value: msg.value}(p.calldataPayload);
+            if (!ok) revert ExecutionFailed(ret);
+        }
+
+        p.status = ProposalStatus.Executed;
+        p.isExecuted = true;
+        emit ProposalExecuted(proposalId);
+    }
+
+    function approveEmergencyTreasury(uint256 proposalId) external {
+        Proposal storage p = proposals[proposalId];
+        if (p.urgency != TreasuryUrgency.Emergency) revert NotEmergency();
+        if (!ringContract.isElderActive(msg.sender)) revert NotAppointedElder();
+        if (p.hasEmergencyApproved[msg.sender]) revert AlreadyApproved();
+
+        p.hasEmergencyApproved[msg.sender] = true;
+        p.emergencyApprovals += 1;
+        emit EmergencyApproved(proposalId, msg.sender);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //               弹劾重写（步骤 3.12）
+    // ═══════════════════════════════════════════════════════════
+
+    function createImpeachmentProposal(
+        address target,
+        string calldata title,
+        string calldata ipfsHash
+    ) external returns (uint256) {
+        if (!ringContract.isElderActive(msg.sender)) revert NotAppointedElder();
         if (target == address(0)) revert ImpeachmentTargetInvalid();
         if (bytes(title).length == 0) revert EmptyTitle();
         if (bytes(ipfsHash).length == 0) revert EmptyIpfs();
 
-        // 验证目标是高层
         uint8 targetTier = ringContract.getTier(target);
-        if (targetTier != 3 && targetTier != 6 && targetTier != 9) {
-            revert ImpeachmentTargetInvalid();
-        }
+        // V4：可弹劾 tier 1-13，不可弹劾公民 14
+        if (targetTier == 0 || targetTier == uint8(AetherRing.RingTier.CITIZEN)) revert ImpeachmentTargetInvalid();
 
         uint256 id = proposalCount++;
         Proposal storage p = proposals[id];
@@ -337,398 +664,262 @@ contract AetherGovernance is AccessControl {
         p.title = title;
         p.ipfsHash = ipfsHash;
         p.createdAt = block.timestamp;
-        p.status = ProposalStatus.Drafting; // 联署阶段
+        p.status = ProposalStatus.Drafting;
         p.impeachedTarget = target;
-        p.requiredSignatures = IMPEACHMENT_SIGNATURES_REQUIRED;
-        p.currentSignatures = 0;
+        p.requiredImpeachSignatures = IMPEACHMENT_SIGNATURES;
+        p.currentImpeachSignatures = 1;
+        p.hasImpeachSigned[msg.sender] = true;
 
         emit ProposalCreated(id, msg.sender, ProposalType.IMPEACHMENT, title);
         return id;
     }
 
-    // ═══════════════════════════════════════════════════════════
-    //                       弹劾联署
-    // ═══════════════════════════════════════════════════════════
-
-    /**
-     * @notice 加入联署（仅活跃会员 tier==10）
-     */
     function signImpeachment(uint256 proposalId) external {
         Proposal storage p = proposals[proposalId];
         if (p.status != ProposalStatus.Drafting) revert NotDrafting();
+        if (!ringContract.isElderActive(msg.sender)) revert NotAppointedElder();
+        if (p.hasImpeachSigned[msg.sender]) revert AlreadySigned();
 
-        uint8 tier = ringContract.getTier(msg.sender);
-        if (tier != 10) revert NotEligibleSigner();
-        if (p.hasSigned[msg.sender]) revert AlreadySigned();
+        p.hasImpeachSigned[msg.sender] = true;
+        p.currentImpeachSignatures += 1;
 
-        p.hasSigned[msg.sender] = true;
-        p.currentSignatures += 1;
+        emit ImpeachmentSigned(proposalId, msg.sender, p.currentImpeachSignatures, p.requiredImpeachSignatures);
 
-        emit ImpeachmentSignatureAdded(
-            proposalId, msg.sender, p.currentSignatures, p.requiredSignatures
-        );
-
-        // 联署满 → 自动进入 PendingMultisig 等待多签审查
-        if (p.currentSignatures >= p.requiredSignatures) {
-            p.status = ProposalStatus.PendingMultisig;
-            emit ImpeachmentSubmittedToMultisig(proposalId);
+        if (p.currentImpeachSignatures >= p.requiredImpeachSignatures) {
+            // 联署满 → 直接进入公投（无法庭审查，无元老否决）
+            p.status = ProposalStatus.PublicVoteActive;
+            p.publicVoteStartAt = block.timestamp;
+            p.publicVoteEndAt = block.timestamp + publicVotePeriod;
+            p.citizenTotalSnapshot = ringContract.getActiveCitizens();
+            emit ImpeachmentToPublicVote(proposalId);
         }
     }
 
-    /**
-     * @notice 多签审查通过（msg.sender == safeWallet）
-     *         进入 Active 投票阶段
-     */
-    function approveImpeachmentByMultisig(uint256 proposalId) external {
-        _requireSafeWallet();
+    function finalizeImpeachment(uint256 proposalId) external {
         Proposal storage p = proposals[proposalId];
-        if (p.status != ProposalStatus.PendingMultisig) revert NotPendingMultisig();
+        if (p.pType != ProposalType.IMPEACHMENT) revert NotPublicVoteActive();
+        if (p.status != ProposalStatus.PublicVoteActive) revert NotPublicVoteActive();
+        if (block.timestamp < p.publicVoteEndAt) revert PublicVoteNotEnded();
 
-        p.status = ProposalStatus.Active;
-        p.votingStartAt = block.timestamp;
-        p.votingEndAt = block.timestamp + votingPeriod;
-        p.memberTotalSnapshot = ringContract.getTotalMembers();
+        // 弹劾计票：公民参与率 ≥40% + 反对率 ≥60%
+        // 注意：弹劾的 FOR = 支持弹劾，AGAINST = 反对弹劾
+        // 弹劾通过 = 反对率 ≥60%（citizenAgainst / citizenVotes）
+        uint256 citizenVotes = p.citizenFor + p.citizenAgainst + p.citizenAbstain;
+        bool quorumMet = p.citizenTotalSnapshot > 0
+            && (citizenVotes * BPS_DENOMINATOR) / p.citizenTotalSnapshot >= IMPEACHMENT_QUORUM_BPS;
+        bool passRateMet = citizenVotes > 0
+            && ((p.citizenAgainst * BPS_DENOMINATOR) / citizenVotes >= IMPEACHMENT_PASS_BPS);
 
-        emit ImpeachmentApprovedByMultisig(proposalId);
-    }
+        bool passed = quorumMet && passRateMet;
 
-    /**
-     * @notice 多签审查拒绝（msg.sender == safeWallet）
-     */
-    function rejectImpeachmentByMultisig(uint256 proposalId) external {
-        _requireSafeWallet();
-        Proposal storage p = proposals[proposalId];
-        if (p.status != ProposalStatus.PendingMultisig) revert NotPendingMultisig();
-
-        p.status = ProposalStatus.Canceled;
-        p.isFinalized = true;
-
-        emit ImpeachmentRejectedByMultisig(proposalId);
-        emit ProposalCanceled(proposalId);
-    }
-
-    // ═══════════════════════════════════════════════════════════
-    //                       投票
-    // ═══════════════════════════════════════════════════════════
-
-    /**
-     * @notice 投票（持环者，投票窗口内）
-     *         IMPEACHMENT 提案：仅会员（tier==10）投票，院方不参与
-     *         普通提案：所有持环者投票
-     */
-    function castVote(uint256 proposalId, VoteOption option)
-        external
-        onlyRingBearer
-        inVotingPeriod(proposalId)
-    {
-        if (option != VoteOption.FOR && option != VoteOption.AGAINST && option != VoteOption.ABSTAIN) {
-            revert InvalidVoteOption();
-        }
-        if (votes[proposalId][msg.sender] != VoteOption.NONE) revert AlreadyVoted();
-
-        uint8 tier = ringContract.getTier(msg.sender);
-        if (tier < 1 || tier > 10) revert UnknownTier(tier);
-
-        votes[proposalId][msg.sender] = option;
-        Proposal storage p = proposals[proposalId];
-
-        if (p.pType == ProposalType.IMPEACHMENT) {
-            // 弹劾：仅会员投票，不走三院
-            if (tier != 10) revert NotEligibleSigner();
-            if (option == VoteOption.FOR) p.memberFor += 1;
-            else if (option == VoteOption.AGAINST) p.memberAgainst += 1;
-            else p.memberAbstain += 1;
-        } else {
-            // 普通提案：按 tier 分发到三院 / 会员
-            _accumulateVote(p, tier, option);
-        }
-
-        emit VoteCast(proposalId, msg.sender, tier, option);
-    }
-
-    // ═══════════════════════════════════════════════════════════
-    //                       最终化
-    // ═══════════════════════════════════════════════════════════
-
-    function finalizeProposal(uint256 proposalId) external {
-        Proposal storage p = proposals[proposalId];
-        if (p.isFinalized) revert AlreadyFinalized();
-        if (block.timestamp <= p.votingEndAt) revert VotingNotEnded();
-
-        p.isFinalized = true;
-
-        if (p.pType == ProposalType.IMPEACHMENT) {
-            _finalizeImpeachment(proposalId, p);
-        } else {
-            _finalizeNormal(proposalId, p);
-        }
-    }
-
-    // ═══════════════════════════════════════════════════════════
-    //                       执行（Timelock 到期后）
-    // ═══════════════════════════════════════════════════════════
-
-    function executeProposal(uint256 proposalId) external payable {
-        Proposal storage p = proposals[proposalId];
-        if (p.status != ProposalStatus.Queued) revert ProposalNotQueued();
-        if (block.timestamp < p.executeAfter) revert TimelockNotElapsed();
-
-        p.status = ProposalStatus.Executed;
-        bytes memory returnData;
-
-        if (p.pType == ProposalType.SIGNAL) {
-            // 无副作用
-        } else if (p.pType == ProposalType.PARAM) {
-            if (p.target != address(this)) revert TreasuryTargetZero();
-            // 二次校验白名单（防 createProposal 后被改）
-            _checkParamWhitelist(p.calldataPayload);
-            (bool ok, bytes memory ret) = address(this).call(p.calldataPayload);
-            require(ok, "PARAM execute failed");
-            returnData = ret;
-        } else if (p.pType == ProposalType.TREASURY) {
-            // 预留扩展槽
-            revert("TREASURY not yet supported");
-        } else if (p.pType == ProposalType.IMPEACHMENT) {
-            // 调 ring.revokeRing 撤销道环 → 同时 retireToEmeritus
-            // 这里调用 ring 的 revokeRing（需要 ring.ADMIN_ROLE）
-            // 弹劾通过 = 撤销道环 + 转为 EMERITUS 退休
+        if (passed) {
+            // 直接撤销道环（弹劾跳过 Timelock 和否决）
             uint256 ringId = ringContract.getRingId(p.impeachedTarget);
-            require(ringId != 0, "Impeached target has no ring");
-            AetherRing(address(ringContract)).revokeRing(ringId);
-            returnData = abi.encode(ringId);
-        }
-
-        emit ProposalExecuted(proposalId, returnData);
-    }
-
-    function cancelProposal(uint256 proposalId) external onlyRole(ADMIN_ROLE) {
-        Proposal storage p = proposals[proposalId];
-        if (p.status == ProposalStatus.Executed) revert AlreadyExecuted();
-        p.status = ProposalStatus.Canceled;
-        p.isFinalized = true;
-        emit ProposalCanceled(proposalId);
-    }
-
-    // ═══════════════════════════════════════════════════════════
-    //                       查询
-    // ═══════════════════════════════════════════════════════════
-
-    function getProposal(uint256 proposalId) external view returns (
-        uint256 id,
-        address proposer,
-        ProposalType pType,
-        string memory title,
-        string memory ipfsHash,
-        uint256 votingStartAt,
-        uint256 votingEndAt,
-        ProposalStatus status,
-        address target,
-        uint256 executeAfter,
-        bool isFinalized,
-        address impeachedTarget,
-        uint256 currentSignatures,
-        uint256 requiredSignatures
-    ) {
-        Proposal storage p = proposals[proposalId];
-        return (
-            p.id,
-            p.proposer,
-            p.pType,
-            p.title,
-            p.ipfsHash,
-            p.votingStartAt,
-            p.votingEndAt,
-            p.status,
-            p.target,
-            p.executeAfter,
-            p.isFinalized,
-            p.impeachedTarget,
-            p.currentSignatures,
-            p.requiredSignatures
-        );
-    }
-
-    function getVoterVote(uint256 proposalId, address voter) external view returns (VoteOption) {
-        return votes[proposalId][voter];
-    }
-
-    /**
-     * @notice 获取普通提案的计票详情（不支持 IMPEACHMENT）
-     */
-    function getNormalVoteCounts(uint256 proposalId)
-        external
-        view
-        returns (
-            uint256 parliamentFor,
-            uint256 parliamentAgainst,
-            uint256 federationFor,
-            uint256 federationAgainst,
-            uint256 senateFor,
-            uint256 senateAgainst,
-            uint256 memberFor,
-            uint256 memberAgainst,
-            uint256 memberAbstain,
-            uint256 memberTotalSnapshot,
-            uint256 totalForWeighted,
-            uint256 totalAgainstWeighted,
-            ChamberStance chamberConsensus,
-            bool memberQuorumMet,
-            bool memberVetoTriggered
-        )
-    {
-        Proposal storage p = proposals[proposalId];
-        return (
-            p.parliamentFor,
-            p.parliamentAgainst,
-            p.federationFor,
-            p.federationAgainst,
-            p.senateFor,
-            p.senateAgainst,
-            p.memberFor,
-            p.memberAgainst,
-            p.memberAbstain,
-            p.memberTotalSnapshot,
-            p.totalForWeighted,
-            p.totalAgainstWeighted,
-            p.chamberConsensus,
-            p.memberQuorumMet,
-            p.memberVetoTriggered
-        );
-    }
-
-    function hasSigned(uint256 proposalId, address signer) external view returns (bool) {
-        return proposals[proposalId].hasSigned[signer];
-    }
-
-    /**
-     * @notice 模拟 finalize 结果（仅普通提案）
-     */
-    function simulateFinalize(uint256 proposalId)
-        external
-        view
-        returns (
-            bool wouldPass,
-            ChamberStance consensus,
-            bool quorumMet,
-            bool vetoTriggered,
-            uint256 totalForWeighted,
-            uint256 totalAgainstWeighted
-        )
-    {
-        Proposal storage p = proposals[proposalId];
-        require(p.pType != ProposalType.IMPEACHMENT, "Use simulateImpeachmentResult");
-
-        ChamberStance parliamentStance = _stanceOf(p.parliamentFor, p.parliamentAgainst);
-        ChamberStance federationStance = _stanceOf(p.federationFor, p.federationAgainst);
-        ChamberStance senateStance = _stanceOf(p.senateFor, p.senateAgainst);
-
-        uint256 forCount = _countStance(parliamentStance, ChamberStance.FOR)
-            + _countStance(federationStance, ChamberStance.FOR)
-            + _countStance(senateStance, ChamberStance.FOR);
-        uint256 againstCount = _countStance(parliamentStance, ChamberStance.AGAINST)
-            + _countStance(federationStance, ChamberStance.AGAINST)
-            + _countStance(senateStance, ChamberStance.AGAINST);
-
-        if (forCount >= 2) consensus = ChamberStance.FOR;
-        else if (againstCount >= 2) consensus = ChamberStance.AGAINST;
-
-        uint256 memberVotes = p.memberFor + p.memberAgainst + p.memberAbstain;
-        if (p.memberTotalSnapshot > 0) {
-            uint256 participationBps = (memberVotes * BPS_DENOMINATOR) / p.memberTotalSnapshot;
-            quorumMet = participationBps >= MEMBER_QUORUM_BPS;
-            if (memberVotes > 0) {
-                uint256 againstBps = (p.memberAgainst * BPS_DENOMINATOR) / memberVotes;
-                vetoTriggered = againstBps >= MEMBER_VETO_BPS;
+            if (ringId != 0) {
+                AetherRing(address(ringContract)).revokeRing(ringId);
             }
+            p.status = ProposalStatus.Executed;
+            p.isExecuted = true;
         } else {
-            quorumMet = true;
+            p.status = ProposalStatus.Defeated;
         }
 
-        if (consensus == ChamberStance.NEUTRAL || !quorumMet || vetoTriggered) {
-            return (false, consensus, quorumMet, vetoTriggered, 0, 0);
-        }
-
-        uint256 chamberForBps = (consensus == ChamberStance.FOR) ? BPS_DENOMINATOR : 0;
-        uint256 memberForBps =
-            memberVotes > 0 ? (p.memberFor * BPS_DENOMINATOR) / memberVotes : 0;
-        totalForWeighted = (chamberForBps * CHAMBER_WEIGHT_BPS + memberForBps * MEMBER_WEIGHT_BPS)
-            / BPS_DENOMINATOR;
-
-        uint256 chamberAgainstBps = (consensus == ChamberStance.AGAINST) ? BPS_DENOMINATOR : 0;
-        uint256 memberAgainstBps =
-            memberVotes > 0 ? (p.memberAgainst * BPS_DENOMINATOR) / memberVotes : 0;
-        totalAgainstWeighted = (chamberAgainstBps * CHAMBER_WEIGHT_BPS + memberAgainstBps * MEMBER_WEIGHT_BPS)
-            / BPS_DENOMINATOR;
-
-        wouldPass = totalForWeighted > PASS_THRESHOLD_BPS;
+        emit ImpeachmentFinalized(proposalId, passed);
     }
 
-    /**
-     * @notice 模拟弹劾结果
-     * @return wouldPass true = 弹劾成立（撤销道环）
-     */
-    function simulateImpeachmentResult(uint256 proposalId)
+    // ═══════════════════════════════════════════════════════════
+    //               理事长信任投票（步骤 3.13）
+    // ═══════════════════════════════════════════════════════════
+
+    function signConfidenceTrigger(address chair) external {
+        uint8 tier = ringContract.getTier(msg.sender);
+        if (tier != uint8(AetherRing.RingTier.COUNCIL_MEMBER) && tier != uint8(AetherRing.RingTier.COUNCIL_SENIOR)) {
+            revert NotCouncilMember();
+        }
+        if (hasSignedConfidenceTrigger[chair][msg.sender]) revert AlreadySigned();
+
+        hasSignedConfidenceTrigger[chair][msg.sender] = true;
+        councilTriggerSignatures[chair] += 1;
+
+        emit ConfidenceTriggerSigned(chair, msg.sender, councilTriggerSignatures[chair]);
+    }
+
+    function triggerConfidenceVote(address chair, string calldata /* reasonIpfs */) external {
+        if (councilTriggerSignatures[chair] < CONFIDENCE_TRIGGER_SIGNATURES) {
+            revert NotEnoughSignatures(councilTriggerSignatures[chair], CONFIDENCE_TRIGGER_SIGNATURES);
+        }
+
+        uint256 id = confidenceVoteCount++;
+        ConfidenceVote storage cv = confidenceVotes[id];
+        cv.chair = chair;
+        cv.startedAt = block.timestamp;
+
+        emit ConfidenceVoteTriggered(id, chair);
+    }
+
+    function voteConfidence(uint256 voteId, bool support) external {
+        ConfidenceVote storage cv = confidenceVotes[voteId];
+        if (cv.resolved) revert AlreadyResolved();
+        if (cv.hasVoted[msg.sender]) revert AlreadyVoted();
+
+        uint8 tier = ringContract.getTier(msg.sender);
+        if (tier != uint8(AetherRing.RingTier.COUNCIL_MEMBER) && tier != uint8(AetherRing.RingTier.COUNCIL_SENIOR)) {
+            revert NotCouncilMember();
+        }
+
+        cv.hasVoted[msg.sender] = true;
+        if (support) cv.forVotes += 1;
+        else cv.againstVotes += 1;
+
+        emit ConfidenceVoteCast(voteId, msg.sender, support);
+    }
+
+    function finalizeConfidence(uint256 voteId) external {
+        ConfidenceVote storage cv = confidenceVotes[voteId];
+        if (cv.resolved) revert AlreadyResolved();
+        if (block.timestamp < cv.startedAt + CONFIDENCE_VOTE_PERIOD) revert ConfidenceVoteNotEnded();
+
+        cv.resolved = true;
+        bool passed = cv.forVotes > cv.againstVotes;
+
+        if (!passed) {
+            // 理事长 30 天内需辞职
+            chairPendingResign[cv.chair] = block.timestamp + CONFIDENCE_RESIGN_WINDOW;
+            emit ChairConfidenceFailed(voteId, cv.chair);
+        }
+
+        emit ConfidenceVoteFinalized(voteId, passed);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //               查询
+    // ═══════════════════════════════════════════════════════════
+
+    function getProposal(uint256 proposalId)
         external
         view
-        returns (bool wouldPass, bool quorumMet, bool vetoTriggered)
+        returns (
+            uint256 id,
+            address proposer,
+            ProposalType pType,
+            string memory title,
+            string memory ipfsHash,
+            ProposalStatus status,
+            address target,
+            uint256 executeAfter,
+            bool isExecuted,
+            bool isConstitutional,
+            TreasuryUrgency urgency,
+            address impeachedTarget,
+            uint256 currentImpeachSignatures,
+            uint256 requiredImpeachSignatures,
+            uint256 currentVetoSignatures,
+            uint256 requiredVetoSignatures,
+            uint256 currentReturnSignatures,
+            uint256 requiredReturnSignatures,
+            uint256 emergencyApprovals
+        )
     {
         Proposal storage p = proposals[proposalId];
-        require(p.pType == ProposalType.IMPEACHMENT, "Not IMPEACHMENT");
+        return (
+            p.id, p.proposer, p.pType, p.title, p.ipfsHash, p.status, p.target,
+            p.executeAfter, p.isExecuted, p.isConstitutional, p.urgency,
+            p.impeachedTarget, p.currentImpeachSignatures, p.requiredImpeachSignatures,
+            p.currentVetoSignatures, p.requiredVetoSignatures,
+            p.currentReturnSignatures, p.requiredReturnSignatures,
+            p.emergencyApprovals
+        );
+    }
 
-        uint256 memberVotes = p.memberFor + p.memberAgainst + p.memberAbstain;
-        if (p.memberTotalSnapshot > 0) {
-            uint256 participationBps = (memberVotes * BPS_DENOMINATOR) / p.memberTotalSnapshot;
-            quorumMet = participationBps >= IMPEACHMENT_QUORUM_BPS;
-            if (memberVotes > 0) {
-                uint256 againstBps = (p.memberAgainst * BPS_DENOMINATOR) / memberVotes;
-                // 反对率 ≥ 70% → 弹劾成立
-                vetoTriggered = againstBps >= IMPEACHMENT_VETO_BPS;
-            }
-        }
-        wouldPass = quorumMet && vetoTriggered;
+    function getVoteCounts(uint256 proposalId)
+        external
+        view
+        returns (
+            uint256 parliamentFor, uint256 parliamentAgainst,
+            uint256 federationFor, uint256 federationAgainst,
+            uint256 tribunalFor, uint256 tribunalAgainst,
+            uint256 citizenFor, uint256 citizenAgainst, uint256 citizenAbstain,
+            uint256 citizenTotalSnapshot,
+            uint256 complianceFor, uint256 complianceAgainst,
+            ChamberStance parliamentStance, ChamberStance federationStance, ChamberStance tribunalStance,
+            bool citizenQuorumMet, bool passed
+        )
+    {
+        Proposal storage p = proposals[proposalId];
+        return (
+            p.parliamentFor, p.parliamentAgainst,
+            p.federationFor, p.federationAgainst,
+            p.tribunalFor, p.tribunalAgainst,
+            p.citizenFor, p.citizenAgainst, p.citizenAbstain,
+            p.citizenTotalSnapshot,
+            p.complianceFor, p.complianceAgainst,
+            p.parliamentStance, p.federationStance, p.tribunalStance,
+            p.citizenQuorumMet, p.passed
+        );
+    }
+
+    function getProposalTimelines(uint256 proposalId)
+        external
+        view
+        returns (
+            uint256 createdAt,
+            uint256 firstVoteStartAt, uint256 firstVoteEndAt,
+            uint256 complianceVoteEndAt,
+            uint256 publicVoteStartAt, uint256 publicVoteEndAt,
+            uint256 vetoWindowEndAt,
+            uint256 queuedAt, uint256 executeAfter
+        )
+    {
+        Proposal storage p = proposals[proposalId];
+        return (
+            p.createdAt,
+            p.firstVoteStartAt, p.firstVoteEndAt,
+            p.complianceVoteEndAt,
+            p.publicVoteStartAt, p.publicVoteEndAt,
+            p.vetoWindowEndAt,
+            p.queuedAt, p.executeAfter
+        );
+    }
+
+    function hasFirstVoted(uint256 proposalId, address voter) external view returns (bool) {
+        return proposals[proposalId].hasFirstVoted[voter];
+    }
+    function hasPublicVoted(uint256 proposalId, address voter) external view returns (bool) {
+        return proposals[proposalId].hasPublicVoted[voter];
+    }
+    function hasComplianceVoted(uint256 proposalId, address voter) external view returns (bool) {
+        return proposals[proposalId].hasComplianceVoted[voter];
+    }
+    function hasImpeachSigned(uint256 proposalId, address signer) external view returns (bool) {
+        return proposals[proposalId].hasImpeachSigned[signer];
+    }
+    function hasVetoed(uint256 proposalId, address elder) external view returns (bool) {
+        return proposals[proposalId].hasVetoed[elder];
+    }
+    function hasSignedReturn(uint256 proposalId, address council) external view returns (bool) {
+        return proposals[proposalId].hasSignedReturn[council];
+    }
+    function hasEmergencyApproved(uint256 proposalId, address elder) external view returns (bool) {
+        return proposals[proposalId].hasEmergencyApproved[elder];
+    }
+
+    function getConfidenceVote(uint256 voteId)
+        external
+        view
+        returns (address chair, uint256 startedAt, uint256 forVotes, uint256 againstVotes, bool resolved)
+    {
+        ConfidenceVote storage cv = confidenceVotes[voteId];
+        return (cv.chair, cv.startedAt, cv.forVotes, cv.againstVotes, cv.resolved);
     }
 
     // ═══════════════════════════════════════════════════════════
-    //                       管理函数（ADMIN_ROLE）
+    //               管理函数（ADMIN_ROLE）
     // ═══════════════════════════════════════════════════════════
 
-    function setRingContract(address _ringAddress) external onlyRole(ADMIN_ROLE) {
-        ringContract = IAetherRing(_ringAddress);
-    }
-
-    function setSafeWallet(address _safe) external onlyRole(ADMIN_ROLE) {
-        if (_safe == address(0)) revert TreasuryTargetZero();
-        address old = address(safeWallet);
-        safeWallet = ISafe(_safe);
-        emit SafeWalletUpdated(old, _safe);
-    }
-
-    function setVotingPeriod(uint256 _period) external onlyRole(ADMIN_ROLE) {
-        votingPeriod = _period;
-    }
-
-    function setTimelocks(uint256 _signal, uint256 _treasury) external onlyRole(ADMIN_ROLE) {
-        timelockSignal = _signal;
-        timelockTreasury = _treasury;
-    }
-
-    function setInternalWeight(uint8 tier, uint256 weight) external onlyRole(ADMIN_ROLE) {
-        if (tier < 1 || tier > 10) revert UnknownTier(tier);
-        internalWeight[tier] = weight;
-    }
-
-    function setChamberWeights(
-        uint256 _parliament,
-        uint256 _federation,
-        uint256 _senate,
-        uint256 _member
-    ) external onlyRole(ADMIN_ROLE) {
-        // 注：v2 计票实际用 CHAMBER_WEIGHT_BPS / MEMBER_WEIGHT_BPS 常量
-        // 这里保留 setter 仅为兼容性，实际生效需要把常量改为 storage 变量
-        // 当前实现：revert 提醒用户该参数实际未生效
-        require(_parliament + _federation + _senate + _member == BPS_DENOMINATOR, "Sum must be 100%");
-        // TODO: 如需启用，把 CHAMBER_WEIGHT_BPS 改为 storage 变量
-        revert("Chamber weights are constants in v2");
+    function setRingContract(address _ring) external onlyRole(ADMIN_ROLE) {
+        address old = address(ringContract);
+        ringContract = IAetherRing(_ring);
+        emit RingContractUpdated(old, _ring);
     }
 
     function grantProposerRole(address account) external onlyRole(ADMIN_ROLE) {
@@ -739,174 +930,44 @@ contract AetherGovernance is AccessControl {
         revokeRole(PROPOSER_ROLE, account);
     }
 
+    // ── PARAM 可修改的参数（由 PARAM 提案通过 execute 调用） ──
+
+    function setVotingPeriods(uint256 _firstVote, uint256 _publicVote, uint256 _compliance) external onlyRole(ADMIN_ROLE) {
+        firstVotePeriod = _firstVote;
+        publicVotePeriod = _publicVote;
+        complianceVotePeriod = _compliance;
+    }
+
+    function setTimelocks(uint256 _normal, uint256 _emergency) external onlyRole(ADMIN_ROLE) {
+        timelockNormal = _normal;
+        timelockEmergency = _emergency;
+    }
+
+    function setInternalWeight(uint8 tier, uint256 weight) external onlyRole(ADMIN_ROLE) {
+        if (tier < 1 || tier > 14) revert UnknownTier(tier);
+        internalWeight[tier] = weight;
+    }
+
+    function cancelProposal(uint256 proposalId) external onlyRole(ADMIN_ROLE) {
+        Proposal storage p = proposals[proposalId];
+        p.status = ProposalStatus.Canceled;
+        emit ProposalCanceled(proposalId);
+    }
+
     // ═══════════════════════════════════════════════════════════
-    //                       内部辅助
+    //               内部辅助
     // ═══════════════════════════════════════════════════════════
 
-    modifier onlyRingBearer() {
-        if (!ringContract.isBearer(msg.sender)) revert NotRingBearer();
-        _;
+    function _isParliamentMember(uint8 tier) internal pure returns (bool) {
+        return tier >= 1 && tier <= 3;
     }
 
-    function _initProposal(
-        uint256 id,
-        address proposer,
-        ProposalType pType,
-        string calldata title,
-        string calldata ipfsHash,
-        address target,
-        bytes calldata calldataPayload,
-        address impeachedTarget
-    ) internal {
-        Proposal storage p = proposals[id];
-        p.id = id;
-        p.proposer = proposer;
-        p.pType = pType;
-        p.title = title;
-        p.ipfsHash = ipfsHash;
-        p.createdAt = block.timestamp;
-        p.votingStartAt = block.timestamp;
-        p.votingEndAt = block.timestamp + votingPeriod;
-        p.memberTotalSnapshot = ringContract.getTotalMembers();
-        p.status = ProposalStatus.Active;
-        p.target = target;
-        p.calldataPayload = calldataPayload;
-        p.impeachedTarget = impeachedTarget;
+    function _isFederationMember(uint8 tier) internal pure returns (bool) {
+        return tier >= 4 && tier <= 6;
     }
 
-    function _accumulateVote(Proposal storage p, uint8 tier, VoteOption option) internal {
-        if (tier >= 1 && tier <= 3) {
-            uint256 w = internalWeight[tier];
-            if (option == VoteOption.FOR) p.parliamentFor += w;
-            else if (option == VoteOption.AGAINST) p.parliamentAgainst += w;
-        } else if (tier >= 4 && tier <= 6) {
-            uint256 w = internalWeight[tier];
-            if (option == VoteOption.FOR) p.federationFor += w;
-            else if (option == VoteOption.AGAINST) p.federationAgainst += w;
-        } else if (tier >= 7 && tier <= 9) {
-            uint256 w = internalWeight[tier];
-            if (option == VoteOption.FOR) p.senateFor += w;
-            else if (option == VoteOption.AGAINST) p.senateAgainst += w;
-        } else {
-            // tier == 10
-            if (option == VoteOption.FOR) p.memberFor += 1;
-            else if (option == VoteOption.AGAINST) p.memberAgainst += 1;
-            else p.memberAbstain += 1;
-        }
-    }
-
-    function _finalizeNormal(uint256 proposalId, Proposal storage p) internal {
-        ChamberStance parliamentStance = _stanceOf(p.parliamentFor, p.parliamentAgainst);
-        ChamberStance federationStance = _stanceOf(p.federationFor, p.federationAgainst);
-        ChamberStance senateStance = _stanceOf(p.senateFor, p.senateAgainst);
-
-        uint256 forCount = _countStance(parliamentStance, ChamberStance.FOR)
-            + _countStance(federationStance, ChamberStance.FOR)
-            + _countStance(senateStance, ChamberStance.FOR);
-        uint256 againstCount = _countStance(parliamentStance, ChamberStance.AGAINST)
-            + _countStance(federationStance, ChamberStance.AGAINST)
-            + _countStance(senateStance, ChamberStance.AGAINST);
-
-        ChamberStance consensus = ChamberStance.NEUTRAL;
-        if (forCount >= 2) consensus = ChamberStance.FOR;
-        else if (againstCount >= 2) consensus = ChamberStance.AGAINST;
-
-        p.chamberConsensus = consensus;
-
-        uint256 memberVotes = p.memberFor + p.memberAgainst + p.memberAbstain;
-        bool quorumMet = false;
-        bool vetoTriggered = false;
-
-        if (p.memberTotalSnapshot > 0) {
-            uint256 participationBps = (memberVotes * BPS_DENOMINATOR) / p.memberTotalSnapshot;
-            quorumMet = participationBps >= MEMBER_QUORUM_BPS;
-            if (memberVotes > 0) {
-                uint256 againstBps = (p.memberAgainst * BPS_DENOMINATOR) / memberVotes;
-                vetoTriggered = againstBps >= MEMBER_VETO_BPS;
-            }
-        } else {
-            quorumMet = true;
-        }
-
-        p.memberQuorumMet = quorumMet;
-        p.memberVetoTriggered = vetoTriggered;
-
-        bool defeated = false;
-        if (consensus == ChamberStance.NEUTRAL) defeated = true;
-        else if (!quorumMet) defeated = true;
-        else if (vetoTriggered) defeated = true;
-
-        if (defeated) {
-            p.status = ProposalStatus.Defeated;
-            emit ProposalFinalized(proposalId, false, consensus, 0, 0, quorumMet, vetoTriggered);
-            return;
-        }
-
-        uint256 chamberForBps = (consensus == ChamberStance.FOR) ? BPS_DENOMINATOR : 0;
-        uint256 memberForBps =
-            memberVotes > 0 ? (p.memberFor * BPS_DENOMINATOR) / memberVotes : 0;
-        uint256 totalForWeighted = (chamberForBps * CHAMBER_WEIGHT_BPS + memberForBps * MEMBER_WEIGHT_BPS)
-            / BPS_DENOMINATOR;
-
-        uint256 chamberAgainstBps = (consensus == ChamberStance.AGAINST) ? BPS_DENOMINATOR : 0;
-        uint256 memberAgainstBps =
-            memberVotes > 0 ? (p.memberAgainst * BPS_DENOMINATOR) / memberVotes : 0;
-        uint256 totalAgainstWeighted = (chamberAgainstBps * CHAMBER_WEIGHT_BPS + memberAgainstBps * MEMBER_WEIGHT_BPS)
-            / BPS_DENOMINATOR;
-
-        p.totalForWeighted = totalForWeighted;
-        p.totalAgainstWeighted = totalAgainstWeighted;
-
-        if (totalForWeighted > PASS_THRESHOLD_BPS) {
-            uint256 delay = _timelockFor(p.pType);
-            p.queuedAt = block.timestamp;
-            p.executeAfter = block.timestamp + delay;
-            p.status = ProposalStatus.Queued;
-            emit ProposalQueued(proposalId, p.executeAfter);
-            emit ProposalFinalized(
-                proposalId, true, consensus, totalForWeighted, totalAgainstWeighted, quorumMet, vetoTriggered
-            );
-        } else {
-            p.status = ProposalStatus.Defeated;
-            emit ProposalFinalized(
-                proposalId, false, consensus, totalForWeighted, totalAgainstWeighted, quorumMet, vetoTriggered
-            );
-        }
-    }
-
-    function _finalizeImpeachment(uint256 proposalId, Proposal storage p) internal {
-        // 弹劾：会员参与率 ≥ 50%，反对率 ≥ 70% → 通过（弹劾成立）
-        uint256 memberVotes = p.memberFor + p.memberAgainst + p.memberAbstain;
-        bool quorumMet = false;
-        bool vetoTriggered = false;
-
-        if (p.memberTotalSnapshot > 0) {
-            uint256 participationBps = (memberVotes * BPS_DENOMINATOR) / p.memberTotalSnapshot;
-            quorumMet = participationBps >= IMPEACHMENT_QUORUM_BPS;
-            if (memberVotes > 0) {
-                uint256 againstBps = (p.memberAgainst * BPS_DENOMINATOR) / memberVotes;
-                vetoTriggered = againstBps >= IMPEACHMENT_VETO_BPS;
-            }
-        }
-        p.memberQuorumMet = quorumMet;
-        p.memberVetoTriggered = vetoTriggered;
-
-        // 弹劾通过 = quorumMet && vetoTriggered
-        // 注意：vetoTriggered 在弹劾场景下含义反转（反对率 >= 70% = 弹劾成立）
-        bool passed = quorumMet && vetoTriggered;
-
-        if (passed) {
-            uint256 delay = timelockImpeachment;
-            p.queuedAt = block.timestamp;
-            p.executeAfter = block.timestamp + delay;
-            p.status = ProposalStatus.Queued;
-            emit ProposalQueued(proposalId, p.executeAfter);
-        } else {
-            p.status = ProposalStatus.Defeated;
-        }
-        emit ProposalFinalized(
-            proposalId, passed, ChamberStance.NEUTRAL, 0, 0, quorumMet, vetoTriggered
-        );
+    function _isTribunalMember(uint8 tier) internal pure returns (bool) {
+        return tier >= 7 && tier <= 9;
     }
 
     function _stanceOf(uint256 forW, uint256 againstW) internal pure returns (ChamberStance) {
@@ -919,27 +980,16 @@ contract AetherGovernance is AccessControl {
         return s == target ? 1 : 0;
     }
 
-    function _timelockFor(ProposalType pType) internal view returns (uint256) {
-        if (pType == ProposalType.TREASURY) return timelockTreasury;
-        if (pType == ProposalType.IMPEACHMENT) return timelockImpeachment;
-        return timelockSignal; // SIGNAL, PARAM
-    }
-
     function _checkParamWhitelist(bytes memory payload) internal pure {
         if (payload.length < 4) revert ParamSelectorNotWhitelisted(bytes4(0));
         bytes4 selector;
         assembly ("memory-safe") {
             selector := mload(add(payload, 32))
         }
-        if (selector != SEL_SET_VOTING_PERIOD && selector != SEL_SET_TIMELOCKS
-            && selector != SEL_SET_INTERNAL_WEIGHT && selector != SEL_SET_CHAMBER_WEIGHTS)
+        if (selector != SEL_SET_VOTING_PERIODS && selector != SEL_SET_TIMELOCKS
+            && selector != SEL_SET_INTERNAL_WEIGHT)
         {
             revert ParamSelectorNotWhitelisted(selector);
         }
-    }
-
-    function _requireSafeWallet() internal view {
-        if (address(safeWallet) == address(0)) revert SafeWalletNotSet();
-        if (msg.sender != address(safeWallet)) revert NotSafeWallet(msg.sender);
     }
 }

@@ -1,23 +1,81 @@
 "use client";
 
-import { useAccount, useReadContract, useWriteContract, useWaitForTransactionReceipt } from "wagmi";
-import { useState } from "react";
+import {
+  useAccount,
+  useReadContract,
+  useReadContracts,
+  useWriteContract,
+  useWaitForTransactionReceipt,
+} from "wagmi";
+import { useMemo, useState } from "react";
 import {
   AetherElectionABI,
   electionAddress,
   type ElectionType,
   type ElectionStatus,
+  type CouncilTargetTier,
 } from "@/lib/contracts";
 
+// ═══════════════════════════════════════════════════════════
+//  类型定义（v3）
+// ═══════════════════════════════════════════════════════════
+
+// getElection 返回 8 字段（v3 新增 unfilledSeats）
+export interface ElectionInfo {
+  eType: ElectionType;
+  status: ElectionStatus;
+  candidateCount: number;
+  totalVotes: number;
+  votingStartAt: number;
+  votingEndAt: number;
+  seatCount: number;
+  unfilledSeats: number; // v3 新增：空缺席位（PartiallyFilled 时 > 0）
+}
+
+// getElectionTimelines 返回 6 字段（v3 新增 councilReviewEndAt / parliamentApprovalEndAt）
+export interface ElectionTimelines {
+  registrationStartAt: number;
+  registrationEndAt: number;
+  councilReviewEndAt: number;
+  parliamentApprovalEndAt: number;
+  votingStartAt: number;
+  votingEndAt: number;
+}
+
+// getCandidateInfo 返回 6 字段（v3）
+export interface CandidateInfo {
+  isNominated: boolean; // 已注册为候选人
+  isRegistered: boolean; // 通过理事会审批，进入投票池
+  isRejected: boolean; // 被理事会拒绝
+  voteCount: bigint;
+  won: boolean; // 当选
+  registeredAt: number;
+}
+
+// ═══════════════════════════════════════════════════════════
+//  useElection — 选举全流程写入 hook（v3）
+// ═══════════════════════════════════════════════════════════
+
 /**
- * useElection — 选举合约 hook
+ * useElection — v3 选举合约 hook
  *
- * 覆盖：
- *   - createElection（仅 ADMIN_ROLE，前端通常由 Safe 多签触发）
- *   - castVote / castReelectionAgainst
- *   - finalizeElection
- *   - cancelElection（仅 ADMIN_ROLE）
- *   - 读取选举详情 / 候选人票数 / 获胜者 / 连任结果
+ * 4 阶段状态机：
+ *   Pending（候选人注册）→ CouncilReview（理事会整理）→
+ *   ParliamentApproval（议会审批）→ Active（投票）→ Finalized
+ *   失败/空缺路径 → PartiallyFilled（理事长可 appointToVacancy 填补）
+ *
+ * 3 种选举类型：
+ *   - MEMBER_TO_GRASSROOTS：公民 → 三院基层（普选）
+ *   - GRASSROOTS_TO_MID：三院基层 → 中层（院选）
+ *   - CITIZEN_TO_COUNCIL：公民 → 理事/常务理事（v3 新增）
+ *
+ * 与 v2 区别：
+ *   - 删除 REELECTION（不可连任）
+ *   - 删除 castReelectionAgainst / getReelectionResult
+ *   - createElection 参数变化：新增 councilTarget，删除 candidates/reelectionTarget
+ *   - 新增 registerCandidate / advanceToCouncilReview / approveCandidate / rejectCandidate
+ *   - 新增 advanceToParliamentApproval / parliamentApproveCandidateList / forceAdvanceToVoting
+ *   - 新增 appointToVacancy（空缺处理）
  */
 export function useElection() {
   const { chainId } = useAccount();
@@ -26,40 +84,158 @@ export function useElection() {
   const [lastTxHash, setLastTxHash] = useState<`0x${string}` | null>(null);
   const receiptQuery = useWaitForTransactionReceipt({ hash: lastTxHash ?? undefined });
 
-  /**
-   * 创建选举（仅 ADMIN_ROLE = Safe 多签）
-   */
+  const ensure = () => {
+    if (!election) throw new Error("Election 合约未部署");
+    return election;
+  };
+
+  // ── 阶段 0：创建选举（仅 ADMIN_ROLE = Safe 多签） ──
   const create = async (params: {
     eType: ElectionType;
-    targetChamber: number; // 1=议会 2=联部 3=元老院；REELECTION 时忽略
+    chamber: number; // 1=议会 2=联邦 3=法庭 4=理事 5=常务理事
+    councilTarget: CouncilTargetTier; // 仅 CITIZEN_TO_COUNCIL 用
     seatCount: number;
-    candidates: `0x${string}`[];
-    reelectionTarget: `0x${string}`; // REELECTION 时填目标地址，其他类型填 0x0
   }): Promise<`0x${string}`> => {
-    if (!election) throw new Error("Election 合约未部署");
+    const addr = ensure();
     const tx = await writeContractAsync({
-      address: election,
+      address: addr,
       abi: AetherElectionABI,
       functionName: "createElection",
       args: [
         params.eType,
-        params.targetChamber,
+        params.chamber,
+        params.councilTarget,
         BigInt(params.seatCount),
-        params.candidates,
-        params.reelectionTarget,
       ],
     });
     setLastTxHash(tx);
     return tx;
   };
 
-  /**
-   * 投票（普选/院选）
-   */
-  const castVote = async (electionId: bigint, candidate: `0x${string}`): Promise<`0x${string}`> => {
-    if (!election) throw new Error("Election 合约未部署");
+  // ── 阶段 1：候选人注册（自荐） ──
+  const registerCandidate = async (electionId: bigint): Promise<`0x${string}`> => {
+    const addr = ensure();
     const tx = await writeContractAsync({
-      address: election,
+      address: addr,
+      abi: AetherElectionABI,
+      functionName: "registerCandidate",
+      args: [electionId],
+    });
+    setLastTxHash(tx);
+    return tx;
+  };
+
+  // ── 阶段 1：无人参选时延长注册期 7 天 ──
+  const extendRegistrationIfNoCandidates = async (
+    electionId: bigint,
+  ): Promise<`0x${string}`> => {
+    const addr = ensure();
+    const tx = await writeContractAsync({
+      address: addr,
+      abi: AetherElectionABI,
+      functionName: "extendRegistrationIfNoCandidates",
+      args: [electionId],
+    });
+    setLastTxHash(tx);
+    return tx;
+  };
+
+  // ── 阶段 1→2：推进至理事会整理 ──
+  const advanceToCouncilReview = async (electionId: bigint): Promise<`0x${string}`> => {
+    const addr = ensure();
+    const tx = await writeContractAsync({
+      address: addr,
+      abi: AetherElectionABI,
+      functionName: "advanceToCouncilReview",
+      args: [electionId],
+    });
+    setLastTxHash(tx);
+    return tx;
+  };
+
+  // ── 阶段 2：理事长批准候选人（仅 COUNCIL_CHAIR_ROLE） ──
+  const approveCandidate = async (
+    electionId: bigint,
+    candidate: `0x${string}`,
+  ): Promise<`0x${string}`> => {
+    const addr = ensure();
+    const tx = await writeContractAsync({
+      address: addr,
+      abi: AetherElectionABI,
+      functionName: "approveCandidate",
+      args: [electionId, candidate],
+    });
+    setLastTxHash(tx);
+    return tx;
+  };
+
+  // ── 阶段 2：理事长拒绝候选人（仅 COUNCIL_CHAIR_ROLE） ──
+  const rejectCandidate = async (
+    electionId: bigint,
+    candidate: `0x${string}`,
+  ): Promise<`0x${string}`> => {
+    const addr = ensure();
+    const tx = await writeContractAsync({
+      address: addr,
+      abi: AetherElectionABI,
+      functionName: "rejectCandidate",
+      args: [electionId, candidate],
+    });
+    setLastTxHash(tx);
+    return tx;
+  };
+
+  // ── 阶段 2→3：推进至议会审批 ──
+  const advanceToParliamentApproval = async (
+    electionId: bigint,
+  ): Promise<`0x${string}`> => {
+    const addr = ensure();
+    const tx = await writeContractAsync({
+      address: addr,
+      abi: AetherElectionABI,
+      functionName: "advanceToParliamentApproval",
+      args: [electionId],
+    });
+    setLastTxHash(tx);
+    return tx;
+  };
+
+  // ── 阶段 3：议会成员投批准票（仅 tier 1/2/3） ──
+  const parliamentApproveCandidateList = async (
+    electionId: bigint,
+  ): Promise<`0x${string}`> => {
+    const addr = ensure();
+    const tx = await writeContractAsync({
+      address: addr,
+      abi: AetherElectionABI,
+      functionName: "parliamentApproveCandidateList",
+      args: [electionId],
+    });
+    setLastTxHash(tx);
+    return tx;
+  };
+
+  // ── 阶段 3→4：议会审批期超时强制推进至投票 ──
+  const forceAdvanceToVoting = async (electionId: bigint): Promise<`0x${string}`> => {
+    const addr = ensure();
+    const tx = await writeContractAsync({
+      address: addr,
+      abi: AetherElectionABI,
+      functionName: "forceAdvanceToVoting",
+      args: [electionId],
+    });
+    setLastTxHash(tx);
+    return tx;
+  };
+
+  // ── 阶段 4：投票 ──
+  const castVote = async (
+    electionId: bigint,
+    candidate: `0x${string}`,
+  ): Promise<`0x${string}`> => {
+    const addr = ensure();
+    const tx = await writeContractAsync({
+      address: addr,
       abi: AetherElectionABI,
       functionName: "castVote",
       args: [electionId, candidate],
@@ -68,28 +244,11 @@ export function useElection() {
     return tx;
   };
 
-  /**
-   * 连任选举：投反对票
-   */
-  const castReelectionAgainst = async (electionId: bigint): Promise<`0x${string}`> => {
-    if (!election) throw new Error("Election 合约未部署");
-    const tx = await writeContractAsync({
-      address: election,
-      abi: AetherElectionABI,
-      functionName: "castReelectionAgainst",
-      args: [electionId],
-    });
-    setLastTxHash(tx);
-    return tx;
-  };
-
-  /**
-   * 结算选举（任何人可调，投票期结束后）
-   */
+  // ── 阶段 5：计票 finalize（任何人可调，投票期结束后） ──
   const finalize = async (electionId: bigint): Promise<`0x${string}`> => {
-    if (!election) throw new Error("Election 合约未部署");
+    const addr = ensure();
     const tx = await writeContractAsync({
-      address: election,
+      address: addr,
       abi: AetherElectionABI,
       functionName: "finalizeElection",
       args: [electionId],
@@ -98,13 +257,27 @@ export function useElection() {
     return tx;
   };
 
-  /**
-   * 取消选举（仅 ADMIN_ROLE = Safe 多签）
-   */
-  const cancel = async (electionId: bigint): Promise<`0x${string}`> => {
-    if (!election) throw new Error("Election 合约未部署");
+  // ── 空缺填补：理事长任命（仅 COUNCIL_CHAIR_ROLE，PartiallyFilled 状态） ──
+  const appointToVacancy = async (
+    electionId: bigint,
+    candidate: `0x${string}`,
+  ): Promise<`0x${string}`> => {
+    const addr = ensure();
     const tx = await writeContractAsync({
-      address: election,
+      address: addr,
+      abi: AetherElectionABI,
+      functionName: "appointToVacancy",
+      args: [electionId, candidate],
+    });
+    setLastTxHash(tx);
+    return tx;
+  };
+
+  // ── 取消选举（仅 ADMIN_ROLE） ──
+  const cancel = async (electionId: bigint): Promise<`0x${string}`> => {
+    const addr = ensure();
+    const tx = await writeContractAsync({
+      address: addr,
       abi: AetherElectionABI,
       functionName: "cancelElection",
       args: [electionId],
@@ -114,11 +287,21 @@ export function useElection() {
   };
 
   return {
+    // 写入方法
     create,
+    registerCandidate,
+    extendRegistrationIfNoCandidates,
+    advanceToCouncilReview,
+    approveCandidate,
+    rejectCandidate,
+    advanceToParliamentApproval,
+    parliamentApproveCandidateList,
+    forceAdvanceToVoting,
     castVote,
-    castReelectionAgainst,
     finalize,
+    appointToVacancy,
     cancel,
+    // 交易状态
     writing,
     lastTxHash,
     receipt: receiptQuery.data,
@@ -127,8 +310,12 @@ export function useElection() {
   };
 }
 
+// ═══════════════════════════════════════════════════════════
+//  读取 hooks
+// ═══════════════════════════════════════════════════════════
+
 /**
- * useElectionState — 读取某选举的元信息
+ * useElectionState — 读取选举元信息（v3，8 字段含 unfilledSeats）
  */
 export function useElectionState(electionId: bigint | null) {
   const { chainId } = useAccount();
@@ -143,18 +330,59 @@ export function useElectionState(electionId: bigint | null) {
     query: { enabled },
   });
 
-  const data = query.data as
-    | readonly [ElectionType, ElectionStatus, bigint, bigint, bigint, bigint, bigint]
-    | undefined;
+  const info = useMemo<ElectionInfo | null>(() => {
+    if (!query.data || query.status !== "success") return null;
+    const raw = query.data as readonly unknown[];
+    return {
+      eType: raw[0] as ElectionType,
+      status: raw[1] as ElectionStatus,
+      candidateCount: Number(raw[2] as bigint),
+      totalVotes: Number(raw[3] as bigint),
+      votingStartAt: Number(raw[4] as bigint),
+      votingEndAt: Number(raw[5] as bigint),
+      seatCount: Number(raw[6] as bigint),
+      unfilledSeats: Number(raw[7] as bigint),
+    };
+  }, [query.data, query.status]);
 
   return {
-    eType: data?.[0] ?? null,
-    status: data?.[1] ?? null,
-    candidateCount: data ? Number(data[2]) : 0,
-    totalVotes: data ? Number(data[3]) : 0,
-    votingStartAt: data ? Number(data[4]) : 0,
-    votingEndAt: data ? Number(data[5]) : 0,
-    seatCount: data ? Number(data[6]) : 0,
+    info,
+    isLoading: query.isLoading,
+    isError: query.isError,
+  };
+}
+
+/**
+ * useElectionTimelines — 读取选举各阶段时间窗口（v3，6 字段）
+ */
+export function useElectionTimelines(electionId: bigint | null) {
+  const { chainId } = useAccount();
+  const election = electionAddress(chainId ?? 0);
+  const enabled = !!election && electionId !== null;
+
+  const query = useReadContract({
+    address: election ?? undefined,
+    abi: AetherElectionABI,
+    functionName: "getElectionTimelines",
+    args: [electionId ?? 0n],
+    query: { enabled },
+  });
+
+  const timelines = useMemo<ElectionTimelines | null>(() => {
+    if (!query.data || query.status !== "success") return null;
+    const raw = query.data as readonly unknown[];
+    return {
+      registrationStartAt: Number(raw[0] as bigint),
+      registrationEndAt: Number(raw[1] as bigint),
+      councilReviewEndAt: Number(raw[2] as bigint),
+      parliamentApprovalEndAt: Number(raw[3] as bigint),
+      votingStartAt: Number(raw[4] as bigint),
+      votingEndAt: Number(raw[5] as bigint),
+    };
+  }, [query.data, query.status]);
+
+  return {
+    timelines,
     isLoading: query.isLoading,
     isError: query.isError,
   };
@@ -180,9 +408,70 @@ export function useElectionWinners(electionId: bigint | null) {
 }
 
 /**
+ * useElectionCandidates — 读取候选人地址列表
+ */
+export function useElectionCandidates(electionId: bigint | null) {
+  const { chainId } = useAccount();
+  const election = electionAddress(chainId ?? 0);
+  const query = useReadContract({
+    address: election ?? undefined,
+    abi: AetherElectionABI,
+    functionName: "getCandidates",
+    args: [electionId ?? 0n],
+    query: { enabled: !!election && electionId !== null },
+  });
+  return {
+    candidates: (query.data as `0x${string}`[] | undefined) ?? [],
+    isLoading: query.isLoading,
+  };
+}
+
+/**
+ * useCandidateInfo — 读取某候选人的详细信息（v3）
+ */
+export function useCandidateInfo(
+  electionId: bigint | null,
+  candidate: `0x${string}` | null,
+) {
+  const { chainId } = useAccount();
+  const election = electionAddress(chainId ?? 0);
+  const enabled = !!election && electionId !== null && !!candidate;
+
+  const query = useReadContract({
+    address: election ?? undefined,
+    abi: AetherElectionABI,
+    functionName: "getCandidateInfo",
+    args: [electionId ?? 0n, candidate ?? "0x0"],
+    query: { enabled },
+  });
+
+  const info = useMemo<CandidateInfo | null>(() => {
+    if (!query.data || query.status !== "success") return null;
+    const raw = query.data as readonly unknown[];
+    return {
+      isNominated: raw[0] as boolean,
+      isRegistered: raw[1] as boolean,
+      isRejected: raw[2] as boolean,
+      voteCount: raw[3] as bigint,
+      won: raw[4] as boolean,
+      registeredAt: Number(raw[5] as bigint),
+    };
+  }, [query.data, query.status]);
+
+  return {
+    info,
+    isLoading: query.isLoading,
+    isError: query.isError,
+  };
+}
+
+/**
  * useCandidateVotes — 读取某候选人的票数
  */
-export function useCandidateVotes(electionId: bigint | null, candidate: `0x${string}` | null) {
+export function useCandidateVotes(
+  electionId: bigint | null,
+  candidate: `0x${string}` | null,
+) {
   const { chainId } = useAccount();
   const election = electionAddress(chainId ?? 0);
   const query = useReadContract({
@@ -199,23 +488,67 @@ export function useCandidateVotes(electionId: bigint | null, candidate: `0x${str
 }
 
 /**
- * useReelectionResult — 读取连任选举结果（仅 REELECTION 类型）
+ * useElectionVoterFlags — 批量查询当前用户的参与状态
+ *   - hasVoted：投票阶段是否已投票
+ *   - hasParliamentApproved：议会审批阶段是否已批准
  */
-export function useReelectionResult(electionId: bigint | null) {
+export function useElectionVoterFlags(electionId: bigint | null) {
+  const { chainId, address } = useAccount();
+  const election = electionAddress(chainId ?? 0);
+  const enabled = !!election && electionId !== null && !!address;
+
+  const query = useReadContracts({
+    contracts: [
+      {
+        address: election!,
+        abi: AetherElectionABI,
+        functionName: "hasVoted",
+        args: [electionId ?? 0n, address ?? "0x0"],
+      },
+      {
+        address: election!,
+        abi: AetherElectionABI,
+        functionName: "hasParliamentApproved",
+        args: [electionId ?? 0n, address ?? "0x0"],
+      },
+    ],
+    query: { enabled },
+  });
+
+  const flags = useMemo(() => {
+    if (!query.data) {
+      return { hasVoted: false, hasParliamentApproved: false };
+    }
+    const get = (i: number) =>
+      query.data![i].status === "success" && query.data![i].result === true;
+    return {
+      hasVoted: get(0),
+      hasParliamentApproved: get(1),
+    };
+  }, [query.data]);
+
+  return {
+    flags,
+    isLoading: query.isLoading,
+    isError: query.isError,
+  };
+}
+
+/**
+ * useElectionCount — 读取选举总数（用于列表分页）
+ */
+export function useElectionCount() {
   const { chainId } = useAccount();
   const election = electionAddress(chainId ?? 0);
   const query = useReadContract({
     address: election ?? undefined,
     abi: AetherElectionABI,
-    functionName: "getReelectionResult",
-    args: [electionId ?? 0n],
-    query: { enabled: !!election && electionId !== null },
+    functionName: "electionCount",
+    query: { enabled: !!election },
   });
-  const data = query.data as readonly [bigint, bigint, boolean] | undefined;
   return {
-    forVotes: data ? Number(data[0]) : 0,
-    againstVotes: data ? Number(data[1]) : 0,
-    passed: data?.[2] ?? false,
+    count: (query.data as bigint | undefined) ?? 0n,
     isLoading: query.isLoading,
+    isError: query.isError,
   };
 }

@@ -8,6 +8,7 @@ export type ContractSet = {
   AetherRing: `0x${string}`;
   AetherGovernance: `0x${string}`;
   AetherElection: `0x${string}`;
+  AetherDonation: `0x${string}`;
 };
 
 const ZERO = "0x0000000000000000000000000000000000000000" as `0x${string}`;
@@ -18,6 +19,7 @@ const FALLBACK: ContractSet = {
   AetherRing: ZERO,
   AetherGovernance: ZERO,
   AetherElection: ZERO,
+  AetherDonation: ZERO,
 };
 
 export const CONTRACTS = {
@@ -52,6 +54,7 @@ function resolveChain(chainId: number): ContractSet {
     AetherRing: readEnvAddr("AETHER_RING", chainId) ?? fallback.AetherRing,
     AetherGovernance: readEnvAddr("AETHER_GOVERNANCE", chainId) ?? fallback.AetherGovernance,
     AetherElection: readEnvAddr("AETHER_ELECTION", chainId) ?? fallback.AetherElection,
+    AetherDonation: readEnvAddr("AETHER_DONATION", chainId) ?? fallback.AetherDonation,
   };
 }
 

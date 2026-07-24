@@ -7,136 +7,166 @@ import {IAetherRing} from "./interfaces/IAetherRing.sol";
 import {IAetherElection} from "./interfaces/IAetherElection.sol";
 
 /**
- * @title AetherElection — Aether DAO 选举合约
+ * @title AetherElection — Aether DAO 选举合约 v3
  * @author Aether Foundation
  *
  * ═══════════════════════════════════════════════════════════════
- *  选举类型
+ *  v3 核心机制
  * ═══════════════════════════════════════════════════════════════
  *
- *  1. MEMBER_TO_GRASSROOTS  会员 → 基层（普选）
- *     - 选举人：全体活跃会员（tier==10）
- *     - 当选规则：得票前 N 名（N=目标席位数，最多 20/院）
- *     - 任期：1 年，可连任 1 次
- *     - 触发：管理员（多签）发起，指定目标院 + 席位数
+ *  1. 三种选举类型：
+ *     - MEMBER_TO_GRASSROOTS  公民 → 三院基层（普选）
+ *     - GRASSROOTS_TO_MID     三院基层 → 中层（院选）
+ *     - CITIZEN_TO_COUNCIL    公民 → 理事/常务理事（普选，v3 新增）
  *
- *  2. GRASSROOTS_TO_MID     基层 → 中层（院选）
- *     - 选举人：对应院的活跃基层（如选参议员 = 议员投票）
- *     - 当选规则：得票前 N 名（N 最多 4/院）
- *     - 任期：2 年，可连任 1 次
- *     - 触发：管理员（多签）发起
+ *  2. 4 阶段状态机：
+ *     Pending（候选人注册）→ CouncilReview（理事会整理）→
+ *     ParliamentApproval（议会审批）→ Active（投票）→ Finalized
+ *     （失败路径 → Canceled / PartiallyFilled）
  *
- *  3. REELECTION            连任选举（基层/中层）
- *     - 选举人：根据原 tier 决定（基层连任 = 会员投票；中层连任 = 院基层投票）
- *     - 当选规则：单席位，得票过半即连任
- *     - 任期：再续一届（基层 +1 年 / 中层 +2 年）
- *     - 触发：本人申请 + 多签确认，进入选举流程
+ *  3. 候选人资格放宽（V5）：
+ *     - MEMBER_TO_GRASSROOTS：公民 OR 三院成员到期（isExpired=true）
+ *     - GRASSROOTS_TO_MID：对应院基层
+ *     - CITIZEN_TO_COUNCIL：仅公民
  *
- *  注：中层 → 高层不通过选举，由多签直接任命（在 AetherRing.updateTier 处理）
+ *  4. 选举人资格：
+ *     - MEMBER_TO_GRASSROOTS / CITIZEN_TO_COUNCIL：全体活跃公民
+ *     - GRASSROOTS_TO_MID：对应院基层
  *
- * ═══════════════════════════════════════════════════════════════
- *  投票规则
- * ═══════════════════════════════════════════════════════════════
+ *  5. 空缺处理（V12）：
+ *     - 名额未满 → PartiallyFilled
+ *     - 无人参选 → 注册期延长 7 天
+ *     - 理事长可临时任命填补（appointToVacancy）
  *
- *  - 一人一票（不分权重，选举场景用人数制更公平）
- *  - 不可改票
- *  - 投票期 7 天
- *  - 投票期结束后任何人可触发 finalize
+ *  6. 当选规则：得票前 N 名（N=seatCount），平票按注册时间先后
  *
- *  计票：
- *  - MEMBER_TO_GRASSROOTS：按得票数排序，取前 N 名
- *  - GRASSROOTS_TO_MID：同上
- *  - REELECTION：得票数 > 反对票数 即当选
+ *  7. 任期（v3 不可连任）：
+ *     - 基层（1/4/7/10/11）：1 年
+ *     - 中层（2/5/8）：2 年
+ *     - 高层（3/6/9/12）：终身（由多签任命，不走选举）
  *
- *  当选后：
- *  - 选举合约调 ring.updateTier(tokenId, newTier, true) 升级 tier
- *  - 选举合约调 ring.renewTerm(tokenId, newTermEnd) 续任（连任选举）
- *
- * ═══════════════════════════════════════════════════════════════
- *  权限模型
- * ═══════════════════════════════════════════════════════════════
- *
- *  - ADMIN_ROLE（多签）：发起选举、取消选举
- *  - 持环者：注册候选人（须自荐 + 满足资格）、投票
- *  - 任何人：finalize
- *
- *  选举合约需要 RING_ADMIN_ROLE 在 AetherRing 上才能调 updateTier / renewTerm
- *  → 部署后管理员必须给 election 合约 grantRole(ADMIN_ROLE) on AetherRing
+ *  注：高层由多签直接任命（AetherRing.retireToEmeritus / appointElder）
  */
 contract AetherElection is AccessControl, IAetherElection {
     // ──────────── 角色 ────────────
     bytes32 public constant ADMIN_ROLE = keccak256("ADMIN_ROLE");
     bytes32 public constant ELECTION_MANAGER_ROLE = keccak256("ELECTION_MANAGER_ROLE");
+    bytes32 public constant COUNCIL_CHAIR_ROLE = keccak256("COUNCIL_CHAIR_ROLE");
 
     // ──────────── 引用 ────────────
     IAetherRing public ringContract;
 
     // ──────────── 常量 ────────────
+    uint256 public constant REGISTRATION_PERIOD = 7 days;
+    uint256 public constant COUNCIL_REVIEW_PERIOD = 3 days;
+    uint256 public constant PARLIAMENT_APPROVAL_PERIOD = 3 days;
     uint256 public constant VOTING_PERIOD = 7 days;
-    uint256 public constant GRASSROOTS_TERM = 365 days;
-    uint256 public constant MID_TERM = 730 days;
+    uint256 public constant NO_CANDIDATE_EXTENSION = 7 days;
+    uint256 public constant MAX_SEATS_GRASSROOTS = 60;
+    uint256 public constant MAX_SEATS_MID = 12;
+    uint256 public constant MAX_SEATS_COUNCIL = 12;
 
     // ──────────── 数据结构 ────────────
     struct Candidate {
         address candidate;
-        bool isRegistered;
+        bool isRegistered; // 已通过理事会整理 + 议会审批（即进入投票池）
+        bool isNominated; // 已注册但未审批
+        bool isRejected; // 被理事会或议会拒绝
         uint256 voteCount;
         bool won; // finalize 后标记
+        uint256 registeredAt; // 注册时间戳（平票时排序用）
     }
 
     struct Election {
+        uint256 id;
         ElectionType eType;
         ElectionStatus status;
-        // 目标院：1=议会 2=联部 3=元老院（与 AetherRing.RingTier 的院一致）
-        uint8 targetChamber;
-        // 席位数（N）
+        uint8 chamber; // 1=议会 2=联邦 3=法庭 4=理事 5=常务理事
+        CouncilTargetTier councilTarget; // 仅 CITIZEN_TO_COUNCIL 用
         uint256 seatCount;
-        // 候选人列表
-        address[] candidates;
-        mapping(address => Candidate) candidateInfo;
-        // 投票记录
-        mapping(address => bool) hasVoted;
-        mapping(address => address) voteChoice; // voter → candidate
-        uint256 totalVotes;
-        // 时间
+        // 时间窗口
+        uint256 registrationStartAt;
+        uint256 registrationEndAt;
+        uint256 councilReviewEndAt;
+        uint256 parliamentApprovalEndAt;
         uint256 votingStartAt;
         uint256 votingEndAt;
-        // 当选者列表（finalize 后填）
+        // 候选人
+        address[] candidates; // 所有注册过的候选人（含被拒）
+        mapping(address => Candidate) candidateInfo;
+        // 议会审批：议会成员对候选人列表的整体批准
+        mapping(address => bool) hasParliamentApproved;
+        uint256 parliamentApprovalCount;
+        uint256 requiredParliamentApprovals; // 简化：议会成员半数以上（设为 1，由 Admin 配置）
+        // 投票
+        mapping(address => bool) hasVoted;
+        mapping(address => address) voteChoice;
+        uint256 totalVotes;
+        // 结果
         address[] winners;
-        // REELECTION 专用：连任者地址 + 反对票
-        address reelectionTarget;
-        uint256 againstVotes;
-        bool passed;
+        uint256 unfilledSeats;
+        bool noCandidateExtended; // 是否已因无人参选延长过
     }
 
     mapping(uint256 => Election) private elections;
     uint256 public electionCount;
 
+    // 议会成员名单（用于 requiredParliamentApprovals 计算；简化为手动设置阈值）
+    uint256 public parliamentApprovalThreshold = 1;
+
     // ──────────── 事件 ────────────
     event ElectionCreated(
-        uint256 indexed id, ElectionType eType, uint8 targetChamber, uint256 seatCount, uint256 votingEndAt
+        uint256 indexed id,
+        ElectionType eType,
+        uint8 chamber,
+        CouncilTargetTier councilTarget,
+        uint256 seatCount,
+        uint256 registrationEndAt
     );
     event CandidateRegistered(uint256 indexed electionId, address candidate);
+    event CandidateApproved(uint256 indexed electionId, address candidate);
+    event CandidateRejected(uint256 indexed electionId, address candidate);
+    event CouncilReviewFinalized(uint256 indexed electionId);
+    event ParliamentApprovalCast(uint256 indexed electionId, address approver, uint256 count);
+    event ParliamentApprovalPassed(uint256 indexed electionId);
+    event VotingStarted(uint256 indexed electionId, uint256 votingEndAt);
     event VoteCast(uint256 indexed electionId, address indexed voter, address candidate);
-    event ElectionFinalized(uint256 indexed id, address[] winners);
+    event ElectionFinalized(uint256 indexed id, address[] winners, uint256 unfilledSeats);
+    event SeatsUnfilled(uint256 indexed id, uint256 unfilledSeats);
+    event VacancyFilled(uint256 indexed id, address candidate);
     event ElectionCanceled(uint256 indexed id);
+    event RegistrationExtended(uint256 indexed electionId, uint256 newRegistrationEndAt);
+    event RingContractUpdated(address oldRing, address newRing);
+    event ParliamentThresholdUpdated(uint256 oldThreshold, uint256 newThreshold);
 
     // ──────────── 错误 ────────────
     error NotRingBearer();
     error NotEligibleVoter();
     error NotEligibleCandidate();
+    error ElectionNotPending();
+    error ElectionNotCouncilReview();
+    error ElectionNotParliamentApproval();
     error ElectionNotActive();
     error ElectionNotEnded();
+    error ElectionNotPartiallyFilled();
     error AlreadyVoted();
     error AlreadyRegistered();
+    error AlreadyApproved();
     error AlreadyFinalized();
     error CandidateNotRegistered();
+    error CandidateAlreadyApproved();
+    error CandidateAlreadyRejected();
     error InvalidElectionType();
     error InvalidChamber();
     error InvalidSeatCount();
     error NoCandidates();
-    error NotReelectionType();
-    error TargetNotRegistered();
+    error NoVacancy();
+    error NotCouncilChair();
+    error RegistrationNotEnded();
+    error CouncilReviewNotEnded();
+    error ParliamentApprovalNotMet();
+    error ExtensionAlreadyApplied();
+    error ZeroAddress();
 
     // ═══════════════════════════════════════════════════════════
     //                       构造函数
@@ -150,146 +180,334 @@ contract AetherElection is AccessControl, IAetherElection {
     }
 
     // ═══════════════════════════════════════════════════════════
-    //                       创建选举
+    //               阶段 1：创建选举 + 候选人注册（步骤 4.2/4.3/4.4）
     // ═══════════════════════════════════════════════════════════
 
     /**
      * @notice 创建选举（仅 ADMIN_ROLE）
      * @param eType          选举类型
-     * @param targetChamber  目标院 (1=议会 2=联部 3=元老院；REELECTION 时忽略)
-     * @param seatCount      席位数（<=20）
-     * @param candidates     候选人地址列表（须满足资格）
-     * @param reelectionTarget REELECTION 专用：连任目标地址
+     * @param chamber        目标院 (1=议会 2=联邦 3=法庭 4=理事 5=常务理事)
+     * @param councilTarget  仅 CITIZEN_TO_COUNCIL 用：0=理事 1=常务理事
+     * @param seatCount      席位数
      */
     function createElection(
         ElectionType eType,
-        uint8 targetChamber,
-        uint256 seatCount,
-        address[] calldata candidates,
-        address reelectionTarget
+        uint8 chamber,
+        CouncilTargetTier councilTarget,
+        uint256 seatCount
     ) external onlyRole(ADMIN_ROLE) returns (uint256) {
-        if (eType == ElectionType.REELECTION) {
-            if (reelectionTarget == address(0)) revert TargetNotRegistered();
+        // 校验 chamber 与 eType 一致
+        if (eType == ElectionType.CITIZEN_TO_COUNCIL) {
+            if (councilTarget == CouncilTargetTier.CouncilMember) {
+                if (chamber != 4) revert InvalidChamber();
+            } else {
+                if (chamber != 5) revert InvalidChamber();
+            }
         } else {
-            if (targetChamber < 1 || targetChamber > 3) revert InvalidChamber();
-            uint256 maxSeats = eType == ElectionType.MEMBER_TO_GRASSROOTS ? 20 : 4;
-            if (seatCount == 0 || seatCount > maxSeats) revert InvalidSeatCount();
-            if (candidates.length < seatCount) revert NoCandidates();
+            if (chamber < 1 || chamber > 3) revert InvalidChamber();
         }
+
+        // 校验席位数
+        uint256 maxSeats;
+        if (eType == ElectionType.MEMBER_TO_GRASSROOTS) maxSeats = MAX_SEATS_GRASSROOTS;
+        else if (eType == ElectionType.GRASSROOTS_TO_MID) maxSeats = MAX_SEATS_MID;
+        else maxSeats = MAX_SEATS_COUNCIL;
+        if (seatCount == 0 || seatCount > maxSeats) revert InvalidSeatCount();
 
         uint256 id = electionCount++;
         Election storage e = elections[id];
+        e.id = id;
         e.eType = eType;
-        e.status = ElectionStatus.Active;
-        e.targetChamber = targetChamber;
+        e.status = ElectionStatus.Pending;
+        e.chamber = chamber;
+        e.councilTarget = councilTarget;
         e.seatCount = seatCount;
-        e.votingStartAt = block.timestamp;
-        e.votingEndAt = block.timestamp + VOTING_PERIOD;
-        e.reelectionTarget = reelectionTarget;
+        e.registrationStartAt = block.timestamp;
+        e.registrationEndAt = block.timestamp + REGISTRATION_PERIOD;
+        e.requiredParliamentApprovals = parliamentApprovalThreshold;
 
-        // 注册候选人（REELECTION 时只有一个目标，候选人列表 = supporters 提名）
-        if (eType != ElectionType.REELECTION) {
-            for (uint256 i = 0; i < candidates.length; i++) {
-                address c = candidates[i];
-                if (!_isEligibleCandidate(eType, targetChamber, c)) revert NotEligibleCandidate();
-                if (e.candidateInfo[c].isRegistered) revert AlreadyRegistered();
-                e.candidates.push(c);
-                e.candidateInfo[c] = Candidate({
-                    candidate: c, isRegistered: true, voteCount: 0, won: false
-                });
-                emit CandidateRegistered(id, c);
-            }
-        } else {
-            // REELECTION: reelectionTarget 作为唯一"候选人"
-            // 投 FOR = 投 reelectionTarget 连任；投 AGAINST = 反对
-            e.candidates.push(reelectionTarget);
-            e.candidateInfo[reelectionTarget] = Candidate({
-                candidate: reelectionTarget, isRegistered: true, voteCount: 0, won: false
-            });
-            emit CandidateRegistered(id, reelectionTarget);
-        }
-
-        emit ElectionCreated(id, eType, targetChamber, seatCount, e.votingEndAt);
+        emit ElectionCreated(id, eType, chamber, councilTarget, seatCount, e.registrationEndAt);
         return id;
     }
 
+    /**
+     * @notice 候选人注册（自荐）
+     *         - MEMBER_TO_GRASSROOTS：公民或到期三院成员
+     *         - GRASSROOTS_TO_MID：对应院基层
+     *         - CITIZEN_TO_COUNCIL：仅公民
+     */
+    function registerCandidate(uint256 electionId) external {
+        Election storage e = elections[electionId];
+        if (e.status != ElectionStatus.Pending) revert ElectionNotPending();
+        if (block.timestamp > e.registrationEndAt) revert RegistrationNotEnded();
+        if (e.candidateInfo[msg.sender].isNominated) revert AlreadyRegistered();
+
+        if (!_isEligibleCandidate(e.eType, e.chamber, msg.sender)) revert NotEligibleCandidate();
+
+        e.candidates.push(msg.sender);
+        e.candidateInfo[msg.sender] = Candidate({
+            candidate: msg.sender,
+            isRegistered: false,
+            isNominated: true,
+            isRejected: false,
+            voteCount: 0,
+            won: false,
+            registeredAt: block.timestamp
+        });
+
+        emit CandidateRegistered(electionId, msg.sender);
+    }
+
+    /**
+     * @notice 注册期结束后，若无人参选，延长 7 天
+     */
+    function extendRegistrationIfNoCandidates(uint256 electionId) external {
+        Election storage e = elections[electionId];
+        if (e.status != ElectionStatus.Pending) revert ElectionNotPending();
+        if (block.timestamp < e.registrationEndAt) revert RegistrationNotEnded();
+        if (e.candidates.length > 0) revert NoCandidates();
+        if (e.noCandidateExtended) revert ExtensionAlreadyApplied();
+
+        e.noCandidateExtended = true;
+        e.registrationEndAt = block.timestamp + NO_CANDIDATE_EXTENSION;
+
+        emit RegistrationExtended(electionId, e.registrationEndAt);
+    }
+
+    /**
+     * @notice 推进至理事会整理阶段
+     *         - 必须注册期结束
+     *         - 必须至少有 1 个候选人
+     */
+    function advanceToCouncilReview(uint256 electionId) external {
+        Election storage e = elections[electionId];
+        if (e.status != ElectionStatus.Pending) revert ElectionNotPending();
+        if (block.timestamp < e.registrationEndAt) revert RegistrationNotEnded();
+        if (e.candidates.length == 0) revert NoCandidates();
+
+        e.status = ElectionStatus.CouncilReview;
+        e.councilReviewEndAt = block.timestamp + COUNCIL_REVIEW_PERIOD;
+
+        emit CouncilReviewFinalized(electionId);
+    }
+
     // ═══════════════════════════════════════════════════════════
-    //                       投票
+    //               阶段 2：理事会整理（步骤 4.3）
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * @notice 理事会批准候选人（仅 COUNCIL_CHAIR_ROLE）
+     *         理事长对每个候选人单独审批
+     */
+    function approveCandidate(uint256 electionId, address candidate) external onlyRole(COUNCIL_CHAIR_ROLE) {
+        Election storage e = elections[electionId];
+        if (e.status != ElectionStatus.CouncilReview) revert ElectionNotCouncilReview();
+
+        Candidate storage c = e.candidateInfo[candidate];
+        if (!c.isNominated) revert CandidateNotRegistered();
+        if (c.isRegistered) revert CandidateAlreadyApproved();
+        if (c.isRejected) revert CandidateAlreadyRejected();
+
+        c.isRegistered = true; // 通过审批，进入投票池
+
+        emit CandidateApproved(electionId, candidate);
+    }
+
+    /**
+     * @notice 理事会拒绝候选人（仅 COUNCIL_CHAIR_ROLE）
+     */
+    function rejectCandidate(uint256 electionId, address candidate) external onlyRole(COUNCIL_CHAIR_ROLE) {
+        Election storage e = elections[electionId];
+        if (e.status != ElectionStatus.CouncilReview) revert ElectionNotCouncilReview();
+
+        Candidate storage c = e.candidateInfo[candidate];
+        if (!c.isNominated) revert CandidateNotRegistered();
+        if (c.isRejected) revert CandidateAlreadyRejected();
+        if (c.isRegistered) revert CandidateAlreadyApproved();
+
+        c.isRejected = true;
+
+        emit CandidateRejected(electionId, candidate);
+    }
+
+    /**
+     * @notice 推进至议会审批阶段
+     */
+    function advanceToParliamentApproval(uint256 electionId) external {
+        Election storage e = elections[electionId];
+        if (e.status != ElectionStatus.CouncilReview) revert ElectionNotCouncilReview();
+        if (block.timestamp < e.councilReviewEndAt) revert CouncilReviewNotEnded();
+
+        // 校验至少 1 个候选人通过审批
+        bool hasApproved = false;
+        for (uint256 i = 0; i < e.candidates.length; i++) {
+            if (e.candidateInfo[e.candidates[i]].isRegistered) {
+                hasApproved = true;
+                break;
+            }
+        }
+        if (!hasApproved) revert NoCandidates();
+
+        e.status = ElectionStatus.ParliamentApproval;
+        e.parliamentApprovalEndAt = block.timestamp + PARLIAMENT_APPROVAL_PERIOD;
+
+        emit CouncilReviewFinalized(electionId);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //               阶段 3：议会审批（步骤 4.3）
+    // ═══════════════════════════════════════════════════════════
+
+    /**
+     * @notice 议会成员对整个候选人列表投批准票
+     *         简化：达到 requiredParliamentApprovals 即通过
+     */
+    function parliamentApproveCandidateList(uint256 electionId) external {
+        Election storage e = elections[electionId];
+        if (e.status != ElectionStatus.ParliamentApproval) revert ElectionNotParliamentApproval();
+        if (e.hasParliamentApproved[msg.sender]) revert AlreadyApproved();
+
+        // 仅议会成员（tier 1/2/3）可投批准票
+        uint8 tier = ringContract.getTier(msg.sender);
+        if (tier < 1 || tier > 3) revert NotEligibleVoter();
+
+        e.hasParliamentApproved[msg.sender] = true;
+        e.parliamentApprovalCount += 1;
+
+        emit ParliamentApprovalCast(electionId, msg.sender, e.parliamentApprovalCount);
+
+        if (e.parliamentApprovalCount >= e.requiredParliamentApprovals) {
+            e.status = ElectionStatus.Active;
+            e.votingStartAt = block.timestamp;
+            e.votingEndAt = block.timestamp + VOTING_PERIOD;
+            emit ParliamentApprovalPassed(electionId);
+            emit VotingStarted(electionId, e.votingEndAt);
+        }
+    }
+
+    /**
+     * @notice 议会审批期结束后自动推进（即使未达阈值，也进入投票阶段）
+     *         防止议会拖延导致选举卡死
+     */
+    function forceAdvanceToVoting(uint256 electionId) external {
+        Election storage e = elections[electionId];
+        if (e.status != ElectionStatus.ParliamentApproval) revert ElectionNotParliamentApproval();
+        if (block.timestamp < e.parliamentApprovalEndAt) revert ParliamentApprovalNotMet();
+
+        e.status = ElectionStatus.Active;
+        e.votingStartAt = block.timestamp;
+        e.votingEndAt = block.timestamp + VOTING_PERIOD;
+        emit ParliamentApprovalPassed(electionId);
+        emit VotingStarted(electionId, e.votingEndAt);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //               阶段 4：投票（步骤 4.3）
     // ═══════════════════════════════════════════════════════════
 
     /**
      * @notice 投票
      * @param electionId  选举 ID
-     * @param candidate   投给的候选人（REELECTION 时 = reelectionTarget，反对用 castReelectionAgainst）
+     * @param candidate   投给的候选人（必须通过理事会审批）
      */
     function castVote(uint256 electionId, address candidate) external {
         Election storage e = elections[electionId];
         if (e.status != ElectionStatus.Active) revert ElectionNotActive();
         if (block.timestamp > e.votingEndAt) revert ElectionNotActive();
         if (e.hasVoted[msg.sender]) revert AlreadyVoted();
-        if (!_isEligibleVoter(e.eType, e.targetChamber, msg.sender)) revert NotEligibleVoter();
-        if (!e.candidateInfo[candidate].isRegistered) revert CandidateNotRegistered();
+        if (!_isEligibleVoter(e.eType, e.chamber, msg.sender)) revert NotEligibleVoter();
+
+        Candidate storage c = e.candidateInfo[candidate];
+        if (!c.isRegistered) revert CandidateNotRegistered();
 
         e.hasVoted[msg.sender] = true;
         e.voteChoice[msg.sender] = candidate;
-        e.candidateInfo[candidate].voteCount += 1;
+        c.voteCount += 1;
         e.totalVotes += 1;
+
+        // 更新公民投票活动时间（休眠机制）
+        ringContract.markVoteActivity(msg.sender);
 
         emit VoteCast(electionId, msg.sender, candidate);
     }
 
+    // ═══════════════════════════════════════════════════════════
+    //               阶段 5：计票 + 空缺处理（步骤 4.5）
+    // ═══════════════════════════════════════════════════════════
+
     /**
-     * @notice REELECTION 专用：投反对票
+     * @notice 最终化（任何人可触发）
+     *         - 取得票前 N 名（N=seatCount），平票按注册时间先后
+     *         - 名额未满 → PartiallyFilled，记录 unfilledSeats
      */
-    function castReelectionAgainst(uint256 electionId) external {
-        Election storage e = elections[electionId];
-        if (e.eType != ElectionType.REELECTION) revert NotReelectionType();
-        if (e.status != ElectionStatus.Active) revert ElectionNotActive();
-        if (block.timestamp > e.votingEndAt) revert ElectionNotActive();
-        if (e.hasVoted[msg.sender]) revert AlreadyVoted();
-        if (!_isEligibleVoter(e.eType, e.targetChamber, msg.sender)) revert NotEligibleVoter();
-
-        e.hasVoted[msg.sender] = true;
-        e.voteChoice[msg.sender] = address(0); // 反对
-        e.againstVotes += 1;
-        e.totalVotes += 1;
-
-        emit VoteCast(electionId, msg.sender, address(0));
-    }
-
-    // ═══════════════════════════════════════════════════════════
-    //                       最终化（任何人可触发）
-    // ═══════════════════════════════════════════════════════════
-
     function finalizeElection(uint256 electionId) external {
         Election storage e = elections[electionId];
         if (e.status != ElectionStatus.Active) revert AlreadyFinalized();
         if (block.timestamp <= e.votingEndAt) revert ElectionNotEnded();
 
-        e.status = ElectionStatus.Finalized;
-
-        if (e.eType == ElectionType.REELECTION) {
-            // 连任：FOR > AGAINST 即通过
-            address target = e.reelectionTarget;
-            uint256 forVotes = e.candidateInfo[target].voteCount;
-            e.passed = forVotes > e.againstVotes;
-            if (e.passed) {
-                e.winners.push(target);
-                e.candidateInfo[target].won = true;
-                _applyReelection(target);
-            }
-        } else {
-            // 普选/院选：取前 N 名
-            address[] memory sorted = _sortCandidatesByVotes(e.candidates, e);
-            uint256 winCount = e.seatCount < sorted.length ? e.seatCount : sorted.length;
-            for (uint256 i = 0; i < winCount; i++) {
-                e.winners.push(sorted[i]);
-                e.candidateInfo[sorted[i]].won = true;
-                _applyPromotion(e.eType, e.targetChamber, sorted[i]);
-            }
+        // 收集已通过审批的候选人
+        address[] memory approvedCandidates = _getApprovedCandidates(e);
+        if (approvedCandidates.length == 0) {
+            // 没有候选人进入投票池 → 全部空缺
+            e.unfilledSeats = e.seatCount;
+            e.status = ElectionStatus.PartiallyFilled;
+            emit SeatsUnfilled(electionId, e.unfilledSeats);
+            emit ElectionFinalized(electionId, e.winners, e.unfilledSeats);
+            return;
         }
 
-        emit ElectionFinalized(electionId, e.winners);
+        // 按票数 + 注册时间排序
+        address[] memory sorted = _sortCandidatesByVotes(approvedCandidates, e);
+        uint256 winCount = e.seatCount < sorted.length ? e.seatCount : sorted.length;
+
+        for (uint256 i = 0; i < winCount; i++) {
+            address winner = sorted[i];
+            e.winners.push(winner);
+            e.candidateInfo[winner].won = true;
+            _applyPromotion(e.eType, e.chamber, e.councilTarget, winner);
+        }
+
+        if (e.winners.length < e.seatCount) {
+            e.unfilledSeats = e.seatCount - e.winners.length;
+            e.status = ElectionStatus.PartiallyFilled;
+            emit SeatsUnfilled(electionId, e.unfilledSeats);
+        } else {
+            e.status = ElectionStatus.Finalized;
+        }
+
+        emit ElectionFinalized(electionId, e.winners, e.unfilledSeats);
+    }
+
+    /**
+     * @notice 理事长填补空缺（仅 PartiallyFilled 状态）
+     *         临时任命的候选人无需经过投票，直接晋升
+     * @param electionId  选举 ID
+     * @param candidate   被任命的候选人地址（必须符合资格）
+     */
+    function appointToVacancy(uint256 electionId, address candidate) external onlyRole(COUNCIL_CHAIR_ROLE) {
+        if (candidate == address(0)) revert ZeroAddress();
+        Election storage e = elections[electionId];
+        if (e.status != ElectionStatus.PartiallyFilled) revert ElectionNotPartiallyFilled();
+        if (e.unfilledSeats == 0) revert NoVacancy();
+
+        // 校验资格
+        if (!_isEligibleCandidate(e.eType, e.chamber, candidate)) revert NotEligibleCandidate();
+
+        // 校验未重复任命
+        Candidate storage c = e.candidateInfo[candidate];
+        if (c.won) revert AlreadyApproved();
+
+        e.winners.push(candidate);
+        c.won = true;
+        e.unfilledSeats -= 1;
+
+        _applyPromotion(e.eType, e.chamber, e.councilTarget, candidate);
+
+        if (e.unfilledSeats == 0) {
+            e.status = ElectionStatus.Finalized;
+        }
+
+        emit VacancyFilled(electionId, candidate);
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -306,20 +524,56 @@ contract AetherElection is AccessControl, IAetherElection {
             uint256 totalVotes,
             uint256 votingStartAt,
             uint256 votingEndAt,
-            uint256 seatCount
+            uint256 seatCount,
+            uint256 unfilledSeats
         )
     {
         Election storage e = elections[electionId];
         return (
-            e.eType, e.status, e.candidates.length, e.totalVotes, e.votingStartAt, e.votingEndAt, e.seatCount
+            e.eType,
+            e.status,
+            e.candidates.length,
+            e.totalVotes,
+            e.votingStartAt,
+            e.votingEndAt,
+            e.seatCount,
+            e.unfilledSeats
         );
     }
 
-    function getCandidateVoteCount(uint256 electionId, address candidate)
+    function getElectionTimelines(uint256 electionId)
         external
         view
-        returns (uint256)
+        returns (
+            uint256 registrationStartAt,
+            uint256 registrationEndAt,
+            uint256 councilReviewEndAt,
+            uint256 parliamentApprovalEndAt,
+            uint256 votingStartAt,
+            uint256 votingEndAt
+        )
     {
+        Election storage e = elections[electionId];
+        return (
+            e.registrationStartAt,
+            e.registrationEndAt,
+            e.councilReviewEndAt,
+            e.parliamentApprovalEndAt,
+            e.votingStartAt,
+            e.votingEndAt
+        );
+    }
+
+    function getCandidateInfo(uint256 electionId, address candidate)
+        external
+        view
+        returns (bool isNominated, bool isRegistered, bool isRejected, uint256 voteCount, bool won, uint256 registeredAt)
+    {
+        Candidate storage c = elections[electionId].candidateInfo[candidate];
+        return (c.isNominated, c.isRegistered, c.isRejected, c.voteCount, c.won, c.registeredAt);
+    }
+
+    function getCandidateVoteCount(uint256 electionId, address candidate) external view returns (uint256) {
         return elections[electionId].candidateInfo[candidate].voteCount;
     }
 
@@ -327,18 +581,16 @@ contract AetherElection is AccessControl, IAetherElection {
         return elections[electionId].winners;
     }
 
-    function getReelectionResult(uint256 electionId)
-        external
-        view
-        returns (uint256 forVotes, uint256 againstVotes, bool passed)
-    {
-        Election storage e = elections[electionId];
-        if (e.eType != ElectionType.REELECTION) revert NotReelectionType();
-        return (e.candidateInfo[e.reelectionTarget].voteCount, e.againstVotes, e.passed);
+    function getCandidates(uint256 electionId) external view returns (address[] memory) {
+        return elections[electionId].candidates;
     }
 
     function hasVoted(uint256 electionId, address voter) external view returns (bool) {
         return elections[electionId].hasVoted[voter];
+    }
+
+    function hasParliamentApproved(uint256 electionId, address approver) external view returns (bool) {
+        return elections[electionId].hasParliamentApproved[approver];
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -347,13 +599,29 @@ contract AetherElection is AccessControl, IAetherElection {
 
     function cancelElection(uint256 electionId) external onlyRole(ADMIN_ROLE) {
         Election storage e = elections[electionId];
-        if (e.status != ElectionStatus.Active) revert AlreadyFinalized();
+        if (e.status == ElectionStatus.Finalized || e.status == ElectionStatus.PartiallyFilled) {
+            revert AlreadyFinalized();
+        }
         e.status = ElectionStatus.Canceled;
         emit ElectionCanceled(electionId);
     }
 
     function setRingContract(address _ring) external onlyRole(ADMIN_ROLE) {
+        address old = address(ringContract);
         ringContract = IAetherRing(_ring);
+        emit RingContractUpdated(old, _ring);
+    }
+
+    function setParliamentApprovalThreshold(uint256 _threshold) external onlyRole(ADMIN_ROLE) {
+        if (_threshold == 0) revert InvalidSeatCount();
+        uint256 old = parliamentApprovalThreshold;
+        parliamentApprovalThreshold = _threshold;
+        emit ParliamentThresholdUpdated(old, _threshold);
+    }
+
+    function grantCouncilChairRole(address chair) external onlyRole(ADMIN_ROLE) {
+        if (chair == address(0)) revert ZeroAddress();
+        _grantRole(COUNCIL_CHAIR_ROLE, chair);
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -361,10 +629,10 @@ contract AetherElection is AccessControl, IAetherElection {
     // ═══════════════════════════════════════════════════════════
 
     /**
-     * @dev 判断地址是否有资格作为候选人
-     *  - MEMBER_TO_GRASSROOTS: 必须是 GENERAL_MEMBER (tier==10)
-     *  - GRASSROOTS_TO_MID: 必须是对应院的基层 (tier 1/4/7)
-     *  - REELECTION: 由 reelectionTarget 指定，不在此检查
+     * @dev 判断地址是否有资格作为候选人（V5 放宽）
+     *  - MEMBER_TO_GRASSROOTS: 公民 OR 三院成员到期（isExpired=true）
+     *  - GRASSROOTS_TO_MID: 对应院基层 (tier 1/4/7)
+     *  - CITIZEN_TO_COUNCIL: 仅公民 (tier==14)
      */
     function _isEligibleCandidate(ElectionType eType, uint8 chamber, address candidate)
         internal
@@ -373,116 +641,119 @@ contract AetherElection is AccessControl, IAetherElection {
     {
         uint8 tier = ringContract.getTier(candidate);
         if (tier == 0) return false;
+
         if (eType == ElectionType.MEMBER_TO_GRASSROOTS) {
-            return tier == 10;
+            // 公民可直接参选
+            if (tier == 14) return true;
+            // 三院成员到期（基层/中层/高层任一层级到期均可参选）
+            if (tier >= 1 && tier <= 9) {
+                uint256 ringId = ringContract.getRingId(candidate);
+                if (ringId != 0 && ringContract.isExpired(ringId)) return true;
+            }
+            return false;
         }
+
+        if (eType == ElectionType.CITIZEN_TO_COUNCIL) {
+            return tier == 14;
+        }
+
         if (eType == ElectionType.GRASSROOTS_TO_MID) {
-            if (chamber == 1) return tier == 1;
-            if (chamber == 2) return tier == 4;
-            if (chamber == 3) return tier == 7;
+            if (chamber == 1) return tier == 1; // 议员 → 参议员
+            if (chamber == 2) return tier == 4; // 委员 → 委员长
+            if (chamber == 3) return tier == 7; // 法官 → 大法官
         }
+
         return false;
     }
 
     /**
      * @dev 判断地址是否有资格投票
-     *  - MEMBER_TO_GRASSROOTS: 全体活跃会员 (tier==10)
-     *  - GRASSROOTS_TO_MID: 对应院的基层 (tier 1/4/7)
-     *  - REELECTION: 根据目标的层级决定
-     *      目标 tier 是基层 (1/4/7) → 会员投票
-     *      目标 tier 是中层 (2/5/8) → 对应院基层投票
+     *  - MEMBER_TO_GRASSROOTS / CITIZEN_TO_COUNCIL: 全体活跃公民 (tier==14)
+     *  - GRASSROOTS_TO_MID: 对应院基层 (tier 1/4/7)
      */
-    function _isEligibleVoter(ElectionType eType, uint8 chamber, address voter)
-        internal
-        view
-        returns (bool)
-    {
+    function _isEligibleVoter(ElectionType eType, uint8 chamber, address voter) internal view returns (bool) {
         uint8 tier = ringContract.getTier(voter);
         if (tier == 0) return false;
-        if (eType == ElectionType.MEMBER_TO_GRASSROOTS) {
-            return tier == 10;
+
+        if (eType == ElectionType.MEMBER_TO_GRASSROOTS || eType == ElectionType.CITIZEN_TO_COUNCIL) {
+            return tier == 14;
         }
+
         if (eType == ElectionType.GRASSROOTS_TO_MID) {
             if (chamber == 1) return tier == 1;
             if (chamber == 2) return tier == 4;
             if (chamber == 3) return tier == 7;
         }
-        if (eType == ElectionType.REELECTION) {
-            // 连任选举：根据目标的当前 tier 决定选民
-            // 这里 chamber 在 REELECTION 时为 0（创建时未指定）
-            // 实际通过 reelectionTarget 的 tier 推断
-            return true; // 简化：让所有人能投，最终由 _isEligibleVoterForReelection 处理
-        }
-        return false;
-    }
 
-    function _isEligibleVoterForReelection(address target, address voter)
-        internal
-        view
-        returns (bool)
-    {
-        uint8 targetTier = ringContract.getTier(target);
-        uint8 voterTier = ringContract.getTier(voter);
-        if (voterTier == 0) return false;
-        // 基层连任：会员投票
-        if (targetTier == 1 || targetTier == 4 || targetTier == 7) {
-            return voterTier == 10;
-        }
-        // 中层连任：对应院基层投票
-        if (targetTier == 2) return voterTier == 1;
-        if (targetTier == 5) return voterTier == 4;
-        if (targetTier == 8) return voterTier == 7;
         return false;
     }
 
     /**
-     * @dev 升级当选者 tier（仅 ADMIN_ROLE on Ring 可调）
-     *      选举合约部署后必须由 ring.ADMIN_ROLE 授权
+     * @dev 升级当选者 tier
+     *      选举合约必须有 ring.ADMIN_ROLE（updateTier）和 ring.MINTER_ROLE（首次铸道环）
      */
-    function _applyPromotion(ElectionType eType, uint8 chamber, address winner) internal {
+    function _applyPromotion(
+        ElectionType eType,
+        uint8 chamber,
+        CouncilTargetTier councilTarget,
+        address winner
+    ) internal {
         AetherRing.RingTier newTier;
+
         if (eType == ElectionType.MEMBER_TO_GRASSROOTS) {
             if (chamber == 1) newTier = AetherRing.RingTier.PARLIAMENT_MEMBER;
             else if (chamber == 2) newTier = AetherRing.RingTier.FEDERATION_MEMBER;
-            else newTier = AetherRing.RingTier.SENATE_ADVISOR;
+            else newTier = AetherRing.RingTier.TRIBUNAL_JUDGE;
         } else if (eType == ElectionType.GRASSROOTS_TO_MID) {
             if (chamber == 1) newTier = AetherRing.RingTier.PARLIAMENT_SENIOR;
             else if (chamber == 2) newTier = AetherRing.RingTier.FEDERATION_SENIOR;
-            else newTier = AetherRing.RingTier.SENATE_FELLOW;
+            else newTier = AetherRing.RingTier.TRIBUNAL_SENIOR;
+        } else if (eType == ElectionType.CITIZEN_TO_COUNCIL) {
+            if (councilTarget == CouncilTargetTier.CouncilMember) {
+                newTier = AetherRing.RingTier.COUNCIL_MEMBER;
+            } else {
+                newTier = AetherRing.RingTier.COUNCIL_SENIOR;
+            }
         }
 
         uint256 ringId = ringContract.getRingId(winner);
-        require(ringId != 0, "Winner has no ring");
 
-        // 调用 AetherRing.updateTier(tokenId, newTier, true)
-        // 选举合约必须有 RING_ADMIN_ROLE
-        AetherRing(address(ringContract)).updateTier(ringId, newTier, true);
-    }
-
-    function _applyReelection(address target) internal {
-        uint256 ringId = ringContract.getRingId(target);
-        require(ringId != 0, "Reelection target has no ring");
-
-        // 续任一届
-        uint8 tier = ringContract.getTier(target);
-        uint64 newTermEnd;
-        if (tier == 1 || tier == 4 || tier == 7) {
-            newTermEnd = uint64(block.timestamp + GRASSROOTS_TERM);
-        } else if (tier == 2 || tier == 5 || tier == 8) {
-            newTermEnd = uint64(block.timestamp + MID_TERM);
+        if (ringId == 0) {
+            // 公民当选基层/理事但未持有道环：先铸道环
+            // 注：mintRing 不允许铸 ELDER，但 PARLIAMENT_MEMBER 等都可
+            AetherRing(address(ringContract)).mintRing(winner, newTier, "");
         } else {
-            // 高层无需连任选举
-            return;
+            // 已有道环（如到期成员重新当选）：updateTier
+            AetherRing(address(ringContract)).updateTier(ringId, newTier, true);
         }
-
-        AetherRing(address(ringContract)).renewTerm(ringId, newTermEnd);
     }
 
     /**
-     * @dev 简单冒泡排序，按票数从高到低
-     *      候选人数量 <=20，gas 可控
+     * @dev 收集所有通过理事会审批的候选人（isRegistered=true）
      */
-    function _sortCandidatesByVotes(address[] storage candidates, Election storage e)
+    function _getApprovedCandidates(Election storage e) internal view returns (address[] memory) {
+        uint256 count = 0;
+        for (uint256 i = 0; i < e.candidates.length; i++) {
+            if (e.candidateInfo[e.candidates[i]].isRegistered) {
+                count++;
+            }
+        }
+        address[] memory approved = new address[](count);
+        uint256 idx = 0;
+        for (uint256 i = 0; i < e.candidates.length; i++) {
+            if (e.candidateInfo[e.candidates[i]].isRegistered) {
+                approved[idx] = e.candidates[i];
+                idx++;
+            }
+        }
+        return approved;
+    }
+
+    /**
+     * @dev 简单冒泡排序，按票数从高到低；平票按注册时间先后（早者排前）
+     *      候选人数量 <=60，gas 可控
+     */
+    function _sortCandidatesByVotes(address[] memory candidates, Election storage e)
         internal
         view
         returns (address[] memory)
@@ -493,8 +764,15 @@ contract AetherElection is AccessControl, IAetherElection {
         }
         for (uint256 i = 0; i < sorted.length; i++) {
             for (uint256 j = i + 1; j < sorted.length; j++) {
-                if (e.candidateInfo[sorted[j]].voteCount > e.candidateInfo[sorted[i]].voteCount) {
+                uint256 votesI = e.candidateInfo[sorted[i]].voteCount;
+                uint256 votesJ = e.candidateInfo[sorted[j]].voteCount;
+                // 票数高的排前；票数相同则注册早的排前
+                if (votesJ > votesI) {
                     (sorted[i], sorted[j]) = (sorted[j], sorted[i]);
+                } else if (votesJ == votesI) {
+                    if (e.candidateInfo[sorted[j]].registeredAt < e.candidateInfo[sorted[i]].registeredAt) {
+                        (sorted[i], sorted[j]) = (sorted[j], sorted[i]);
+                    }
                 }
             }
         }

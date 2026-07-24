@@ -36,6 +36,28 @@ export const AetherRingABI = [
         "type": "uint256"
       }
     ],
+    "name": "AlreadyAppointedElder",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "AlreadyDormant",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
     "name": "AlreadyEmeritus",
     "type": "error"
   },
@@ -48,6 +70,33 @@ export const AetherRingABI = [
       }
     ],
     "name": "AlreadyHasRing",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "current",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "limit",
+        "type": "uint256"
+      }
+    ],
+    "name": "AppointedElderLimitReached",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "DormancyNotDue",
     "type": "error"
   },
   {
@@ -177,12 +226,50 @@ export const AetherRingABI = [
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "sender",
+        "type": "address"
+      }
+    ],
+    "name": "NotAppointedElder",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "NotCitizen",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "NotDormant",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint256",
         "name": "tokenId",
         "type": "uint256"
       }
     ],
     "name": "NotEmeritus",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotRingBearer",
     "type": "error"
   },
   {
@@ -205,6 +292,17 @@ export const AetherRingABI = [
       }
     ],
     "name": "NotSafeWallet",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "remainingSeconds",
+        "type": "uint256"
+      }
+    ],
+    "name": "RenounceCooldownActive",
     "type": "error"
   },
   {
@@ -287,14 +385,8 @@ export const AetherRingABI = [
     "type": "error"
   },
   {
-    "inputs": [
-      {
-        "internalType": "uint8",
-        "name": "consecutiveTerms",
-        "type": "uint8"
-      }
-    ],
-    "name": "TermLimitReached",
+    "inputs": [],
+    "name": "Unauthorized",
     "type": "error"
   },
   {
@@ -345,6 +437,82 @@ export const AetherRingABI = [
       }
     ],
     "name": "ApprovalForAll",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "holder",
+        "type": "address"
+      }
+    ],
+    "name": "CitizenDormant",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "holder",
+        "type": "address"
+      }
+    ],
+    "name": "CitizenReactivated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "holder",
+        "type": "address"
+      }
+    ],
+    "name": "CitizenRenounced",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "holder",
+        "type": "address"
+      }
+    ],
+    "name": "ElderAppointed",
     "type": "event"
   },
   {
@@ -456,6 +624,12 @@ export const AetherRingABI = [
         "internalType": "address",
         "name": "holder",
         "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum AetherRing.RingTier",
+        "name": "oldTier",
+        "type": "uint8"
       }
     ],
     "name": "RingRetired",
@@ -585,31 +759,6 @@ export const AetherRingABI = [
       },
       {
         "indexed": false,
-        "internalType": "uint64",
-        "name": "newTermEndAt",
-        "type": "uint64"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint8",
-        "name": "newConsecutiveTerms",
-        "type": "uint8"
-      }
-    ],
-    "name": "TermRenewed",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "tokenId",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
         "internalType": "enum AetherRing.RingTier",
         "name": "oldTier",
         "type": "uint8"
@@ -650,6 +799,25 @@ export const AetherRingABI = [
     "type": "event"
   },
   {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "voter",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "lastActivityAt",
+        "type": "uint256"
+      }
+    ],
+    "name": "VoteActivityMarked",
+    "type": "event"
+  },
+  {
     "inputs": [],
     "name": "ADMIN_ROLE",
     "outputs": [
@@ -657,6 +825,84 @@ export const AetherRingABI = [
         "internalType": "bytes32",
         "name": "",
         "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "APPOINTED_ELDER_LIMIT",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "CITIZEN_TERM",
+    "outputs": [
+      {
+        "internalType": "uint64",
+        "name": "",
+        "type": "uint64"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "COUNCIL_CHAIR_LIMIT",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "COUNCIL_CHAIR_TERM",
+    "outputs": [
+      {
+        "internalType": "uint64",
+        "name": "",
+        "type": "uint64"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "COUNCIL_MEMBER_LIMIT",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "COUNCIL_SENIOR_LIMIT",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -677,12 +923,51 @@ export const AetherRingABI = [
   },
   {
     "inputs": [],
-    "name": "GENERAL_TERM",
+    "name": "DORMANCY_PERIOD",
     "outputs": [
       {
         "internalType": "uint64",
         "name": "",
         "type": "uint64"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "ELDER_TERM",
+    "outputs": [
+      {
+        "internalType": "uint64",
+        "name": "",
+        "type": "uint64"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "ELECTION_ROLE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "GOVERNANCE_ROLE",
+    "outputs": [
+      {
+        "internalType": "bytes32",
+        "name": "",
+        "type": "bytes32"
       }
     ],
     "stateMutability": "view",
@@ -793,6 +1078,37 @@ export const AetherRingABI = [
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "RENOUNCE_COOLDOWN",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "candidate",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "covenantHash",
+        "type": "string"
+      }
+    ],
+    "name": "appointElder",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "address",
@@ -819,6 +1135,51 @@ export const AetherRingABI = [
       }
     ],
     "name": "balanceOf",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "user",
+        "type": "address"
+      }
+    ],
+    "name": "canReacquireCitizenship",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getActiveCitizens",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "getAppointedElderCount",
     "outputs": [
       {
         "internalType": "uint256",
@@ -918,6 +1279,26 @@ export const AetherRingABI = [
             "internalType": "string",
             "name": "covenantHash",
             "type": "string"
+          },
+          {
+            "internalType": "uint64",
+            "name": "lastActivityAt",
+            "type": "uint64"
+          },
+          {
+            "internalType": "bool",
+            "name": "isDormant",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "isRetiredElder",
+            "type": "bool"
+          },
+          {
+            "internalType": "bool",
+            "name": "isAppointedElder",
+            "type": "bool"
           }
         ],
         "internalType": "struct AetherRing.RingInfo",
@@ -987,7 +1368,7 @@ export const AetherRingABI = [
   },
   {
     "inputs": [],
-    "name": "getTotalMembers",
+    "name": "getTotalCitizens",
     "outputs": [
       {
         "internalType": "uint256",
@@ -1091,6 +1472,44 @@ export const AetherRingABI = [
         "type": "address"
       }
     ],
+    "name": "isDormant",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "holder",
+        "type": "address"
+      }
+    ],
+    "name": "isElderActive",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "holder",
+        "type": "address"
+      }
+    ],
     "name": "isEmeritus",
     "outputs": [
       {
@@ -1124,12 +1543,76 @@ export const AetherRingABI = [
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "holder",
+        "type": "address"
+      }
+    ],
+    "name": "isRetiredElder",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "lastRenouncedAt",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "tokenId",
+        "type": "uint256"
+      }
+    ],
+    "name": "markDormantIfDue",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint256",
         "name": "tokenId",
         "type": "uint256"
       }
     ],
     "name": "markExpiredIfDue",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "voter",
+        "type": "address"
+      }
+    ],
+    "name": "markVoteActivity",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1211,17 +1694,19 @@ export const AetherRingABI = [
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "tokenId",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint64",
-        "name": "newTermEnd",
-        "type": "uint64"
+        "internalType": "address",
+        "name": "voter",
+        "type": "address"
       }
     ],
-    "name": "renewTerm",
+    "name": "reactivateDormantCitizen",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "renounceCitizenship",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1350,6 +1835,26 @@ export const AetherRingABI = [
         "internalType": "string",
         "name": "covenantHash",
         "type": "string"
+      },
+      {
+        "internalType": "uint64",
+        "name": "lastActivityAt",
+        "type": "uint64"
+      },
+      {
+        "internalType": "bool",
+        "name": "isDormant",
+        "type": "bool"
+      },
+      {
+        "internalType": "bool",
+        "name": "isRetiredElder",
+        "type": "bool"
+      },
+      {
+        "internalType": "bool",
+        "name": "isAppointedElder",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",

@@ -36,12 +36,12 @@ export const AetherGovernanceABI = [
   },
   {
     "inputs": [],
-    "name": "AlreadyExecuted",
+    "name": "AlreadyApproved",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "AlreadyFinalized",
+    "name": "AlreadyResolved",
     "type": "error"
   },
   {
@@ -51,7 +51,37 @@ export const AetherGovernanceABI = [
   },
   {
     "inputs": [],
+    "name": "AlreadyVetoed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "AlreadyVoted",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "CannotVetoImpeachment",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ComplianceNotEnded",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ConfidenceVoteNotEnded",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "ConstitutionalOnlyForParam",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "EmergencyApprovalNotMet",
     "type": "error"
   },
   {
@@ -65,18 +95,34 @@ export const AetherGovernanceABI = [
     "type": "error"
   },
   {
+    "inputs": [
+      {
+        "internalType": "bytes",
+        "name": "ret",
+        "type": "bytes"
+      }
+    ],
+    "name": "ExecutionFailed",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "FirstVoteNotEnded",
+    "type": "error"
+  },
+  {
     "inputs": [],
     "name": "ImpeachmentTargetInvalid",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "InvalidChamberWeights",
+    "name": "NotAppointedElder",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "InvalidVoteOption",
+    "name": "NotAuthorized",
     "type": "error"
   },
   {
@@ -86,64 +132,27 @@ export const AetherGovernanceABI = [
   },
   {
     "inputs": [],
+    "name": "NotCouncilChair",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotCouncilMember",
+    "type": "error"
+  },
+  {
+    "inputs": [],
     "name": "NotDrafting",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "NotEligibleSigner",
+    "name": "NotEligibleVoter",
     "type": "error"
   },
   {
     "inputs": [],
-    "name": "NotImpeachmentType",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "NotInVotingPeriod",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "NotPendingMultisig",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "NotRingBearer",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "address",
-        "name": "sender",
-        "type": "address"
-      }
-    ],
-    "name": "NotSafeWallet",
-    "type": "error"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "bytes4",
-        "name": "selector",
-        "type": "bytes4"
-      }
-    ],
-    "name": "ParamSelectorNotWhitelisted",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "ProposalNotQueued",
-    "type": "error"
-  },
-  {
-    "inputs": [],
-    "name": "SafeWalletNotSet",
+    "name": "NotEmergency",
     "type": "error"
   },
   {
@@ -159,7 +168,83 @@ export const AetherGovernanceABI = [
         "type": "uint256"
       }
     ],
-    "name": "SignaturesNotMet",
+    "name": "NotEnoughSignatures",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotFirstVoteActive",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotParliamentMember",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotPendingCompliance",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotPendingFirstVote",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotPendingFormal",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotPendingVeto",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotProposer",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotPublicVoteActive",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotQueued",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotReturnedToDraft",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotRingBearer",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "NotTribunalMember",
+    "type": "error"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "bytes4",
+        "name": "selector",
+        "type": "bytes4"
+      }
+    ],
+    "name": "ParamSelectorNotWhitelisted",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "PublicVoteNotEnded",
     "type": "error"
   },
   {
@@ -185,7 +270,12 @@ export const AetherGovernanceABI = [
   },
   {
     "inputs": [],
-    "name": "VotingNotEnded",
+    "name": "UseCreateImpeachmentProposal",
+    "type": "error"
+  },
+  {
+    "inputs": [],
+    "name": "VetoWindowNotEnded",
     "type": "error"
   },
   {
@@ -196,22 +286,15 @@ export const AetherGovernanceABI = [
         "internalType": "uint256",
         "name": "id",
         "type": "uint256"
-      }
-    ],
-    "name": "ImpeachmentApprovedByMultisig",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
+      },
       {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "id",
-        "type": "uint256"
+        "indexed": false,
+        "internalType": "address",
+        "name": "chair",
+        "type": "address"
       }
     ],
-    "name": "ImpeachmentRejectedByMultisig",
+    "name": "ChairConfidenceFailed",
     "type": "event"
   },
   {
@@ -224,7 +307,247 @@ export const AetherGovernanceABI = [
         "type": "uint256"
       },
       {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "compliant",
+        "type": "bool"
+      }
+    ],
+    "name": "ComplianceFinalized",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
         "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "voter",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum AetherGovernance.VoteOption",
+        "name": "option",
+        "type": "uint8"
+      }
+    ],
+    "name": "ComplianceVoteCast",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "chair",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "signer",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "current",
+        "type": "uint256"
+      }
+    ],
+    "name": "ConfidenceTriggerSigned",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "voter",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "support",
+        "type": "bool"
+      }
+    ],
+    "name": "ConfidenceVoteCast",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "passed",
+        "type": "bool"
+      }
+    ],
+    "name": "ConfidenceVoteFinalized",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "chair",
+        "type": "address"
+      }
+    ],
+    "name": "ConfidenceVoteTriggered",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "elder",
+        "type": "address"
+      }
+    ],
+    "name": "EmergencyApproved",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "voter",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum AetherGovernance.VoteOption",
+        "name": "option",
+        "type": "uint8"
+      }
+    ],
+    "name": "FirstVoteCast",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "passed",
+        "type": "bool"
+      }
+    ],
+    "name": "FirstVoteFinalized",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      }
+    ],
+    "name": "FirstVoteStarted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      }
+    ],
+    "name": "FormalProposalSubmitted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bool",
+        "name": "passed",
+        "type": "bool"
+      }
+    ],
+    "name": "ImpeachmentFinalized",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
         "internalType": "address",
         "name": "signer",
         "type": "address"
@@ -242,7 +565,7 @@ export const AetherGovernanceABI = [
         "type": "uint256"
       }
     ],
-    "name": "ImpeachmentSignatureAdded",
+    "name": "ImpeachmentSigned",
     "type": "event"
   },
   {
@@ -255,7 +578,20 @@ export const AetherGovernanceABI = [
         "type": "uint256"
       }
     ],
-    "name": "ImpeachmentSubmittedToMultisig",
+    "name": "ImpeachmentToPublicVote",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      }
+    ],
+    "name": "ProposalAdvanced",
     "type": "event"
   },
   {
@@ -310,12 +646,6 @@ export const AetherGovernanceABI = [
         "internalType": "uint256",
         "name": "id",
         "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "bytes",
-        "name": "returnData",
-        "type": "bytes"
       }
     ],
     "name": "ProposalExecuted",
@@ -334,36 +664,6 @@ export const AetherGovernanceABI = [
         "indexed": false,
         "internalType": "bool",
         "name": "passed",
-        "type": "bool"
-      },
-      {
-        "indexed": false,
-        "internalType": "enum AetherGovernance.ChamberStance",
-        "name": "consensus",
-        "type": "uint8"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "forWeighted",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint256",
-        "name": "againstWeighted",
-        "type": "uint256"
-      },
-      {
-        "indexed": false,
-        "internalType": "bool",
-        "name": "memberQuorumMet",
-        "type": "bool"
-      },
-      {
-        "indexed": false,
-        "internalType": "bool",
-        "name": "memberVeto",
         "type": "bool"
       }
     ],
@@ -387,6 +687,89 @@ export const AetherGovernanceABI = [
       }
     ],
     "name": "ProposalQueued",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      }
+    ],
+    "name": "ProposalResubmitted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      }
+    ],
+    "name": "ProposalReturned",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      }
+    ],
+    "name": "ProposalVetoed",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "uint256",
+        "name": "id",
+        "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "voter",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "enum AetherGovernance.VoteOption",
+        "name": "option",
+        "type": "uint8"
+      }
+    ],
+    "name": "PublicVoteCast",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "oldRing",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "newRing",
+        "type": "address"
+      }
+    ],
+    "name": "RingContractUpdated",
     "type": "event"
   },
   {
@@ -465,56 +848,6 @@ export const AetherGovernanceABI = [
     "type": "event"
   },
   {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "oldSafe",
-        "type": "address"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "newSafe",
-        "type": "address"
-      }
-    ],
-    "name": "SafeWalletUpdated",
-    "type": "event"
-  },
-  {
-    "anonymous": false,
-    "inputs": [
-      {
-        "indexed": true,
-        "internalType": "uint256",
-        "name": "proposalId",
-        "type": "uint256"
-      },
-      {
-        "indexed": true,
-        "internalType": "address",
-        "name": "voter",
-        "type": "address"
-      },
-      {
-        "indexed": false,
-        "internalType": "uint8",
-        "name": "tier",
-        "type": "uint8"
-      },
-      {
-        "indexed": false,
-        "internalType": "enum AetherGovernance.VoteOption",
-        "name": "option",
-        "type": "uint8"
-      }
-    ],
-    "name": "VoteCast",
-    "type": "event"
-  },
-  {
     "inputs": [],
     "name": "ADMIN_ROLE",
     "outputs": [
@@ -555,12 +888,142 @@ export const AetherGovernanceABI = [
   },
   {
     "inputs": [],
+    "name": "CITIZEN_QUORUM_BPS",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "CITIZEN_WEIGHT_BPS",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "COMPLIANCE_VOTE_PERIOD",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "CONFIDENCE_RESIGN_WINDOW",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "CONFIDENCE_TRIGGER_SIGNATURES",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "CONFIDENCE_VOTE_PERIOD",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "CONSTITUTIONAL_QUORUM_BPS",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
     "name": "DEFAULT_ADMIN_ROLE",
     "outputs": [
       {
         "internalType": "bytes32",
         "name": "",
         "type": "bytes32"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "EMERGENCY_ELDER_APPROVALS",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "FIRST_VOTE_PERIOD",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "IMPEACHMENT_PASS_BPS",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
       }
     ],
     "stateMutability": "view",
@@ -581,59 +1044,7 @@ export const AetherGovernanceABI = [
   },
   {
     "inputs": [],
-    "name": "IMPEACHMENT_SIGNATURES_REQUIRED",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "IMPEACHMENT_VETO_BPS",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "MEMBER_QUORUM_BPS",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "MEMBER_VETO_BPS",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "MEMBER_WEIGHT_BPS",
+    "name": "IMPEACHMENT_SIGNATURES",
     "outputs": [
       {
         "internalType": "uint256",
@@ -671,6 +1082,84 @@ export const AetherGovernanceABI = [
     "type": "function"
   },
   {
+    "inputs": [],
+    "name": "PUBLIC_VOTE_PERIOD",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "RETURN_SIGNATURES",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "TIMELOCK_EMERGENCY",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "TIMELOCK_NORMAL",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "VETO_SIGNATURES",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "VETO_WINDOW",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
     "inputs": [
       {
         "internalType": "uint256",
@@ -678,7 +1167,20 @@ export const AetherGovernanceABI = [
         "type": "uint256"
       }
     ],
-    "name": "approveImpeachmentByMultisig",
+    "name": "advanceProposal",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      }
+    ],
+    "name": "approveEmergencyTreasury",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -709,9 +1211,148 @@ export const AetherGovernanceABI = [
         "type": "uint8"
       }
     ],
-    "name": "castVote",
+    "name": "castComplianceVote",
     "outputs": [],
     "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "enum AetherGovernance.VoteOption",
+        "name": "option",
+        "type": "uint8"
+      }
+    ],
+    "name": "castFirstVote",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "enum AetherGovernance.VoteOption",
+        "name": "option",
+        "type": "uint8"
+      }
+    ],
+    "name": "castPublicVote",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "chairPendingResign",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "complianceVotePeriod",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "confidenceVoteCount",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "name": "confidenceVotes",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "chair",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "startedAt",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "forVotes",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "againstVotes",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "resolved",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "councilTriggerSignatures",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -769,6 +1410,16 @@ export const AetherGovernanceABI = [
         "internalType": "bytes",
         "name": "calldataPayload",
         "type": "bytes"
+      },
+      {
+        "internalType": "bool",
+        "name": "isConstitutional",
+        "type": "bool"
+      },
+      {
+        "internalType": "enum AetherGovernance.TreasuryUrgency",
+        "name": "urgency",
+        "type": "uint8"
       }
     ],
     "name": "createProposal",
@@ -803,6 +1454,58 @@ export const AetherGovernanceABI = [
         "type": "uint256"
       }
     ],
+    "name": "finalizeCompliance",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "voteId",
+        "type": "uint256"
+      }
+    ],
+    "name": "finalizeConfidence",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      }
+    ],
+    "name": "finalizeFirstVote",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      }
+    ],
+    "name": "finalizeImpeachment",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      }
+    ],
     "name": "finalizeProposal",
     "outputs": [],
     "stateMutability": "nonpayable",
@@ -816,81 +1519,57 @@ export const AetherGovernanceABI = [
         "type": "uint256"
       }
     ],
-    "name": "getNormalVoteCounts",
+    "name": "finalizeVetoWindow",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "firstVotePeriod",
     "outputs": [
       {
         "internalType": "uint256",
-        "name": "parliamentFor",
+        "name": "",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "voteId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getConfidenceVote",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "chair",
+        "type": "address"
+      },
+      {
+        "internalType": "uint256",
+        "name": "startedAt",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "parliamentAgainst",
+        "name": "forVotes",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "federationFor",
+        "name": "againstVotes",
         "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "federationAgainst",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "senateFor",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "senateAgainst",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "memberFor",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "memberAgainst",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "memberAbstain",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "memberTotalSnapshot",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "totalForWeighted",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "totalAgainstWeighted",
-        "type": "uint256"
-      },
-      {
-        "internalType": "enum AetherGovernance.ChamberStance",
-        "name": "chamberConsensus",
-        "type": "uint8"
       },
       {
         "internalType": "bool",
-        "name": "memberQuorumMet",
-        "type": "bool"
-      },
-      {
-        "internalType": "bool",
-        "name": "memberVetoTriggered",
+        "name": "resolved",
         "type": "bool"
       }
     ],
@@ -933,16 +1612,6 @@ export const AetherGovernanceABI = [
         "type": "string"
       },
       {
-        "internalType": "uint256",
-        "name": "votingStartAt",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "votingEndAt",
-        "type": "uint256"
-      },
-      {
         "internalType": "enum AetherGovernance.ProposalStatus",
         "name": "status",
         "type": "uint8"
@@ -959,8 +1628,18 @@ export const AetherGovernanceABI = [
       },
       {
         "internalType": "bool",
-        "name": "isFinalized",
+        "name": "isExecuted",
         "type": "bool"
+      },
+      {
+        "internalType": "bool",
+        "name": "isConstitutional",
+        "type": "bool"
+      },
+      {
+        "internalType": "enum AetherGovernance.TreasuryUrgency",
+        "name": "urgency",
+        "type": "uint8"
       },
       {
         "internalType": "address",
@@ -969,12 +1648,96 @@ export const AetherGovernanceABI = [
       },
       {
         "internalType": "uint256",
-        "name": "currentSignatures",
+        "name": "currentImpeachSignatures",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "requiredSignatures",
+        "name": "requiredImpeachSignatures",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "currentVetoSignatures",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "requiredVetoSignatures",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "currentReturnSignatures",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "requiredReturnSignatures",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "emergencyApprovals",
+        "type": "uint256"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      }
+    ],
+    "name": "getProposalTimelines",
+    "outputs": [
+      {
+        "internalType": "uint256",
+        "name": "createdAt",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "firstVoteStartAt",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "firstVoteEndAt",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "complianceVoteEndAt",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "publicVoteStartAt",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "publicVoteEndAt",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "vetoWindowEndAt",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "queuedAt",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "executeAfter",
         "type": "uint256"
       }
     ],
@@ -1006,19 +1769,94 @@ export const AetherGovernanceABI = [
         "internalType": "uint256",
         "name": "proposalId",
         "type": "uint256"
-      },
-      {
-        "internalType": "address",
-        "name": "voter",
-        "type": "address"
       }
     ],
-    "name": "getVoterVote",
+    "name": "getVoteCounts",
     "outputs": [
       {
-        "internalType": "enum AetherGovernance.VoteOption",
-        "name": "",
+        "internalType": "uint256",
+        "name": "parliamentFor",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "parliamentAgainst",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "federationFor",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "federationAgainst",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "tribunalFor",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "tribunalAgainst",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "citizenFor",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "citizenAgainst",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "citizenAbstain",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "citizenTotalSnapshot",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "complianceFor",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "complianceAgainst",
+        "type": "uint256"
+      },
+      {
+        "internalType": "enum AetherGovernance.ChamberStance",
+        "name": "parliamentStance",
         "type": "uint8"
+      },
+      {
+        "internalType": "enum AetherGovernance.ChamberStance",
+        "name": "federationStance",
+        "type": "uint8"
+      },
+      {
+        "internalType": "enum AetherGovernance.ChamberStance",
+        "name": "tribunalStance",
+        "type": "uint8"
+      },
+      {
+        "internalType": "bool",
+        "name": "citizenQuorumMet",
+        "type": "bool"
+      },
+      {
+        "internalType": "bool",
+        "name": "passed",
+        "type": "bool"
       }
     ],
     "stateMutability": "view",
@@ -1058,6 +1896,126 @@ export const AetherGovernanceABI = [
   {
     "inputs": [
       {
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "voter",
+        "type": "address"
+      }
+    ],
+    "name": "hasComplianceVoted",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "elder",
+        "type": "address"
+      }
+    ],
+    "name": "hasEmergencyApproved",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "voter",
+        "type": "address"
+      }
+    ],
+    "name": "hasFirstVoted",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "signer",
+        "type": "address"
+      }
+    ],
+    "name": "hasImpeachSigned",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "voter",
+        "type": "address"
+      }
+    ],
+    "name": "hasPublicVoted",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "bytes32",
         "name": "role",
         "type": "bytes32"
@@ -1082,17 +2040,65 @@ export const AetherGovernanceABI = [
   {
     "inputs": [
       {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "name": "hasSignedConfidenceTrigger",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
         "internalType": "uint256",
         "name": "proposalId",
         "type": "uint256"
       },
       {
         "internalType": "address",
-        "name": "signer",
+        "name": "council",
         "type": "address"
       }
     ],
-    "name": "hasSigned",
+    "name": "hasSignedReturn",
+    "outputs": [
+      {
+        "internalType": "bool",
+        "name": "",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "address",
+        "name": "elder",
+        "type": "address"
+      }
+    ],
+    "name": "hasVetoed",
     "outputs": [
       {
         "internalType": "bool",
@@ -1177,12 +2183,32 @@ export const AetherGovernanceABI = [
       },
       {
         "internalType": "uint256",
-        "name": "votingStartAt",
+        "name": "firstVoteStartAt",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "votingEndAt",
+        "name": "firstVoteEndAt",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "complianceVoteEndAt",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "publicVoteStartAt",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "publicVoteEndAt",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "vetoWindowEndAt",
         "type": "uint256"
       },
       {
@@ -1207,57 +2233,67 @@ export const AetherGovernanceABI = [
       },
       {
         "internalType": "uint256",
-        "name": "senateFor",
+        "name": "tribunalFor",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "senateAgainst",
+        "name": "tribunalAgainst",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "memberFor",
+        "name": "citizenFor",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "memberAgainst",
+        "name": "citizenAgainst",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "memberAbstain",
+        "name": "citizenAbstain",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "memberTotalSnapshot",
+        "name": "citizenTotalSnapshot",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "totalForWeighted",
+        "name": "complianceFor",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "totalAgainstWeighted",
+        "name": "complianceAgainst",
         "type": "uint256"
       },
       {
         "internalType": "enum AetherGovernance.ChamberStance",
-        "name": "chamberConsensus",
+        "name": "parliamentStance",
+        "type": "uint8"
+      },
+      {
+        "internalType": "enum AetherGovernance.ChamberStance",
+        "name": "federationStance",
+        "type": "uint8"
+      },
+      {
+        "internalType": "enum AetherGovernance.ChamberStance",
+        "name": "tribunalStance",
         "type": "uint8"
       },
       {
         "internalType": "bool",
-        "name": "memberQuorumMet",
+        "name": "citizenQuorumMet",
         "type": "bool"
       },
       {
         "internalType": "bool",
-        "name": "memberVetoTriggered",
+        "name": "passed",
         "type": "bool"
       },
       {
@@ -1287,8 +2323,18 @@ export const AetherGovernanceABI = [
       },
       {
         "internalType": "bool",
-        "name": "isFinalized",
+        "name": "isExecuted",
         "type": "bool"
+      },
+      {
+        "internalType": "bool",
+        "name": "isConstitutional",
+        "type": "bool"
+      },
+      {
+        "internalType": "enum AetherGovernance.TreasuryUrgency",
+        "name": "urgency",
+        "type": "uint8"
       },
       {
         "internalType": "address",
@@ -1297,12 +2343,37 @@ export const AetherGovernanceABI = [
       },
       {
         "internalType": "uint256",
-        "name": "requiredSignatures",
+        "name": "requiredImpeachSignatures",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "currentSignatures",
+        "name": "currentImpeachSignatures",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "requiredVetoSignatures",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "currentVetoSignatures",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "requiredReturnSignatures",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "currentReturnSignatures",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "emergencyApprovals",
         "type": "uint256"
       }
     ],
@@ -1310,16 +2381,16 @@ export const AetherGovernanceABI = [
     "type": "function"
   },
   {
-    "inputs": [
+    "inputs": [],
+    "name": "publicVotePeriod",
+    "outputs": [
       {
         "internalType": "uint256",
-        "name": "proposalId",
+        "name": "",
         "type": "uint256"
       }
     ],
-    "name": "rejectImpeachmentByMultisig",
-    "outputs": [],
-    "stateMutability": "nonpayable",
+    "stateMutability": "view",
     "type": "function"
   },
   {
@@ -1336,6 +2407,42 @@ export const AetherGovernanceABI = [
       }
     ],
     "name": "renounceRole",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "newTitle",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "newIpfs",
+        "type": "string"
+      }
+    ],
+    "name": "resubmitFromReturn",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "proposalId",
+        "type": "uint256"
+      }
+    ],
+    "name": "returnProposal",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1385,47 +2492,6 @@ export const AetherGovernanceABI = [
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "safeWallet",
-    "outputs": [
-      {
-        "internalType": "contract ISafe",
-        "name": "",
-        "type": "address"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
-        "internalType": "uint256",
-        "name": "_parliament",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_federation",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_senate",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "_member",
-        "type": "uint256"
-      }
-    ],
-    "name": "setChamberWeights",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
     "inputs": [
       {
         "internalType": "uint8",
@@ -1447,7 +2513,7 @@ export const AetherGovernanceABI = [
     "inputs": [
       {
         "internalType": "address",
-        "name": "_ringAddress",
+        "name": "_ring",
         "type": "address"
       }
     ],
@@ -1459,26 +2525,13 @@ export const AetherGovernanceABI = [
   {
     "inputs": [
       {
-        "internalType": "address",
-        "name": "_safe",
-        "type": "address"
-      }
-    ],
-    "name": "setSafeWallet",
-    "outputs": [],
-    "stateMutability": "nonpayable",
-    "type": "function"
-  },
-  {
-    "inputs": [
-      {
         "internalType": "uint256",
-        "name": "_signal",
+        "name": "_normal",
         "type": "uint256"
       },
       {
         "internalType": "uint256",
-        "name": "_treasury",
+        "name": "_emergency",
         "type": "uint256"
       }
     ],
@@ -1491,11 +2544,34 @@ export const AetherGovernanceABI = [
     "inputs": [
       {
         "internalType": "uint256",
-        "name": "_period",
+        "name": "_firstVote",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_publicVote",
+        "type": "uint256"
+      },
+      {
+        "internalType": "uint256",
+        "name": "_compliance",
         "type": "uint256"
       }
     ],
-    "name": "setVotingPeriod",
+    "name": "setVotingPeriods",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "chair",
+        "type": "address"
+      }
+    ],
+    "name": "signConfidenceTrigger",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"
@@ -1521,40 +2597,9 @@ export const AetherGovernanceABI = [
         "type": "uint256"
       }
     ],
-    "name": "simulateFinalize",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "wouldPass",
-        "type": "bool"
-      },
-      {
-        "internalType": "enum AetherGovernance.ChamberStance",
-        "name": "consensus",
-        "type": "uint8"
-      },
-      {
-        "internalType": "bool",
-        "name": "quorumMet",
-        "type": "bool"
-      },
-      {
-        "internalType": "bool",
-        "name": "vetoTriggered",
-        "type": "bool"
-      },
-      {
-        "internalType": "uint256",
-        "name": "totalForWeighted",
-        "type": "uint256"
-      },
-      {
-        "internalType": "uint256",
-        "name": "totalAgainstWeighted",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
+    "name": "startFirstVote",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -1565,25 +2610,9 @@ export const AetherGovernanceABI = [
         "type": "uint256"
       }
     ],
-    "name": "simulateImpeachmentResult",
-    "outputs": [
-      {
-        "internalType": "bool",
-        "name": "wouldPass",
-        "type": "bool"
-      },
-      {
-        "internalType": "bool",
-        "name": "quorumMet",
-        "type": "bool"
-      },
-      {
-        "internalType": "bool",
-        "name": "vetoTriggered",
-        "type": "bool"
-      }
-    ],
-    "stateMutability": "view",
+    "name": "submitFormalProposal",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
@@ -1607,7 +2636,7 @@ export const AetherGovernanceABI = [
   },
   {
     "inputs": [],
-    "name": "timelockImpeachment",
+    "name": "timelockEmergency",
     "outputs": [
       {
         "internalType": "uint256",
@@ -1620,20 +2649,7 @@ export const AetherGovernanceABI = [
   },
   {
     "inputs": [],
-    "name": "timelockSignal",
-    "outputs": [
-      {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
-      }
-    ],
-    "stateMutability": "view",
-    "type": "function"
-  },
-  {
-    "inputs": [],
-    "name": "timelockTreasury",
+    "name": "timelockNormal",
     "outputs": [
       {
         "internalType": "uint256",
@@ -1647,38 +2663,50 @@ export const AetherGovernanceABI = [
   {
     "inputs": [
       {
-        "internalType": "uint256",
-        "name": "",
-        "type": "uint256"
+        "internalType": "address",
+        "name": "chair",
+        "type": "address"
       },
       {
-        "internalType": "address",
+        "internalType": "string",
         "name": "",
-        "type": "address"
+        "type": "string"
       }
     ],
-    "name": "votes",
-    "outputs": [
-      {
-        "internalType": "enum AetherGovernance.VoteOption",
-        "name": "",
-        "type": "uint8"
-      }
-    ],
-    "stateMutability": "view",
+    "name": "triggerConfidenceVote",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   },
   {
-    "inputs": [],
-    "name": "votingPeriod",
-    "outputs": [
+    "inputs": [
       {
         "internalType": "uint256",
-        "name": "",
+        "name": "proposalId",
         "type": "uint256"
       }
     ],
-    "stateMutability": "view",
+    "name": "vetoProposal",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "uint256",
+        "name": "voteId",
+        "type": "uint256"
+      },
+      {
+        "internalType": "bool",
+        "name": "support",
+        "type": "bool"
+      }
+    ],
+    "name": "voteConfidence",
+    "outputs": [],
+    "stateMutability": "nonpayable",
     "type": "function"
   }
 ] as const;
