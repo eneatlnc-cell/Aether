@@ -60,25 +60,6 @@ contract AetherRing is ERC721, AccessControl, IAetherRing {
     bytes32 public constant GOVERNANCE_ROLE = keccak256("GOVERNANCE_ROLE");
     bytes32 public constant ELECTION_ROLE = keccak256("ELECTION_ROLE");
 
-    // ──────────── 14 级权级枚举 ────────────
-    enum RingTier {
-        NONE, // 0
-        PARLIAMENT_MEMBER, // 1  议员（议会基层）
-        PARLIAMENT_SENIOR, // 2  参议员（议会中层）
-        PARLIAMENT_SPEAKER, // 3  议长（议会高层）
-        FEDERATION_MEMBER, // 4  委员（联邦基层）
-        FEDERATION_SENIOR, // 5  委员长（联邦中层）
-        FEDERATION_MINISTER, // 6  执政（联邦高层）
-        TRIBUNAL_JUDGE, // 7  法官（法庭基层）
-        TRIBUNAL_SENIOR, // 8  大法官（法庭中层）
-        TRIBUNAL_CHIEF, // 9  首席（法庭高层）
-        COUNCIL_MEMBER, // 10 理事（理事会基层）
-        COUNCIL_SENIOR, // 11 常务理事（理事会中层）
-        COUNCIL_CHAIR, // 12 理事长（理事会高层）
-        ELDER, // 13 元老（独立机构）
-        CITIZEN // 14 公民（基金会成员）
-    }
-
     // ──────────── 层级 ────────────
     enum TierLevel {
         NONE, // 0
@@ -88,23 +69,6 @@ contract AetherRing is ERC721, AccessControl, IAetherRing {
         COUNCIL, // 4 理事会
         ELDER_LEVEL, // 5 元老院
         CITIZEN_LEVEL // 6 公民
-    }
-
-    // ──────────── 数据结构 ────────────
-    struct RingInfo {
-        RingTier tier;
-        uint64 mintedAt;
-        uint64 termEndAt; // 任期结束时间；高层/元老/公民为 type(uint64).max
-        uint8 consecutiveTerms; // 已连任次数（v3 始终为 0，保留字段兼容）
-        bool isActive; // 投票/提案权限
-        bool isEmeritus; // 退休标记（退休元老）
-        bool isExpired; // 任期到期标记
-        string covenantHash;
-        // ── v3 新增 ──
-        uint64 lastActivityAt; // 最后一次治理活动时间（休眠判断用，仅公民）
-        bool isDormant; // 是否休眠（仅公民）
-        bool isRetiredElder; // 退休元老（无治理权）
-        bool isAppointedElder; // 任命元老（有治理权）
     }
 
     // ──────────── 存储 ────────────
@@ -353,6 +317,10 @@ contract AetherRing is ERC721, AccessControl, IAetherRing {
 
     function setRingActive(uint256 tokenId, bool active) external onlyRole(ADMIN_ROLE) {
         if (!_exists(tokenId)) revert RingDoesNotExist(tokenId);
+        // M7: 不允许激活已到期的道环（绕过任期限制）
+        if (active && (ringInfo[tokenId].isExpired || block.timestamp >= ringInfo[tokenId].termEndAt)) {
+            revert RingExpiredCannotVote(tokenId, ringInfo[tokenId].termEndAt);
+        }
         ringInfo[tokenId].isActive = active;
         if (active) emit RingActivated(tokenId);
         else emit RingDeactivated(tokenId);
@@ -430,8 +398,7 @@ contract AetherRing is ERC721, AccessControl, IAetherRing {
      * @param candidate 候选人地址
      * @param covenantHash 契约哈希（新铸时用）
      */
-    function appointElder(address candidate, string calldata covenantHash) external {
-        _requireSafeWallet();
+    function appointElder(address candidate, string calldata covenantHash) external onlyRole(ADMIN_ROLE) {
         if (candidate == address(0)) revert InvalidRecipient();
 
         if (_appointedElderCount >= APPOINTED_ELDER_LIMIT) {
@@ -622,7 +589,9 @@ contract AetherRing is ERC721, AccessControl, IAetherRing {
      * @notice 获取活跃公民总数（用于治理 quorum 分母，排除休眠公民）
      */
     function getActiveCitizens() external view returns (uint256) {
-        return _tierCount[uint8(RingTier.CITIZEN)] - _dormantCitizenCount;
+        uint256 total = _tierCount[uint8(RingTier.CITIZEN)];
+        // L2: 下溢保护（防止 _dormantCitizenCount 异常超过总数时 revert 阻塞治理）
+        return total > _dormantCitizenCount ? total - _dormantCitizenCount : 0;
     }
 
     /**

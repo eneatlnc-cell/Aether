@@ -357,6 +357,153 @@ contract IntegrationTest is Test {
         vm.prank(citizen2);
         election.approveCandidate(id, citizen1);
     }
+
+    // ═══════════════════════════════════════════════════════════
+    //  T5.6 / H10 端到端链路：捐款 → 投票 → 选举
+    //  验证跨合约身份流转：无身份用户经捐款获得公民身份 →
+    //  参与治理提案公投 → 注册为选举候选人 → 当选 → 晋升为三院成员
+    // ═══════════════════════════════════════════════════════════
+
+    function test_DonationToVoteToElection_ChainFlow_H10() public {
+        // ──────────── 阶段 1：捐款 → 铸公民道环 ────────────
+        // 1.1 验证 newDonor 初始无道环
+        assertEq(ring.getRingId(newDonor), 0);
+        assertEq(uint8(ring.getTier(newDonor)), 0);
+        assertFalse(ring.isBearer(newDonor));
+
+        // 1.2 PayPal 服务端铸造捐款凭证（newDonor 首次捐款）
+        bytes32 paypalHash = keccak256("paypal-payer-id-chain-h10");
+        vm.prank(paypalServer);
+        uint256 donationTokenId = donation.mintDonation(newDonor, DONATION_AMOUNT, "PP-TX-H10-001", paypalHash);
+
+        // 1.3 验证：newDonor 自动获得公民道环（tier 14）
+        assertTrue(ring.getRingId(newDonor) != 0);
+        assertEq(uint8(ring.getTier(newDonor)), uint8(AetherRing.RingTier.CITIZEN));
+        assertTrue(ring.isBearer(newDonor));
+
+        // 1.4 验证活跃公民数已增加（5 → 6，newDonor 已加入）
+        assertEq(ring.getActiveCitizens(), 6);
+
+        // 1.5 多签结算（admin 占位）
+        donation.settleDonation(donationTokenId, DONATION_AMOUNT);
+
+        // ──────────── 阶段 2：公民参与治理提案公投 ────────────
+        // 2.1 联邦委员创建 SIGNAL 提案
+        vm.prank(fedMember);
+        uint256 proposalId = gov.createProposal(
+            AetherGovernance.ProposalType.SIGNAL,
+            "Chain Flow Test Proposal",
+            "ipfs://QmChainFlow",
+            address(0),
+            "",
+            false,
+            AetherGovernance.TreasuryUrgency.Normal
+        );
+
+        // 2.2 理事长推进 → 议会一审
+        vm.prank(chair);
+        gov.advanceProposal(proposalId);
+        gov.startFirstVote(proposalId);
+        vm.prank(parMember);
+        gov.castFirstVote(proposalId, AetherGovernance.VoteOption.FOR);
+
+        // 2.3 一审结束（5 天）→ 正式提交 + 法庭合规
+        vm.warp(block.timestamp + 5 days + 1);
+        gov.finalizeFirstVote(proposalId);
+        vm.prank(fedMember);
+        gov.submitFormalProposal(proposalId);
+        vm.prank(tribJudge);
+        gov.castComplianceVote(proposalId, AetherGovernance.VoteOption.FOR);
+
+        // 2.4 合规结束（3 天）→ 进入公投
+        //     此时 citizenTotalSnapshot = 6（含 newDonor）
+        vm.warp(block.timestamp + 3 days + 1);
+        gov.finalizeCompliance(proposalId);
+
+        // 2.5 newDonor 作为新公民参与公投（关键：验证捐款获得的身份可投票）
+        vm.prank(newDonor);
+        gov.castPublicVote(proposalId, AetherGovernance.VoteOption.FOR);
+
+        // 2.6 其他公民 + 三院成员投票（满足 quorum 20% 和加权通过门槛）
+        vm.prank(citizen1);
+        gov.castPublicVote(proposalId, AetherGovernance.VoteOption.FOR);
+        vm.prank(citizen2);
+        gov.castPublicVote(proposalId, AetherGovernance.VoteOption.FOR);
+        vm.prank(parMember);
+        gov.castPublicVote(proposalId, AetherGovernance.VoteOption.FOR);
+        vm.prank(fedMember);
+        gov.castPublicVote(proposalId, AetherGovernance.VoteOption.FOR);
+        vm.prank(tribJudge);
+        gov.castPublicVote(proposalId, AetherGovernance.VoteOption.FOR);
+
+        // 2.7 公投结束（7 天）→ 验证提案通过（newDonor 的票已被计入）
+        vm.warp(block.timestamp + 7 days + 1);
+        gov.finalizeProposal(proposalId);
+
+        // 验证 citizenFor = 3（newDonor + citizen1 + citizen2），citizenTotalSnapshot = 6
+        (,,,,,, uint256 citizenFor,,, uint256 citizenTotal,,,,,,,) = gov.getVoteCounts(proposalId);
+        assertEq(citizenFor, 3, "citizenFor should include newDonor's vote");
+        assertEq(citizenTotal, 6, "citizenTotalSnapshot should be 6 (5 initial + newDonor)");
+
+        // 验证提案状态为 PendingVeto（即已通过，等待元老否决窗口）
+        (,,,,, AetherGovernance.ProposalStatus status,,,,,,,,,,,,,) = gov.getProposal(proposalId);
+        assertEq(uint8(status), uint8(AetherGovernance.ProposalStatus.PendingVeto), "proposal should pass");
+
+        // ──────────── 阶段 3：公民注册为选举候选人 → 当选 → 晋升 ────────────
+        // 3.1 创建 MEMBER_TO_GRASSROOTS 选举（议会基层，1 席）
+        uint256 electionId = election.createElection(
+            IAetherElection.ElectionType.MEMBER_TO_GRASSROOTS,
+            1, // 议会
+            IAetherElection.CouncilTargetTier.CouncilMember,
+            1
+        );
+
+        // 3.2 newDonor 作为公民注册为候选人（关键：验证捐款获得的身份可参选）
+        vm.prank(newDonor);
+        election.registerCandidate(electionId);
+
+        // 3.3 注册期结束（7 天）→ 理事会整理
+        vm.warp(block.timestamp + 7 days + 1);
+        election.advanceToCouncilReview(electionId);
+
+        // 3.4 理事长批准 newDonor
+        vm.prank(chair);
+        election.approveCandidate(electionId, newDonor);
+
+        // 3.5 理事会期结束（3 天）→ 议会审批
+        vm.warp(block.timestamp + 3 days + 1);
+        election.advanceToParliamentApproval(electionId);
+
+        // 3.6 议员批准（阈值=1）
+        vm.prank(parMember);
+        election.parliamentApproveCandidateList(electionId);
+
+        // 3.7 公民投票：citizen1 → newDonor, citizen2 → newDonor
+        vm.prank(citizen1);
+        election.castVote(electionId, newDonor);
+        vm.prank(citizen2);
+        election.castVote(electionId, newDonor);
+
+        // 3.8 投票期结束（7 天）→ finalize → newDonor 当选
+        vm.warp(block.timestamp + 7 days + 1);
+        election.finalizeElection(electionId);
+
+        // 3.9 验证：newDonor 已晋升为 PARLIAMENT_MEMBER (tier 1)
+        //     （_applyPromotion 通过 updateTier 升级，因为 newDonor 已持有公民道环）
+        assertEq(uint8(ring.getTier(newDonor)), uint8(AetherRing.RingTier.PARLIAMENT_MEMBER), "newDonor should be promoted to PARLIAMENT_MEMBER");
+
+        // 3.10 验证 winners 列表
+        address[] memory winners = election.getWinners(electionId);
+        assertEq(winners.length, 1);
+        assertEq(winners[0], newDonor);
+
+        // 3.11 验证选举状态为 Finalized
+        (, IAetherElection.ElectionStatus eStatus,,,,,, ) = election.getElection(electionId);
+        assertEq(uint8(eStatus), uint8(IAetherElection.ElectionStatus.Finalized));
+
+        // 3.12 验证 newDonor 不再是公民（tier 14 → tier 1），活跃公民数回到 5
+        assertEq(ring.getActiveCitizens(), 5, "newDonor promoted out of citizen pool");
+    }
 }
 
 /**

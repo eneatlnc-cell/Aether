@@ -162,6 +162,7 @@ contract AetherElection is AccessControl, IAetherElection {
     error InvalidSeatCount();
     error NoCandidates();
     error NoVacancy();
+    error PromotionFailed(address candidate);
     error NotCouncilChair();
     error RegistrationNotEnded();
     error CouncilReviewNotEnded();
@@ -400,6 +401,8 @@ contract AetherElection is AccessControl, IAetherElection {
         Election storage e = elections[electionId];
         if (e.status != ElectionStatus.ParliamentApproval) revert ElectionNotParliamentApproval();
         if (block.timestamp < e.parliamentApprovalEndAt) revert ParliamentApprovalNotMet();
+        // M8: 议会审批期结束后强制推进，但至少需 1 票批准（防止完全被否决的名单进入投票）
+        if (e.parliamentApprovalCount == 0) revert ParliamentApprovalNotMet();
 
         e.status = ElectionStatus.Active;
         e.votingStartAt = block.timestamp;
@@ -467,11 +470,15 @@ contract AetherElection is AccessControl, IAetherElection {
         address[] memory sorted = _sortCandidatesByVotes(approvedCandidates, e);
         uint256 winCount = e.seatCount < sorted.length ? e.seatCount : sorted.length;
 
+        // Bug 18: 逐个晋升，失败的跳过并计入未填补名额
         for (uint256 i = 0; i < winCount; i++) {
             address winner = sorted[i];
-            e.winners.push(winner);
-            e.candidateInfo[winner].won = true;
-            _applyPromotion(e.eType, e.chamber, e.councilTarget, winner);
+            bool ok = _applyPromotion(e.eType, e.chamber, e.councilTarget, winner);
+            if (ok) {
+                e.winners.push(winner);
+                e.candidateInfo[winner].won = true;
+            }
+            // 失败的候选人不加入 winners，自然计入 unfilledSeats
         }
 
         if (e.winners.length < e.seatCount) {
@@ -497,18 +504,24 @@ contract AetherElection is AccessControl, IAetherElection {
         if (e.status != ElectionStatus.PartiallyFilled) revert ElectionNotPartiallyFilled();
         if (e.unfilledSeats == 0) revert NoVacancy();
 
+        // M6: 必须是已通过理事会审批进入投票池的候选人（防止绕过选举结果任意任命）
+        Candidate storage c = e.candidateInfo[candidate];
+        if (!c.isRegistered) revert NotEligibleCandidate();
+        if (c.isRejected) revert NotEligibleCandidate();
+
         // 校验资格
         if (!_isEligibleCandidate(e.eType, e.chamber, candidate)) revert NotEligibleCandidate();
 
         // 校验未重复任命
-        Candidate storage c = e.candidateInfo[candidate];
         if (c.won) revert AlreadyApproved();
+
+        // Bug 18: 晋升失败时 revert，由理事长选择其他候选人
+        bool ok = _applyPromotion(e.eType, e.chamber, e.councilTarget, candidate);
+        if (!ok) revert PromotionFailed(candidate);
 
         e.winners.push(candidate);
         c.won = true;
         e.unfilledSeats -= 1;
-
-        _applyPromotion(e.eType, e.chamber, e.councilTarget, candidate);
 
         if (e.unfilledSeats == 0) {
             e.status = ElectionStatus.Finalized;
@@ -650,7 +663,7 @@ contract AetherElection is AccessControl, IAetherElection {
         if (ringId == 0) return false;
 
         // 用 getRingInfo 读取原始 tier（不受 isActive/isExpired/isDormant 影响）
-        AetherRing.RingInfo memory info = AetherRing(address(ringContract)).getRingInfo(ringId);
+        IAetherRing.RingInfo memory info = ringContract.getRingInfo(ringId);
         uint8 tier = uint8(info.tier);
 
         if (eType == ElectionType.MEMBER_TO_GRASSROOTS) {
@@ -705,34 +718,42 @@ contract AetherElection is AccessControl, IAetherElection {
         uint8 chamber,
         CouncilTargetTier councilTarget,
         address winner
-    ) internal {
-        AetherRing.RingTier newTier;
+    ) internal returns (bool success) {
+        IAetherRing.RingTier newTier;
 
         if (eType == ElectionType.MEMBER_TO_GRASSROOTS) {
-            if (chamber == 1) newTier = AetherRing.RingTier.PARLIAMENT_MEMBER;
-            else if (chamber == 2) newTier = AetherRing.RingTier.FEDERATION_MEMBER;
-            else newTier = AetherRing.RingTier.TRIBUNAL_JUDGE;
+            if (chamber == 1) newTier = IAetherRing.RingTier.PARLIAMENT_MEMBER;
+            else if (chamber == 2) newTier = IAetherRing.RingTier.FEDERATION_MEMBER;
+            else newTier = IAetherRing.RingTier.TRIBUNAL_JUDGE;
         } else if (eType == ElectionType.GRASSROOTS_TO_MID) {
-            if (chamber == 1) newTier = AetherRing.RingTier.PARLIAMENT_SENIOR;
-            else if (chamber == 2) newTier = AetherRing.RingTier.FEDERATION_SENIOR;
-            else newTier = AetherRing.RingTier.TRIBUNAL_SENIOR;
+            if (chamber == 1) newTier = IAetherRing.RingTier.PARLIAMENT_SENIOR;
+            else if (chamber == 2) newTier = IAetherRing.RingTier.FEDERATION_SENIOR;
+            else newTier = IAetherRing.RingTier.TRIBUNAL_SENIOR;
         } else if (eType == ElectionType.CITIZEN_TO_COUNCIL) {
             if (councilTarget == CouncilTargetTier.CouncilMember) {
-                newTier = AetherRing.RingTier.COUNCIL_MEMBER;
+                newTier = IAetherRing.RingTier.COUNCIL_MEMBER;
             } else {
-                newTier = AetherRing.RingTier.COUNCIL_SENIOR;
+                newTier = IAetherRing.RingTier.COUNCIL_SENIOR;
             }
         }
 
         uint256 ringId = ringContract.getRingId(winner);
 
+        // Bug 18: try/catch 防止单个候选人晋升失败阻塞整个选举
         if (ringId == 0) {
             // 公民当选基层/理事但未持有道环：先铸道环
-            // 注：mintRing 不允许铸 ELDER，但 PARLIAMENT_MEMBER 等都可
-            AetherRing(address(ringContract)).mintRing(winner, newTier, "");
+            try ringContract.mintRing(winner, newTier, "") {
+                success = true;
+            } catch {
+                success = false;
+            }
         } else {
             // 已有道环（如到期成员重新当选）：updateTier
-            AetherRing(address(ringContract)).updateTier(ringId, newTier, true);
+            try ringContract.updateTier(ringId, newTier, true) {
+                success = true;
+            } catch {
+                success = false;
+            }
         }
     }
 

@@ -81,6 +81,7 @@ contract AetherDonation is ERC721, AccessControl, IAetherDonation {
     event DormantCitizenReactivated(address indexed donor);
     event TreasuryUpdated(address indexed oldTreasury, address indexed newTreasury);
     event RingContractUpdated(address indexed oldRing, address indexed newRing);
+    event PaypalAccountUnlinked(bytes32 indexed paypalAccountHash, address indexed oldWallet);
 
     // ──────────── 错误 ────────────
     error DonationTooSmall(uint256 amount, uint256 minRequired);
@@ -157,10 +158,9 @@ contract AetherDonation is ERC721, AccessControl, IAetherDonation {
             paypalAccountToWallet[paypalAccountHash] = donor;
         }
 
-        // ── 3. 铸捐款凭证 NFT ──
+        // ── 3. 铸捐款凭证 NFT（CEI：先写状态再铸） ──
         uint256 tokenId = _nextTokenId++;
-        _safeMint(donor, tokenId);
-
+        // M1: 状态写入前置，防止 _safeMint 回调重入造成状态不一致
         _donations[tokenId] = Donation({
             donor: donor,
             amount: amount,
@@ -173,18 +173,21 @@ contract AetherDonation is ERC721, AccessControl, IAetherDonation {
             fastTrackActivated: false
         });
         _donorTokenIds[donor].push(tokenId);
+        _safeMint(donor, tokenId);
 
         // ── 4. 公民身份发放 / 重新激活 ──
         uint256 ringId = ringContract.getRingId(donor);
         if (ringId == 0) {
             // 首次捐款：铸公民道环
-            AetherRing(address(ringContract)).mintRing(donor, AetherRing.RingTier.CITIZEN, "");
+            ringContract.mintRing(donor, IAetherRing.RingTier.CITIZEN, "");
             emit CitizenRingMinted(donor, ringContract.getRingId(donor));
         } else {
-            // 已有道环：尝试重新激活休眠公民（非休眠则 no-op）
-            AetherRing(address(ringContract)).reactivateDormantCitizen(donor);
-            // 检查是否实际激活了（通过 isDormant 前后对比无法做，这里乐观触发）
-            emit DormantCitizenReactivated(donor);
+            // Bug 30: 仅在确实休眠时才发重新激活事件，避免乐观误发
+            bool wasDormant = ringContract.isDormant(donor);
+            ringContract.reactivateDormantCitizen(donor);
+            if (wasDormant) {
+                emit DormantCitizenReactivated(donor);
+            }
         }
 
         emit DonationMinted(tokenId, donor, amount, paypalTxId);
@@ -230,7 +233,7 @@ contract AetherDonation is ERC721, AccessControl, IAetherDonation {
         if (msg.sender == d.donor) revert CannotSelfSponsor(tokenId, d.donor);
 
         // 担保人必须是现有活跃公民
-        if (ringContract.getTier(msg.sender) != uint8(AetherRing.RingTier.CITIZEN)) {
+        if (ringContract.getTier(msg.sender) != uint8(IAetherRing.RingTier.CITIZEN)) {
             revert NotCitizen(msg.sender);
         }
 
@@ -333,6 +336,18 @@ contract AetherDonation is ERC721, AccessControl, IAetherDonation {
 
     function revokeMinterRole(address account) external onlyRole(ADMIN_ROLE) {
         _revokeRole(MINTER_ROLE, account);
+    }
+
+    /**
+     * @notice Bug 29: 解绑 PayPal 账户与钱包的绑定（用户丢失私钥 / 迁移钱包时用）
+     *         仅 ADMIN_ROLE（Safe 多签）可调用，防止误用绕过防女巫
+     * @param paypalAccountHash 要解绑的 PayPal 账户哈希
+     */
+    function unlinkPaypalAccount(bytes32 paypalAccountHash) external onlyRole(ADMIN_ROLE) {
+        address linked = paypalAccountToWallet[paypalAccountHash];
+        if (linked == address(0)) revert DuplicatePayPalAccount(paypalAccountHash); // 复用错误码表示未找到
+        delete paypalAccountToWallet[paypalAccountHash];
+        emit PaypalAccountUnlinked(paypalAccountHash, linked);
     }
 
     // ═══════════════════════════════════════════════════════════

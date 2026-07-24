@@ -271,6 +271,9 @@ contract AetherGovernance is AccessControl {
     error AlreadyResolved();
     error ConfidenceVoteNotEnded();
     error NotEnoughSignatures(uint256 current, uint256 required);
+    error ParamOutOfRange();
+    error ZeroRingAddress();
+    error AlreadyInTerminalState();
 
     // ──────────── 修饰器 ────────────
     modifier onlyChamberMember() {
@@ -355,7 +358,7 @@ contract AetherGovernance is AccessControl {
         if (p.status != ProposalStatus.Drafting) revert NotDrafting();
         // IMPEACHMENT 走专用流程（createImpeachmentProposal → signImpeachment），不能走普通七阶段
         if (p.pType == ProposalType.IMPEACHMENT) revert UseCreateImpeachmentProposal();
-        if (ringContract.getTier(msg.sender) != uint8(AetherRing.RingTier.COUNCIL_CHAIR)) revert NotCouncilChair();
+        if (ringContract.getTier(msg.sender) != uint8(IAetherRing.RingTier.COUNCIL_CHAIR)) revert NotCouncilChair();
 
         p.status = ProposalStatus.PendingFirstVote;
         emit ProposalAdvanced(proposalId);
@@ -367,7 +370,7 @@ contract AetherGovernance is AccessControl {
         // IMPEACHMENT 提案不可被理事会退回
         if (p.pType == ProposalType.IMPEACHMENT) revert UseCreateImpeachmentProposal();
         uint8 tier = ringContract.getTier(msg.sender);
-        if (tier < uint8(AetherRing.RingTier.COUNCIL_MEMBER) || tier > uint8(AetherRing.RingTier.COUNCIL_CHAIR)) {
+        if (tier < uint8(IAetherRing.RingTier.COUNCIL_MEMBER) || tier > uint8(IAetherRing.RingTier.COUNCIL_CHAIR)) {
             revert NotCouncilMember();
         }
         if (p.hasSignedReturn[msg.sender]) revert AlreadySigned();
@@ -443,7 +446,7 @@ contract AetherGovernance is AccessControl {
     function submitFormalProposal(uint256 proposalId) external {
         Proposal storage p = proposals[proposalId];
         if (p.status != ProposalStatus.PendingFormal) revert NotPendingFormal();
-        if (msg.sender != p.proposer && ringContract.getTier(msg.sender) != uint8(AetherRing.RingTier.COUNCIL_CHAIR)) {
+        if (msg.sender != p.proposer && ringContract.getTier(msg.sender) != uint8(IAetherRing.RingTier.COUNCIL_CHAIR)) {
             revert NotAuthorized();
         }
 
@@ -521,7 +524,7 @@ contract AetherGovernance is AccessControl {
         } else if (_isTribunalMember(tier)) {
             if (option == VoteOption.FOR) p.tribunalFor += weight;
             else if (option == VoteOption.AGAINST) p.tribunalAgainst += weight;
-        } else if (tier == uint8(AetherRing.RingTier.CITIZEN)) {
+        } else if (tier == uint8(IAetherRing.RingTier.CITIZEN)) {
             if (option == VoteOption.FOR) p.citizenFor += 1;
             else if (option == VoteOption.AGAINST) p.citizenAgainst += 1;
             else p.citizenAbstain += 1;
@@ -669,7 +672,7 @@ contract AetherGovernance is AccessControl {
 
         uint8 targetTier = ringContract.getTier(target);
         // V4：可弹劾 tier 1-13，不可弹劾公民 14
-        if (targetTier == 0 || targetTier == uint8(AetherRing.RingTier.CITIZEN)) revert ImpeachmentTargetInvalid();
+        if (targetTier == 0 || targetTier == uint8(IAetherRing.RingTier.CITIZEN)) revert ImpeachmentTargetInvalid();
 
         uint256 id = proposalCount++;
         Proposal storage p = proposals[id];
@@ -731,7 +734,7 @@ contract AetherGovernance is AccessControl {
             // 直接撤销道环（弹劾跳过 Timelock 和否决）
             uint256 ringId = ringContract.getRingId(p.impeachedTarget);
             if (ringId != 0) {
-                AetherRing(address(ringContract)).revokeRing(ringId);
+                ringContract.revokeRing(ringId);
             }
             p.status = ProposalStatus.Executed;
             p.isExecuted = true;
@@ -748,7 +751,7 @@ contract AetherGovernance is AccessControl {
 
     function signConfidenceTrigger(address chair) external {
         uint8 tier = ringContract.getTier(msg.sender);
-        if (tier != uint8(AetherRing.RingTier.COUNCIL_MEMBER) && tier != uint8(AetherRing.RingTier.COUNCIL_SENIOR)) {
+        if (tier != uint8(IAetherRing.RingTier.COUNCIL_MEMBER) && tier != uint8(IAetherRing.RingTier.COUNCIL_SENIOR)) {
             revert NotCouncilMember();
         }
         if (hasSignedConfidenceTrigger[chair][msg.sender]) revert AlreadySigned();
@@ -778,7 +781,7 @@ contract AetherGovernance is AccessControl {
         if (cv.hasVoted[msg.sender]) revert AlreadyVoted();
 
         uint8 tier = ringContract.getTier(msg.sender);
-        if (tier != uint8(AetherRing.RingTier.COUNCIL_MEMBER) && tier != uint8(AetherRing.RingTier.COUNCIL_SENIOR)) {
+        if (tier != uint8(IAetherRing.RingTier.COUNCIL_MEMBER) && tier != uint8(IAetherRing.RingTier.COUNCIL_SENIOR)) {
             revert NotCouncilMember();
         }
 
@@ -932,6 +935,8 @@ contract AetherGovernance is AccessControl {
     // ═══════════════════════════════════════════════════════════
 
     function setRingContract(address _ring) external onlyRole(ADMIN_ROLE) {
+        // M5: 零地址检查，防止误设导致合约卡死
+        if (_ring == address(0)) revert ZeroRingAddress();
         address old = address(ringContract);
         ringContract = IAetherRing(_ring);
         emit RingContractUpdated(old, _ring);
@@ -948,23 +953,34 @@ contract AetherGovernance is AccessControl {
     // ── PARAM 可修改的参数（由 PARAM 提案通过 execute 调用） ──
 
     function setVotingPeriods(uint256 _firstVote, uint256 _publicVote, uint256 _compliance) external onlyRole(ADMIN_ROLE) {
+        // M4: 下界校验，防止设为 0 导致同块即可 finalize
+        if (_firstVote < 1 hours || _publicVote < 1 hours || _compliance < 1 hours) revert ParamOutOfRange();
         firstVotePeriod = _firstVote;
         publicVotePeriod = _publicVote;
         complianceVotePeriod = _compliance;
     }
 
     function setTimelocks(uint256 _normal, uint256 _emergency) external onlyRole(ADMIN_ROLE) {
+        // M4: 下界校验，防止 timelock=0 导致排队后立即可执行
+        if (_normal < 1 hours || _emergency < 1 hours) revert ParamOutOfRange();
         timelockNormal = _normal;
         timelockEmergency = _emergency;
     }
 
     function setInternalWeight(uint8 tier, uint256 weight) external onlyRole(ADMIN_ROLE) {
         if (tier < 1 || tier > 14) revert UnknownTier(tier);
+        // M4: 权重上界校验，防止极端值导致计票失真
+        if (weight > 100) revert ParamOutOfRange();
         internalWeight[tier] = weight;
     }
 
     function cancelProposal(uint256 proposalId) external onlyRole(ADMIN_ROLE) {
         Proposal storage p = proposals[proposalId];
+        // M3: 终态保护，禁止对已 Executed/Defeated/Canceled 的提案重复取消
+        if (p.status == ProposalStatus.Executed || p.status == ProposalStatus.Defeated
+            || p.status == ProposalStatus.Canceled) {
+            revert AlreadyInTerminalState();
+        }
         p.status = ProposalStatus.Canceled;
         emit ProposalCanceled(proposalId);
     }
