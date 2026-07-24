@@ -3,7 +3,7 @@
 > **审计日期**：2026-07-24
 > **审计范围**：4 个智能合约 + 5 个前端 hooks + 部署脚本 + 配置 + 集成测试
 > **审计方法**：静态分析 + 状态机建模 + CEI 检查 + 权限矩阵 + ABI 一致性比对
-> **结论**：发现 **3 个 Critical、10 个 High、12 个 Medium、9 个 Low/Info** 问题。Hooks 与 ABI 一致性良好；合约层与部署脚本存在阻断性缺陷，**主网部署前必须修复 Critical/High 项**。
+> **结论**：发现 **3 个 Critical、11 个 High（含 v3.1 新增 H11）、12 个 Medium、9 个 Low/Info** 问题。Hooks 与 ABI 一致性良好；合约层与部署脚本存在阻断性缺陷，**主网部署前必须修复 Critical/High 项**。
 
 ---
 
@@ -76,7 +76,7 @@
 
 ---
 
-## 三、🟠 High 问题（10 项）
+## 三、🟠 High 问题（11 项，含 v3.1 新增 H11）
 
 ### H1. executeProposal TREASURY 分支重入（CEI 违规）
 
@@ -169,7 +169,7 @@
 - **关键影响**：三院一致 FOR 即可达 6000 > 5000 通过门槛，**完全绕过公民**（仅需形式满足 quorum 即可），违背"公民 60% 主导"的设计初衷。
 - **修复（v3.1 已实施）**：
   ```solidity
-  uint256 public constant CHAMBER_WEIGHT_BPS = 1_666;  // 每院 ≈16.66%，三院合计 4998
+  uint256 public constant CHAMBER_WEIGHT_BPS = 1_666;  // 每院 ≈16.6%，三院合计 4998
   uint256 public constant CITIZEN_WEIGHT_BPS = 5_000;  // 公民 50%
   // 合计 4998 + 5000 = 9998 ≈ 10000（100%）
   // 三院全 FOR(4998) + 公民 0% = 4998 < 5000 → 三院无法独断
@@ -323,7 +323,7 @@ governance/election/donation 调用的 ring 方法**全部存在**于 AetherRing
 | 测试 | 覆盖范围 |
 |---|---|
 | T5.1 完整提案流程 | 草案→一审→合规→公投→否决窗口→执行 |
-| T5.2 完整弹劾流程 | 元老发起→3联署→公投→撤销道环（但依赖 C2 bug） |
+| T5.2 完整弹劾流程 | 元老发起→3联署→公投→撤销道环（已重写为 30%/70% + citizenFor 路径） |
 | T5.3 完整选举流程 | 创建→注册→理事会→议会审批→投票→finalize→晋升 |
 | T5.4 完整捐款流程 | mintDonation→铸公民道环→settle→3担保激活快速通道 |
 | T5.5 角色权限校验 | 非任命元老不能弹劾、退休元老不能弹劾、非理事会长不能 approveCandidate |
@@ -333,7 +333,7 @@ governance/election/donation 调用的 ring 方法**全部存在**于 AetherRing
 - 🔴 捐款→投票→选举完整链路串联（见 H10）
 - 🟠 appointToVacancy 空缺处理（PartiallyFilled 状态、unfilledSeats 计算、填满转 Finalized）
 - 🟡 角色不匹配负面测试不充分（donation 无 MINTER_ROLE / election 无 ADMIN_ROLE / 非 Safe 调 appointElder / 非 PROPOSER_ROLE 创建提案 / 非三院成员 createProposal）
-- 🟡 弹劾负面路径（参与率<40% / 支持率<60% / 弹劾公民 revert / 弹劾 ELDER 允许）
+- 🟡 弹劾负面路径（参与率<30% / 支持率<70% / 弹劾公民 revert / 弹劾 ELDER 允许）
 
 ---
 
@@ -342,12 +342,13 @@ governance/election/donation 调用的 ring 方法**全部存在**于 AetherRing
 ### 🔴 立即修复（阻断部署/治理）
 
 1. **C1** AetherRing.sol:113 → `uint256 private _nextTokenId = 1;`
-2. **C2** AetherGovernance.sol:711 → `p.citizenAgainst` 改 `p.citizenFor`，并修正 T5.2 测试
+2. **C2** AetherGovernance.sol:711 → `p.citizenAgainst` 改 `p.citizenFor`，并修正 T5.2 测试 + IMPEACHMENT_QUORUM_BPS 4000→3000、IMPEACHMENT_PASS_BPS 6000→7000
 3. **C3** Genesis.s.sol:119-140 → 实际调用 `ring.appointElder`
 4. **H1** AetherGovernance.sol executeProposal → CEI 模式或 ReentrancyGuard
 5. **H2** AetherGovernance.sol 构造函数 → `_grantRole(ADMIN_ROLE, address(this));`
 6. **H3** AetherGovernance.sol advanceProposal → `if (p.pType == IMPEACHMENT) revert UseCreateImpeachmentProposal();`
 7. **H4** AetherRing.sol:325 → `if (info.tier != RingTier.ELDER)` 守卫
+8. **H11** ✅ 已修复 (v3.1) — 加权计票权重 120%→100%
 
 ### 🟠 部署前修复
 

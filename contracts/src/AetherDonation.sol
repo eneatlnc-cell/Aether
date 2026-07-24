@@ -92,6 +92,7 @@ contract AetherDonation is ERC721, AccessControl, IAetherDonation {
     error AlreadyFastTrack(uint256 tokenId);
     error AlreadySponsored(uint256 tokenId, address sponsor);
     error NotCitizen(address sponsor);
+    error CannotSelfSponsor(uint256 tokenId, address donor);
     error NonTransferable();
     error NonTransferableApproval();
     error InvalidTreasury();
@@ -225,9 +226,10 @@ contract AetherDonation is ERC721, AccessControl, IAetherDonation {
         if (d.donor == address(0)) revert DonationNotFound(tokenId);
         if (d.fastTrackActivated) revert AlreadyFastTrack(tokenId);
         if (hasSponsored[tokenId][msg.sender]) revert AlreadySponsored(tokenId, msg.sender);
+        // 捐款人不能为自己的捐款担保
+        if (msg.sender == d.donor) revert CannotSelfSponsor(tokenId, d.donor);
 
         // 担保人必须是现有活跃公民
-        if (!ringContract.isBearer(msg.sender)) revert NotCitizen(msg.sender);
         if (ringContract.getTier(msg.sender) != uint8(AetherRing.RingTier.CITIZEN)) {
             revert NotCitizen(msg.sender);
         }
@@ -326,11 +328,11 @@ contract AetherDonation is ERC721, AccessControl, IAetherDonation {
     }
 
     function grantMinterRole(address account) external onlyRole(ADMIN_ROLE) {
-        grantRole(MINTER_ROLE, account);
+        _grantRole(MINTER_ROLE, account);
     }
 
     function revokeMinterRole(address account) external onlyRole(ADMIN_ROLE) {
-        revokeRole(MINTER_ROLE, account);
+        _revokeRole(MINTER_ROLE, account);
     }
 
     // ═══════════════════════════════════════════════════════════

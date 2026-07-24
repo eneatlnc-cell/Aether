@@ -170,7 +170,7 @@ NEXT_PUBLIC_SAFE_WALLET_42161_ADDRESS=0x...
 |---|---|---|
 | `src/hooks/useRingInfo.ts` | ✅ 完成 | 14 tier 枚举 + RingInfo 12 字段（含 isDormant/isRetiredElder/isAppointedElder/lastActivityAt）+ useActiveCitizens + useCanReacquireCitizenship |
 | `src/hooks/useGovernance.ts` | ✅ 完成 | 7 阶段流程 + 12 状态 + 21 个写入方法 + 6 个读取 hooks（含信任投票 confidence vote）|
-| `src/hooks/useImpeachment.ts` | ✅ 完成 | 元老发起（createImpeachmentProposal）+ 3 联署（signImpeachment）+ 40%/60% 计票（finalizeImpeachment）|
+| `src/hooks/useImpeachment.ts` | ✅ 完成 | 元老发起（createImpeachmentProposal）+ 3 联署（signImpeachment）+ 30%/70%（citizenFor）计票（finalizeImpeachment）|
 | `src/hooks/useElection.ts` | ✅ 完成 | 4 阶段状态机 + CITIZEN_TO_COUNCIL + appointToVacancy 空缺处理 + 8 个读取 hooks |
 | `src/hooks/useDonation.ts` | ✅ 完成 | 保留旧版 ETH 转账 hook（DonationModal 兼容）+ 12 个 v3 读取 hooks + useDonationWrite 写入 hook（mint/settle/sponsor/setTreasury/setRingContract/grantMinterRole/revokeMinterRole）|
 
@@ -210,13 +210,7 @@ NEXT_PUBLIC_SAFE_WALLET_42161_ADDRESS=0x...
 
 ### 5.2 已知潜在问题（需测试验证）
 
-1. **弹劾计票逻辑**（`AetherGovernance.finalizeImpeachment`）：
-   - `passRateMet` 使用 `citizenAgainst` 判断反对率
-   - 文档注释：FOR=支持弹劾，AGAINST=反对弹劾
-   - 但 `passRateMet = citizenAgainst / citizenVotes >= 60%` 语义为"反对率"
-   - 需确认：弹劾通过 = 反对率 ≥60% 还是支持率 ≥60%？
-   - 当前实现：弹劾通过 = 反对弹劾的票数占比 ≥60%（即大多数反对弹劾时才通过？这逻辑反了）
-   - **建议**：改为 `citizenFor`（支持弹劾率 ≥60% 才通过弹劾）
+1. **弹劾计票逻辑**（`AetherGovernance.finalizeImpeachment`）：✅ 已修复 (v3.1)：使用 citizenFor + 30%/70%
 
 2. **公民 quorum 分母**（`AetherGovernance.finalizeProposal`）：
    - `citizenTotalSnapshot` 在 `startPublicVote` 时快照 `getActiveCitizens()`
@@ -332,11 +326,11 @@ v3 合约不可升级（无 proxy）。若需修复严重 bug：
 | 前端 hooks | 5 个（Phase 6 — ✅ 已完成） | 🟢 低 |
 | 前端 UI 适配 | 3 项（tier 标签/状态流转图/选举指示器 + pnpm build） | 🟡 中 |
 | 安全审计 | 3 项（审计/invariant/slither） | 🟡 中 |
-| 已知 bug | 1 项（弹劾计票逻辑） | 🔴 高 |
+| 已知 bug | 0 项 | ✅ v3.1 已全部修复 |
 | 运维 | 3 项（角色转移/监控/升级） | 🟢 低 |
 
 **最高优先级**：
-1. 修复弹劾计票逻辑（`finalizeImpeachment` 中 `passRateMet` 应使用 `citizenFor`）
+1. ✅ 已完成 (v3.1)
 2. 本地执行 `forge test` 验证全部 89 个测试
 3. 创建 Safe 多签并完成 Arbitrum Sepolia 部署
 4. 真实环境执行 `pnpm build` + UI 组件适配 v3 枚举

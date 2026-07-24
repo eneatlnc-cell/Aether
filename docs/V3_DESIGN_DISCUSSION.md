@@ -31,7 +31,7 @@ v3.0 白皮书相比 v2 是一次**架构级重构**，核心变化：
 - 权级体系：10 级 → 14 级
 - 机构：3 院 → 5 机构（议会/联邦/法庭/理事会/元老院）
 - 治理流程：4 阶段 → 7 阶段
-- 计票规则：方案 B（三院共识 + 加权）→ 新方案（三院各 20% + 公民 60%）
+- 计票规则：方案 B（三院共识 + 加权）→ 新方案（三院各 20% + 公民 60%）（v3.1 修订：三院各 ≈16.6% + 公民 50%，合计 ≈100%）
 - 新增合约：AetherDonation（PayPal 捐款 NFT 凭证）
 - 任期：可连任 1 次 → 不可连任
 
@@ -112,7 +112,7 @@ v3.0 白皮书相比 v2 是一次**架构级重构**，核心变化：
 
 **v3 新方案**：
 ```
-议会 20% + 联邦 20% + 法庭 20% + 公民 60% = 100%
+议会 20% + 联邦 20% + 法庭 20% + 公民 60% = 100% （v3.1 修订：≈16.6%×3 + 50% = 9998≈10000）
 每院内部多数决（1/3/10 加权）→ FOR/AGAINST
 总赞成 = Σ(FOR院 × 20%) + 公民赞成率 × 60%
 通过 = 总赞成 > 50% 且 公民参与率 ≥ 20%
@@ -154,14 +154,14 @@ v3.0 白皮书相比 v2 是一次**架构级重构**，核心变化：
 | Q6 | 理事会任命 | 理事/常务理事由公民选举；理事长由多签任命（见 R3-补充） |
 | Q7 | 公民 quorum | ≥20% 参与率，未达标自动失败 |
 | Q8 | Donation NFT | ERC-721 SBT，不可转让，不分档，链下兑换+链上 settle |
-| Q9 | 弹劾 | 元老院发起（≥3人），公民投票 ≥40%/≥60% 通过 |
+| Q9 | 弹劾 | 元老院发起（≥3人），公民投票 ≥40%/≥60% 通过 （v3.1: 30%/70%）|
 | Q10 | internalWeight | 理事会/元老=0，公民=1，三院=1/3/10 |
 
 ### 3.2 实现细节（R1-R10 + R3-补充）
 
 #### R1. 计票公式 ✅
 
-- **公式**：`总赞成 = (FOR 的院数 × 20%) + (公民赞成率 × 60%)`
+- **公式**：`总赞成 = (FOR 的院数 × 20%) + (公民赞成率 × 60%)`（v3.1: (FOR院数×1666) + (公民赞成率×5000/10000)）
 - **通过**：`总赞成 > 50% 且 公民参与率 ≥ 20%`
 - 院方 AGAINST **不减分**，只是该院不贡献 20% 赞成权重
 - 三院全 FOR + 公民 0% 参与 = 60% 赞成，但因 quorum 未达标（0% < 20%）→ **失败**
@@ -435,7 +435,7 @@ struct Proposal {
 **常量调整**：
 ```solidity
 uint256 public constant CHAMBER_WEIGHT_BPS = 2_000;  // 每院 20%（v2: 6_667）
-uint256 public constant CITIZEN_WEIGHT_BPS = 6_000;  // 公民 60%（v2: 3_333）
+uint256 public constant CITIZEN_WEIGHT_BPS = 6_000;  // 公民 60%（v2: 3_333）  // v3.1 已改为 1_666 / 5_000
 uint256 public constant PASS_THRESHOLD_BPS = 5_000;  // >50%（不变）
 uint256 public constant CITIZEN_QUORUM_BPS = 2_000;  // ≥20%（v2: 3_000）
 // 删除 MEMBER_VETO_BPS（v3 无绝对否决）
@@ -599,7 +599,7 @@ uint256 vetoWindowEndAt;    // publicVoteEndAt + 72h
 ```solidity
 uint256 public constant IMPEACHMENT_VETO_SIGNATURES = 3;  // 元老联署
 uint256 public constant IMPEACHMENT_QUORUM_BPS = 4_000;   // ≥40%
-uint256 public constant IMPEACHMENT_PASS_BPS = 6_000;     // ≥60% 反对即弹劾成立
+uint256 public constant IMPEACHMENT_PASS_BPS = 6_000;     // ≥60% 反对即弹劾成立  // v3.1 已改为 3_000 / 7_000
 
 function createImpeachmentProposal(address target, string title, string ipfsHash) external {
     uint8 tier = ringContract.getTier(msg.sender);
@@ -931,7 +931,7 @@ Deploy.s.sol 需新增 AetherDonation 部署 + 4 合约交叉授权。
 | Q6 | 理事会任命 | 理事/常务理事公民选举；理事长多签任命 | ✅ |
 | Q7 | 公民 quorum | ≥20% | ✅ |
 | Q8 | Donation NFT | ERC-721 SBT，链下兑换+链上 settle | ✅ |
-| Q9 | 弹劾 | 元老发起(≥3)，公民 40%/60% | ✅ |
+| Q9 | 弹劾 | 元老院发起(≥3)，公民 40%/60%（v3.1: 30%/70%） | ✅ |
 | Q10 | internalWeight | 三院 1/3/10，理事会/元老 0，公民 1 | ✅ |
 | R1 | 计票公式 | 总赞成=(FOR院数×20%)+(公民赞成率×60%)>50% 且 公民参与≥20%；quorum分母=公民快照 | ✅ |
 | R2 | 法庭不合规后 | 退回 Drafting | ✅ |

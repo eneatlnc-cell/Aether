@@ -16,7 +16,7 @@
 | ID | 文件 | 行号 | 问题 | 修复 |
 |---|---|---|---|---|
 | C1 | AetherRing.sol | 113 | `_nextTokenId` 初始值为 0，破坏"0=无道环"哨兵约定，首个铸道环地址可重复 mint | `uint256 private _nextTokenId = 1;` |
-| C2 | AetherGovernance.sol | 711 | 弹劾计票用 `citizenAgainst` 而非 `citizenFor`，语义反转（60% 反对时反而通过）| `p.citizenAgainst` → `p.citizenFor`，并修正 T5.2 测试期望 |
+| C2 | AetherGovernance.sol | 711 | 弹劾计票用 `citizenAgainst` 而非 `citizenFor`，语义反转（60% 反对时反而通过）| `p.citizenAgainst` → `p.citizenFor`，并修正 T5.2 测试期望 + IMPEACHMENT_QUORUM_BPS 4000→3000、IMPEACHMENT_PASS_BPS 6000→7000 |
 | C3 | Genesis.s.sol | 119-140 | 任命元老完全未执行（仅 console.log），部署后无任命元老，弹劾/否决/紧急拨款全部瘫痪 | 实际调用 `ring.appointElder(elder, "")` |
 
 ### 1.2 智能合约 High 问题（10 项）
@@ -65,8 +65,8 @@
   - 非 PROPOSER_ROLE 创建提案 revert
   - 非三院成员（tier 10-14）createProposal revert
 - [ ] **弹劾负面路径**未覆盖：
-  - 参与率 <40% 不通过
-  - 支持率 <60% 不通过
+  - 参与率 <30% 不通过
+  - 支持率 <70% 不通过
   - 弹劾公民（tier 14）revert `ImpeachmentTargetInvalid`
   - 弹劾 ELDER（tier 13）允许
 
@@ -222,9 +222,9 @@ v3 合约不可升级（无 proxy）。若需修复严重 bug：
 
 **不可调参数**（常量，需重新部署）：
 
-- 三院权重（各 20%）、公民权重（60%）、通过门槛（>50%）
+- 三院权重（各 ≈16.6%/1666 BPS，合计 4998）、公民权重（50%/5000 BPS）、通过门槛（>50%）
 - quorum 阈值（普通 20% / 章程 50%）
-- 弹劾联署数（3）、弹劾参与率（40%）、弹劾通过率（60%）
+- 弹劾联署数（3）、弹劾参与率（30%）、弹劾通过率（70%，citizenFor）
 - 公民休眠期（2 年）、放弃冷却期（30 天）
 - 任命元老上限（9）
 

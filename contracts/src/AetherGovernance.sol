@@ -163,7 +163,7 @@ contract AetherGovernance is AccessControl {
     // 设计：三院全 FOR（4998）+ 公民 0% = 4998 < 5000，三院无法独断
     //       公民 100%（5000）+ 0 院 = 5000，不 > 5000，公民也无法独断
     // → 提案通过必须跨院 + 公民合作，体现 50/50 制衡
-    uint256 public constant CHAMBER_WEIGHT_BPS = 1_666;        // 每院 ≈16.66%，三院合计 4998
+    uint256 public constant CHAMBER_WEIGHT_BPS = 1_666;        // 每院 ≈16.6%，三院合计 4998
     uint256 public constant CITIZEN_WEIGHT_BPS = 5_000;        // 公民 50%
     uint256 public constant PASS_THRESHOLD_BPS = 5_000;        // >50%
     uint256 public constant CITIZEN_QUORUM_BPS = 2_000;        // ≥20%
@@ -256,6 +256,7 @@ contract AetherGovernance is AccessControl {
     error NotAppointedElder();
     error AlreadyVetoed();
     error VetoWindowNotEnded();
+    error VetoWindowEnded();
     error NotQueued();
     error TimelockNotElapsed();
     error NotEmergency();
@@ -286,6 +287,9 @@ contract AetherGovernance is AccessControl {
         _grantRole(DEFAULT_ADMIN_ROLE, msg.sender);
         _grantRole(ADMIN_ROLE, msg.sender);
         _grantRole(PROPOSER_ROLE, msg.sender);
+        // PARAM 提案通过 address(this).call 执行 setVotingPeriods 等 onlyRole(ADMIN_ROLE) 函数
+        // 因此治理合约自身需要 ADMIN_ROLE
+        _grantRole(ADMIN_ROLE, address(this));
         ringContract = IAetherRing(_ringAddress);
 
         // 三院内部权重：1/3/10（基层/中层/高层）
@@ -349,6 +353,8 @@ contract AetherGovernance is AccessControl {
     function advanceProposal(uint256 proposalId) external {
         Proposal storage p = proposals[proposalId];
         if (p.status != ProposalStatus.Drafting) revert NotDrafting();
+        // IMPEACHMENT 走专用流程（createImpeachmentProposal → signImpeachment），不能走普通七阶段
+        if (p.pType == ProposalType.IMPEACHMENT) revert UseCreateImpeachmentProposal();
         if (ringContract.getTier(msg.sender) != uint8(AetherRing.RingTier.COUNCIL_CHAIR)) revert NotCouncilChair();
 
         p.status = ProposalStatus.PendingFirstVote;
@@ -358,6 +364,8 @@ contract AetherGovernance is AccessControl {
     function returnProposal(uint256 proposalId) external {
         Proposal storage p = proposals[proposalId];
         if (p.status != ProposalStatus.Drafting) revert NotDrafting();
+        // IMPEACHMENT 提案不可被理事会退回
+        if (p.pType == ProposalType.IMPEACHMENT) revert UseCreateImpeachmentProposal();
         uint8 tier = ringContract.getTier(msg.sender);
         if (tier < uint8(AetherRing.RingTier.COUNCIL_MEMBER) || tier > uint8(AetherRing.RingTier.COUNCIL_CHAIR)) {
             revert NotCouncilMember();
@@ -547,7 +555,7 @@ contract AetherGovernance is AccessControl {
         p.citizenQuorumMet = p.citizenTotalSnapshot > 0
             && (citizenVotes * BPS_DENOMINATOR) / p.citizenTotalSnapshot >= requiredQuorum;
 
-        // 3. 加权计算：三院 FOR 数 × 20% + 公民赞成率 × 60%
+        // 3. 加权计算：三院 FOR 数 × 1666 BPS + 公民赞成率 × 5000 BPS（合计 ≈10000）
         uint256 chamberForCount = _countStance(p.parliamentStance, ChamberStance.FOR)
             + _countStance(p.federationStance, ChamberStance.FOR)
             + _countStance(p.tribunalStance, ChamberStance.FOR);
@@ -577,6 +585,7 @@ contract AetherGovernance is AccessControl {
     function vetoProposal(uint256 proposalId) external {
         Proposal storage p = proposals[proposalId];
         if (p.status != ProposalStatus.PendingVeto) revert NotPendingVeto();
+        if (block.timestamp > p.vetoWindowEndAt) revert VetoWindowEnded();
         if (p.pType == ProposalType.IMPEACHMENT) revert CannotVetoImpeachment();
         if (!ringContract.isElderActive(msg.sender)) revert NotAppointedElder();
         if (p.hasVetoed[msg.sender]) revert AlreadyVetoed();
@@ -612,6 +621,10 @@ contract AetherGovernance is AccessControl {
         if (p.status != ProposalStatus.Queued) revert NotQueued();
         if (block.timestamp < p.executeAfter) revert TimelockNotElapsed();
 
+        // CEI：先更新状态，防止重入
+        p.status = ProposalStatus.Executed;
+        p.isExecuted = true;
+
         if (p.pType == ProposalType.SIGNAL) {
             // 信号性提案，无链上执行
         } else if (p.pType == ProposalType.PARAM) {
@@ -626,8 +639,6 @@ contract AetherGovernance is AccessControl {
             if (!ok) revert ExecutionFailed(ret);
         }
 
-        p.status = ProposalStatus.Executed;
-        p.isExecuted = true;
         emit ProposalExecuted(proposalId);
     }
 

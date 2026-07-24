@@ -157,6 +157,7 @@ contract AetherElection is AccessControl, IAetherElection {
     error CandidateAlreadyApproved();
     error CandidateAlreadyRejected();
     error InvalidElectionType();
+    error InvalidElectionId(uint256 electionId);
     error InvalidChamber();
     error InvalidSeatCount();
     error NoCandidates();
@@ -177,6 +178,12 @@ contract AetherElection is AccessControl, IAetherElection {
         _grantRole(ADMIN_ROLE, msg.sender);
         _grantRole(ELECTION_MANAGER_ROLE, msg.sender);
         ringContract = IAetherRing(_ringAddress);
+    }
+
+    /// @dev 校验 electionId 有效性（防止对不存在的选举操作）
+    modifier validElection(uint256 electionId) {
+        if (electionId >= electionCount) revert InvalidElectionId(electionId);
+        _;
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -236,7 +243,7 @@ contract AetherElection is AccessControl, IAetherElection {
      *         - GRASSROOTS_TO_MID：对应院基层
      *         - CITIZEN_TO_COUNCIL：仅公民
      */
-    function registerCandidate(uint256 electionId) external {
+    function registerCandidate(uint256 electionId) external validElection(electionId) {
         Election storage e = elections[electionId];
         if (e.status != ElectionStatus.Pending) revert ElectionNotPending();
         if (block.timestamp > e.registrationEndAt) revert RegistrationNotEnded();
@@ -261,7 +268,7 @@ contract AetherElection is AccessControl, IAetherElection {
     /**
      * @notice 注册期结束后，若无人参选，延长 7 天
      */
-    function extendRegistrationIfNoCandidates(uint256 electionId) external {
+    function extendRegistrationIfNoCandidates(uint256 electionId) external validElection(electionId) {
         Election storage e = elections[electionId];
         if (e.status != ElectionStatus.Pending) revert ElectionNotPending();
         if (block.timestamp < e.registrationEndAt) revert RegistrationNotEnded();
@@ -279,7 +286,7 @@ contract AetherElection is AccessControl, IAetherElection {
      *         - 必须注册期结束
      *         - 必须至少有 1 个候选人
      */
-    function advanceToCouncilReview(uint256 electionId) external {
+    function advanceToCouncilReview(uint256 electionId) external validElection(electionId) {
         Election storage e = elections[electionId];
         if (e.status != ElectionStatus.Pending) revert ElectionNotPending();
         if (block.timestamp < e.registrationEndAt) revert RegistrationNotEnded();
@@ -299,7 +306,7 @@ contract AetherElection is AccessControl, IAetherElection {
      * @notice 理事会批准候选人（仅 COUNCIL_CHAIR_ROLE）
      *         理事长对每个候选人单独审批
      */
-    function approveCandidate(uint256 electionId, address candidate) external onlyRole(COUNCIL_CHAIR_ROLE) {
+    function approveCandidate(uint256 electionId, address candidate) external validElection(electionId) onlyRole(COUNCIL_CHAIR_ROLE) {
         Election storage e = elections[electionId];
         if (e.status != ElectionStatus.CouncilReview) revert ElectionNotCouncilReview();
 
@@ -316,7 +323,7 @@ contract AetherElection is AccessControl, IAetherElection {
     /**
      * @notice 理事会拒绝候选人（仅 COUNCIL_CHAIR_ROLE）
      */
-    function rejectCandidate(uint256 electionId, address candidate) external onlyRole(COUNCIL_CHAIR_ROLE) {
+    function rejectCandidate(uint256 electionId, address candidate) external validElection(electionId) onlyRole(COUNCIL_CHAIR_ROLE) {
         Election storage e = elections[electionId];
         if (e.status != ElectionStatus.CouncilReview) revert ElectionNotCouncilReview();
 
@@ -333,7 +340,7 @@ contract AetherElection is AccessControl, IAetherElection {
     /**
      * @notice 推进至议会审批阶段
      */
-    function advanceToParliamentApproval(uint256 electionId) external {
+    function advanceToParliamentApproval(uint256 electionId) external validElection(electionId) {
         Election storage e = elections[electionId];
         if (e.status != ElectionStatus.CouncilReview) revert ElectionNotCouncilReview();
         if (block.timestamp < e.councilReviewEndAt) revert CouncilReviewNotEnded();
@@ -362,7 +369,7 @@ contract AetherElection is AccessControl, IAetherElection {
      * @notice 议会成员对整个候选人列表投批准票
      *         简化：达到 requiredParliamentApprovals 即通过
      */
-    function parliamentApproveCandidateList(uint256 electionId) external {
+    function parliamentApproveCandidateList(uint256 electionId) external validElection(electionId) {
         Election storage e = elections[electionId];
         if (e.status != ElectionStatus.ParliamentApproval) revert ElectionNotParliamentApproval();
         if (e.hasParliamentApproved[msg.sender]) revert AlreadyApproved();
@@ -389,7 +396,7 @@ contract AetherElection is AccessControl, IAetherElection {
      * @notice 议会审批期结束后自动推进（即使未达阈值，也进入投票阶段）
      *         防止议会拖延导致选举卡死
      */
-    function forceAdvanceToVoting(uint256 electionId) external {
+    function forceAdvanceToVoting(uint256 electionId) external validElection(electionId) {
         Election storage e = elections[electionId];
         if (e.status != ElectionStatus.ParliamentApproval) revert ElectionNotParliamentApproval();
         if (block.timestamp < e.parliamentApprovalEndAt) revert ParliamentApprovalNotMet();
@@ -410,7 +417,7 @@ contract AetherElection is AccessControl, IAetherElection {
      * @param electionId  选举 ID
      * @param candidate   投给的候选人（必须通过理事会审批）
      */
-    function castVote(uint256 electionId, address candidate) external {
+    function castVote(uint256 electionId, address candidate) external validElection(electionId) {
         Election storage e = elections[electionId];
         if (e.status != ElectionStatus.Active) revert ElectionNotActive();
         if (block.timestamp > e.votingEndAt) revert ElectionNotActive();
@@ -440,7 +447,7 @@ contract AetherElection is AccessControl, IAetherElection {
      *         - 取得票前 N 名（N=seatCount），平票按注册时间先后
      *         - 名额未满 → PartiallyFilled，记录 unfilledSeats
      */
-    function finalizeElection(uint256 electionId) external {
+    function finalizeElection(uint256 electionId) external validElection(electionId) {
         Election storage e = elections[electionId];
         if (e.status != ElectionStatus.Active) revert AlreadyFinalized();
         if (block.timestamp <= e.votingEndAt) revert ElectionNotEnded();
@@ -484,7 +491,7 @@ contract AetherElection is AccessControl, IAetherElection {
      * @param electionId  选举 ID
      * @param candidate   被任命的候选人地址（必须符合资格）
      */
-    function appointToVacancy(uint256 electionId, address candidate) external onlyRole(COUNCIL_CHAIR_ROLE) {
+    function appointToVacancy(uint256 electionId, address candidate) external validElection(electionId) onlyRole(COUNCIL_CHAIR_ROLE) {
         if (candidate == address(0)) revert ZeroAddress();
         Election storage e = elections[electionId];
         if (e.status != ElectionStatus.PartiallyFilled) revert ElectionNotPartiallyFilled();
@@ -597,7 +604,7 @@ contract AetherElection is AccessControl, IAetherElection {
     //                       管理
     // ═══════════════════════════════════════════════════════════
 
-    function cancelElection(uint256 electionId) external onlyRole(ADMIN_ROLE) {
+    function cancelElection(uint256 electionId) external validElection(electionId) onlyRole(ADMIN_ROLE) {
         Election storage e = elections[electionId];
         if (e.status == ElectionStatus.Finalized || e.status == ElectionStatus.PartiallyFilled) {
             revert AlreadyFinalized();
@@ -639,17 +646,18 @@ contract AetherElection is AccessControl, IAetherElection {
         view
         returns (bool)
     {
-        uint8 tier = ringContract.getTier(candidate);
-        if (tier == 0) return false;
+        uint256 ringId = ringContract.getRingId(candidate);
+        if (ringId == 0) return false;
+
+        // 用 getRingInfo 读取原始 tier（不受 isActive/isExpired/isDormant 影响）
+        AetherRing.RingInfo memory info = AetherRing(address(ringContract)).getRingInfo(ringId);
+        uint8 tier = uint8(info.tier);
 
         if (eType == ElectionType.MEMBER_TO_GRASSROOTS) {
             // 公民可直接参选
             if (tier == 14) return true;
             // 三院成员到期（基层/中层/高层任一层级到期均可参选）
-            if (tier >= 1 && tier <= 9) {
-                uint256 ringId = ringContract.getRingId(candidate);
-                if (ringId != 0 && ringContract.isExpired(ringId)) return true;
-            }
+            if (tier >= 1 && tier <= 9 && info.isExpired) return true;
             return false;
         }
 

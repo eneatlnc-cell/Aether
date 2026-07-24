@@ -872,8 +872,8 @@ enum ProposalStatus {
 
 enum TreasuryUrgency { Normal, Emergency }
 
-uint256 public constant CHAMBER_WEIGHT_BPS = 2_000;       // 每院 20%
-uint256 public constant CITIZEN_WEIGHT_BPS = 6_000;       // 公民 60%
+uint256 public constant CHAMBER_WEIGHT_BPS = 2_000;       // 每院 20%  // v3.1 已改为 1_666
+uint256 public constant CITIZEN_WEIGHT_BPS = 6_000;       // 公民 60%  // v3.1 已改为 5_000
 uint256 public constant PASS_THRESHOLD_BPS = 5_000;       // >50%
 uint256 public constant CITIZEN_QUORUM_BPS = 2_000;       // ≥20%
 uint256 public constant CONSTITUTIONAL_QUORUM_BPS = 5_000;  // V13 章程修订 50%
@@ -886,8 +886,8 @@ uint256 public constant TIMELOCK_NORMAL = 48 hours;
 uint256 public constant TIMELOCK_EMERGENCY = 12 hours;     // V14
 
 uint256 public constant IMPEACHMENT_SIGNATURES = 3;        // 元老发起 ≥3
-uint256 public constant IMPEACHMENT_QUORUM_BPS = 4_000;    // 公民参与 ≥40%
-uint256 public constant IMPEACHMENT_PASS_BPS = 6_000;      // 反对率 ≥60%
+uint256 public constant IMPEACHMENT_QUORUM_BPS = 4_000;    // 公民参与 ≥40%  // v3.1 已改为 3_000
+uint256 public constant IMPEACHMENT_PASS_BPS = 6_000;      // 反对率 ≥60%  // v3.1 已改为 7_000
 uint256 public constant VETO_SIGNATURES = 3;
 uint256 public constant RETURN_SIGNATURES = 2;
 uint256 public constant EMERGENCY_ELDER_APPROVALS = 3;
@@ -1429,13 +1429,13 @@ function finalizeImpeachment(uint256 proposalId) external {
     if (p.status != ProposalStatus.PublicVoteActive) revert NotPublicVoteActive();
     if (block.timestamp < p.publicVoteEndAt) revert PublicVoteNotEnded();
     
-    // 弹劾计票：公民参与率 ≥40% + 反对率 ≥60%
+    // 弹劾计票：公民参与率 ≥40% + 反对率 ≥60%  (v3.1: 30%/70%)
     uint256 citizenVotes = p.citizenFor + p.citizenAgainst + p.citizenAbstain;
     bool quorumMet = (citizenVotes * BPS_DENOMINATOR) / p.citizenTotalSnapshot >= IMPEACHMENT_QUORUM_BPS;
     // 注意：弹劾的 FOR = 支持弹劾，AGAINST = 反对弹劾
     // 反对率 = citizenAgainst / citizenVotes
     bool passRateMet = citizenVotes > 0 
-        && ((p.citizenAgainst * BPS_DENOMINATOR) / citizenVotes >= IMPEACHMENT_PASS_BPS);
+        && ((p.citizenAgainst * BPS_DENOMINATOR) / citizenVotes >= IMPEACHMENT_PASS_BPS);  // v3.1 已改为 p.citizenFor
     
     bool passed = quorumMet && passRateMet;
     
@@ -1457,7 +1457,7 @@ function finalizeImpeachment(uint256 proposalId) external {
 **验证**：
 - [ ] 任命元老发起，退休元老 revert
 - [ ] 3 联署后进入公投
-- [ ] 公民参与 ≥40% + 反对率 ≥60% → 通过撤销道环
+- [ ] 公民参与 ≥40% + 反对率 ≥60% → 通过撤销道环 (v3.1: 30%/70%)
 - [ ] tier 14 不可弹劾
 
 ---
@@ -1587,7 +1587,7 @@ library AetherGovernanceLib {
 | T3.20 | test_Execute_EmergencyTreasury_3ElderApprovals | 紧急拨款 3 元老批准 |
 | T3.21 | test_Impeachment_Create_AppointedElderOnly | 仅任命元老发起 |
 | T3.22 | test_Impeachment_3Signatures_ToPublicVote | 3 联署进公投 |
-| T3.23 | test_Impeachment_40PctQuorum_60PctAgainst_Passes | 通过撤销道环 |
+| T3.23 | test_Impeachment_40PctQuorum_60PctAgainst_Passes | 通过撤销道环 // v3.1 已重命名为 test_Impeachment_30PctQuorum_70PctFor_Passes |
 | T3.24 | test_Impeachment_TargetCitizen_Revert | 弹劾公民 revert |
 | T3.25 | test_ConfidenceVote_8Signatures_Trigger | 8 理事联署触发 |
 | T3.26 | test_ConfidenceVote_CouncilOnly | 仅理事投票 |
@@ -1607,10 +1607,10 @@ library AetherGovernanceLib {
 ```
 ✅ 12 状态枚举 + 11 转换函数
 ✅ 非法转换全部 revert
-✅ 计票公式：总赞成=(FOR院数×20%)+(公民赞成率×60%)>50% 且 公民参与≥20%
+✅ 计票公式：总赞成=(FOR院数×20%)+(公民赞成率×60%)>50% 且 公民参与≥20% (v3.1: =(FOR院数×1666)+(公民赞成率×5000/10000)>5000)
 ✅ quorum 快照在 startPublicVote（getActiveCitizens）
 ✅ 元老否决对 IMPEACHMENT 不可用
-✅ 弹劾仅任命元老发起，3 联署，40%/60%
+✅ 弹劾仅任命元老发起，3 联署，40%/60% (v3.1: 30%/70%)
 ✅ 章程修订 quorum 50%
 ✅ 紧急拨款 12h + 3 元老批准
 ✅ 信任投票 8 理事联署

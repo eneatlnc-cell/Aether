@@ -110,7 +110,7 @@ contract AetherRing is ERC721, AccessControl, IAetherRing {
     // ──────────── 存储 ────────────
     mapping(uint256 => RingInfo) public ringInfo;
     mapping(address => uint256) public walletToRingId;
-    uint256 private _nextTokenId;
+    uint256 private _nextTokenId = 1; // 从 1 开始（0 表示"无道环"哨兵）
 
     // 按权级计数（用于席位上限检查）
     mapping(uint8 => uint256) private _tierCount;
@@ -222,6 +222,10 @@ contract AetherRing is ERC721, AccessControl, IAetherRing {
         if (tier == RingTier.NONE) revert InvalidTier();
         // 任命元老不能通过 mintRing 直接铸，必须走 appointElder
         if (tier == RingTier.ELDER) revert InvalidTier();
+        // 公民冷却期检查（防止放弃后立即重新获取）
+        if (tier == RingTier.CITIZEN && !canReacquireCitizenship(recipient)) {
+            revert RenounceCooldownActive(uint256(RENOUNCE_COOLDOWN - (block.timestamp - lastRenouncedAt[recipient])));
+        }
 
         _checkSeatLimit(tier);
 
@@ -277,9 +281,13 @@ contract AetherRing is ERC721, AccessControl, IAetherRing {
         // 席位上限检查（新 tier 不能超限）
         _checkSeatLimit(newTier);
 
-        // 调整计数
-        _tierCount[uint8(oldTier)] -= 1;
-        _tierCount[uint8(newTier)] += 1;
+        // 调整计数（ELDER 不维护 _tierCount，跳过递减防下溢）
+        if (oldTier != RingTier.ELDER) {
+            _tierCount[uint8(oldTier)] -= 1;
+        }
+        if (newTier != RingTier.ELDER) {
+            _tierCount[uint8(newTier)] += 1;
+        }
 
         info.tier = newTier;
 
@@ -317,12 +325,18 @@ contract AetherRing is ERC721, AccessControl, IAetherRing {
     //                       撤销（管理员 / 弹劾结果）
     // ═══════════════════════════════════════════════════════════
 
-    function revokeRing(uint256 tokenId) external onlyRole(ADMIN_ROLE) {
+    function revokeRing(uint256 tokenId) external {
+        if (!_hasRole(ADMIN_ROLE, msg.sender) && !_hasRole(GOVERNANCE_ROLE, msg.sender)) {
+            revert Unauthorized();
+        }
         if (!_exists(tokenId)) revert RingDoesNotExist(tokenId);
         address holder = ownerOf(tokenId);
 
         RingInfo storage info = ringInfo[tokenId];
-        _tierCount[uint8(info.tier)] -= 1;
+        // ELDER tier 不维护 _tierCount（appointElder/retireToEmeritus 不增加），跳过递减防下溢
+        if (info.tier != RingTier.ELDER) {
+            _tierCount[uint8(info.tier)] -= 1;
+        }
         if (info.isAppointedElder) {
             _appointedElderCount -= 1;
         }
@@ -333,6 +347,7 @@ contract AetherRing is ERC721, AccessControl, IAetherRing {
         walletToRingId[holder] = 0;
 
         _burn(tokenId);
+        delete ringInfo[tokenId];
         emit RingRevoked(tokenId, holder);
     }
 
@@ -657,7 +672,7 @@ contract AetherRing is ERC721, AccessControl, IAetherRing {
         uint256 ringId = walletToRingId[holder];
         if (ringId == 0) return false;
         RingInfo storage info = ringInfo[ringId];
-        return info.isAppointedElder && !info.isEmeritus;
+        return info.isAppointedElder && !info.isEmeritus && info.isActive;
     }
 
     /**
@@ -715,7 +730,7 @@ contract AetherRing is ERC721, AccessControl, IAetherRing {
     // ═══════════════════════════════════════════════════════════
 
     function _exists(uint256 tokenId) internal view returns (bool) {
-        return tokenId < _nextTokenId;
+        return _ownerOf(tokenId) != address(0);
     }
 
     function _checkSeatLimit(RingTier tier) internal view {
