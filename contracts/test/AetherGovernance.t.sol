@@ -490,9 +490,10 @@ contract AetherGovernanceTest is Test {
     }
 
     // ═══════════════════════════════════════════════════════════
-    //  T3.23 弹劾 40% quorum + 60% against → 通过
+    //  T3.23 弹劾 30% quorum + 70% 支持率（FOR）→ 通过
+    //  v3.1 修正：citizenFor（支持弹劾）≥ 70%，citizenAgainst 不再使用
     // ═══════════════════════════════════════════════════════════
-    function test_Impeachment_40PctQuorum_60PctAgainst_Passes() public {
+    function test_Impeachment_30PctQuorum_70PctFor_Passes() public {
         vm.prank(elder1);
         uint256 id = gov.createImpeachmentProposal(parMember, "Impeach", "ipfs");
         vm.prank(elder2);
@@ -500,60 +501,69 @@ contract AetherGovernanceTest is Test {
         vm.prank(elder3);
         gov.signImpeachment(id);
 
-        // 5 公民中 3 个投票（60% 参与 > 40%），全部 AGAINST（反对弹劾）
-        // 等等：弹劾通过 = 反对率 ≥60%（AGAINST = 反对弹劾 = 支持保留）
-        // 实际：FOR=支持弹劾, AGAINST=反对弹劾
-        // 弹劾通过需要 citizenAgainst >= 60%（即反对弹劾的 >= 60%）？
-        // 不对：计划说"反对率 ≥60%"指弹劾的反对率，即 citizenAgainst/citizenVotes >= 60%
-        // 但 AGAINST = 反对弹劾。所以弹劾通过 = 反对弹劾 >= 60%？这逻辑反了。
-        // 重新读计划："弹劾的 FOR = 支持弹劾，AGAINST = 反对弹劾"
-        // "反对率 ≥60%" 应该是支持弹劾率 >= 60%（FOR >= 60%）
-        // 但代码用的是 citizenAgainst。让我检查...
-        // 代码：passRateMet = citizenAgainst >= 60%
-        // 这意味着 AGAINST >= 60% 才通过。但 AGAINST = 反对弹劾。
-        // 所以这是"反对弹劾 >= 60% 才通过"？这不对。
-        // 实际：在弹劾语境，"反对" = 反对被弹劾人的行为 = 支持弹劾
-        // 让我重新理解：弹劾场景下 FOR=支持弹劾(撤销道环)
-        // 通过 = FOR >= 60%。但代码用的是 citizenAgainst。
-        // 这是一个语义混淆。让我按代码实际行为测试：
-        // passRateMet = citizenAgainst >= 60%
-        // 所以测试：3 个公民投 AGAINST（反对弹劾）→ 60% → 弹劾通过？
-        // 不对。让我重新看代码...
-        // 代码 finalizeImpeachment:
-        //   passRateMet = (p.citizenAgainst * BPS) / citizenVotes >= 6000
-        //   passed = quorumMet && passRateMet
-        // 这意味着 citizenAgainst >= 60% 时弹劾通过
-        // 但 citizenAgainst = 反对弹劾的人
-        // 所以这是：反对弹劾 >= 60% 时弹劾通过？这不合逻辑。
-        //
-        // 重新理解计划原文："反对率 ≥60%"
-        // 在弹劾语境，"反对" = 反对被弹劾人 = 支持弹劾
-        // 所以 FOR = 支持弹劾 = "反对"被弹劾人
-        // 但代码用了 citizenAgainst...
-        //
-        // 我认为代码有 bug：应该用 citizenFor 而不是 citizenAgainst
-        // 但根据计划"反对率 ≥60%"，如果"反对率"指的是"反对被弹劾人"的比率，
-        // 那应该用 citizenFor。
-        // 让我暂时按代码实际行为测试，然后标注 bug。
-        //
-        // 实际上重新读：弹劾的 FOR = 支持弹劾
-        // "反对率 ≥60%" = 支持弹劾 >= 60% = citizenFor >= 60%
-        // 但代码用 citizenAgainst。这是 bug。
-        // 我先按代码行为测试（citizenAgainst >= 60% → 通过），然后修复。
-
-        // 按当前代码行为：3 个公民投 AGAINST → 60% → 通过
+        // 5 公民中 3 个投票（60% 参与 > 30% quorum），其中 3 个 FOR（100% 支持率 ≥ 70%）
         vm.prank(citizen1);
-        gov.castPublicVote(id, AetherGovernance.VoteOption.AGAINST);
+        gov.castPublicVote(id, AetherGovernance.VoteOption.FOR);
         vm.prank(citizen2);
-        gov.castPublicVote(id, AetherGovernance.VoteOption.AGAINST);
+        gov.castPublicVote(id, AetherGovernance.VoteOption.FOR);
         vm.prank(citizen3);
-        gov.castPublicVote(id, AetherGovernance.VoteOption.AGAINST);
+        gov.castPublicVote(id, AetherGovernance.VoteOption.FOR);
 
         vm.warp(block.timestamp + 7 days + 1);
         gov.finalizeImpeachment(id);
 
         (, , , , , AetherGovernance.ProposalStatus status, , , , , , , , , , , , , ) = gov.getProposal(id);
         assertEq(uint8(status), uint8(AetherGovernance.ProposalStatus.Executed));
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  T3.23b 弹劾：支持率不足 70% → 不通过（Defeated）
+    // ═══════════════════════════════════════════════════════════
+    function test_Impeachment_Below70PctFor_Defeated() public {
+        vm.prank(elder1);
+        uint256 id = gov.createImpeachmentProposal(parMember, "Impeach", "ipfs");
+        vm.prank(elder2);
+        gov.signImpeachment(id);
+        vm.prank(elder3);
+        gov.signImpeachment(id);
+
+        // 4 公民投票（80% 参与 > 30%），2 FOR + 2 AGAINST（50% < 70%）
+        vm.prank(citizen1);
+        gov.castPublicVote(id, AetherGovernance.VoteOption.FOR);
+        vm.prank(citizen2);
+        gov.castPublicVote(id, AetherGovernance.VoteOption.FOR);
+        vm.prank(citizen3);
+        gov.castPublicVote(id, AetherGovernance.VoteOption.AGAINST);
+        vm.prank(citizen4);
+        gov.castPublicVote(id, AetherGovernance.VoteOption.AGAINST);
+
+        vm.warp(block.timestamp + 7 days + 1);
+        gov.finalizeImpeachment(id);
+
+        (, , , , , AetherGovernance.ProposalStatus status, , , , , , , , , , , , , ) = gov.getProposal(id);
+        assertEq(uint8(status), uint8(AetherGovernance.ProposalStatus.Defeated));
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  T3.23c 弹劾：参与率不足 30% → 不通过（Defeated）
+    // ═══════════════════════════════════════════════════════════
+    function test_Impeachment_Below30PctQuorum_Defeated() public {
+        vm.prank(elder1);
+        uint256 id = gov.createImpeachmentProposal(parMember, "Impeach", "ipfs");
+        vm.prank(elder2);
+        gov.signImpeachment(id);
+        vm.prank(elder3);
+        gov.signImpeachment(id);
+
+        // 5 公民中仅 1 个投票（20% 参与 < 30% quorum）
+        vm.prank(citizen1);
+        gov.castPublicVote(id, AetherGovernance.VoteOption.FOR);
+
+        vm.warp(block.timestamp + 7 days + 1);
+        gov.finalizeImpeachment(id);
+
+        (, , , , , AetherGovernance.ProposalStatus status, , , , , , , , , , , , , ) = gov.getProposal(id);
+        assertEq(uint8(status), uint8(AetherGovernance.ProposalStatus.Defeated));
     }
 
     // ═══════════════════════════════════════════════════════════

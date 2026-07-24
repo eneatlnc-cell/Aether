@@ -11,10 +11,14 @@
 
 | 严重程度 | 数量 | 说明 |
 |---|---|---|
-| 🔴 Critical | 3 | 阻断核心功能，可导致资金损失或治理瘫痪 |
-| 🟠 High | 10 | 严重安全漏洞或功能失效，主网前必须修复 |
+| 🔴 Critical | 3（C2 已于 v3.1 修复）| 阻断核心功能，可导致资金损失或治理瘫痪 |
+| 🟠 High | 10 + 1（H11 已于 v3.1 修复）| 严重安全漏洞或功能失效，主网前必须修复 |
 | 🟡 Medium | 12 | 设计偏离或潜在风险，建议修复 |
 | 🟢 Low / Info | 9 | 代码质量/文档/最佳实践问题 |
+
+> **v3.1 修复批次**：
+> - **C2** 弹劾计票语义反转（`citizenAgainst`→`citizenFor`）+ 阈值 40/60→30/70 ✅
+> - **H11**（新增）加权计票权重总和 120% > 100% → 归一为 4998+5000=9998≈100%（50/50 制衡）✅
 
 ---
 
@@ -35,10 +39,10 @@
   uint256 private _nextTokenId = 1; // 从 1 开始（0 表示"无"）
   ```
 
-### C2. AetherGovernance 弹劾计票逻辑语义反转
+### C2. AetherGovernance 弹劾计票逻辑语义反转 ✅ 已修复 (v3.1)
 
-- **文件**：[contracts/src/AetherGovernance.sol](file:///workspace/contracts/src/AetherGovernance.sol#L711) (line 704-713)
-- **现象**：
+- **文件**：[contracts/src/AetherGovernance.sol](file:///workspace/contracts/src/AetherGovernance.sol#L714-L715) (line 704-713)
+- **现象（修复前）**：
   ```solidity
   // 注释：FOR=支持弹劾，AGAINST=反对弹劾
   bool passRateMet = citizenVotes > 0
@@ -47,11 +51,17 @@
   注释自相矛盾（line 705 说 FOR=支持，line 707 说"通过=反对率≥60%"）。实际使用 `citizenAgainst` 判断通过，导致**当 60% 公民投票反对弹劾时弹劾反而通过**。
 - **影响**：弹劾机制完全反转 — 无辜者易被弹劾、恶人无法被弹劾。
 - **测试污染**：Integration.t.sol T5.2 (line 197-203) 依赖同一 bug，3 人支持 + 1 人反对时仍期望通过，需同步修正。
-- **修复**：
+- **修复（v3.1 已实施）**：
   ```solidity
+  // 弹劾计票：公民参与率 ≥30% + 支持率 ≥70%
   bool passRateMet = citizenVotes > 0
       && ((p.citizenFor * BPS_DENOMINATOR) / citizenVotes >= IMPEACHMENT_PASS_BPS);
   ```
+  - `p.citizenAgainst` → `p.citizenFor`（修复语义反转）
+  - `IMPEACHMENT_QUORUM_BPS`：4000 → **3000**（参与率门槛 40% → 30%）
+  - `IMPEACHMENT_PASS_BPS`：6000 → **7000**（通过率门槛 60% → 70%，使用 citizenFor）
+  - 测试 AetherGovernance.t.sol T3.23 重写为 `test_Impeachment_30PctQuorum_70PctFor_Passes`，
+    新增 T3.23b（支持率不足 70% → Defeated）和 T3.23c（参与率不足 30% → Defeated）覆盖负面路径
 
 ### C3. Genesis.s.sol 任命元老完全未执行
 
@@ -143,6 +153,29 @@
 - **现象**：T5.4 验证 newDonor 通过 mintDonation 获得公民道环，但未继续验证 newDonor 能参与治理投票或选举。T5.1/T5.2/T5.3 使用预铸的 citizen1-5。
 - **影响**：跨合约端到端身份流转未验证，donation 铸的公民道环与 governance/election 资格检查不一致无法被测试捕获。
 - **修复**：新增 `test_DonationToVoteToElection_ChainFlow` 覆盖完整链路。
+
+### H11. 加权计票权重总和 120% > 100%（白皮书自相矛盾）✅ 已修复 (v3.1)
+
+- **文件**：[contracts/src/AetherGovernance.sol](file:///workspace/contracts/src/AetherGovernance.sol#L166-L167) (line 162-164, 546-557)
+- **现象（修复前）**：
+  ```solidity
+  uint256 public constant CHAMBER_WEIGHT_BPS = 2_000;  // 每院 20%
+  uint256 public constant CITIZEN_WEIGHT_BPS = 6_000;  // 公民 60%
+  // 三院全 FOR: 3 × 2000 = 6000 BPS
+  // 公民 100%:  1.0 × 6000 = 6000 BPS
+  // 最大总和:   6000 + 6000 = 12000 BPS = 120% > 100%
+  ```
+  白皮书与代码均声称"三院各 20%（共 60%）+ 公民 60%"，但 60% + 60% = 120%，权重未归一到 100%。
+- **关键影响**：三院一致 FOR 即可达 6000 > 5000 通过门槛，**完全绕过公民**（仅需形式满足 quorum 即可），违背"公民 60% 主导"的设计初衷。
+- **修复（v3.1 已实施）**：
+  ```solidity
+  uint256 public constant CHAMBER_WEIGHT_BPS = 1_666;  // 每院 ≈16.66%，三院合计 4998
+  uint256 public constant CITIZEN_WEIGHT_BPS = 5_000;  // 公民 50%
+  // 合计 4998 + 5000 = 9998 ≈ 10000（100%）
+  // 三院全 FOR(4998) + 公民 0% = 4998 < 5000 → 三院无法独断
+  // 公民 100%(5000) + 0 院 = 5000，不 > 5000 → 公民也无法独断
+  // → 提案通过必须跨院 + 公民合作，体现 50/50 制衡
+  ```
 
 ---
 

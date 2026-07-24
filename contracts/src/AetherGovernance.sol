@@ -21,12 +21,12 @@ import {IAetherRing} from "./interfaces/IAetherRing.sol";
  *
  *  2. 三院内部权重 1/3/10（基层/中层/高层），每院多数决出 FOR/AGAINST/NEUTRAL
  *
- *  3. 加权计票：三院各 20%（共 60%）+ 公民 60%，通过门槛 >50%
+ *  3. 加权计票：三院各 1666（合计 4998≈50%）+ 公民 5000（50%），通过门槛 >50%
  *     公民 quorum：普通 20%，章程修订 50%
  *
  *  4. 元老否决：3 任命元老联署，72h 窗口（V5: 弹劾不可否决）
  *
- *  5. 弹劾：3 任命元老发起 → 公投 → 公民参与≥40% + 反对率≥60%
+ *  5. 弹劾：3 任命元老发起 → 公投 → 公民参与≥30% + 支持率≥70%
  *
  *  6. 理事长信任投票：8 理事联署触发 → 理事投票 → 不通过 30 天辞职
  *
@@ -159,8 +159,12 @@ contract AetherGovernance is AccessControl {
 
     // ── 常量 ──
     uint256 public constant BPS_DENOMINATOR = 10_000;
-    uint256 public constant CHAMBER_WEIGHT_BPS = 2_000;        // 每院 20%
-    uint256 public constant CITIZEN_WEIGHT_BPS = 6_000;        // 公民 60%
+    // 权重归一到 100%：三院合计 4998 + 公民 5000 = 9998 ≈ 10000
+    // 设计：三院全 FOR（4998）+ 公民 0% = 4998 < 5000，三院无法独断
+    //       公民 100%（5000）+ 0 院 = 5000，不 > 5000，公民也无法独断
+    // → 提案通过必须跨院 + 公民合作，体现 50/50 制衡
+    uint256 public constant CHAMBER_WEIGHT_BPS = 1_666;        // 每院 ≈16.66%，三院合计 4998
+    uint256 public constant CITIZEN_WEIGHT_BPS = 5_000;        // 公民 50%
     uint256 public constant PASS_THRESHOLD_BPS = 5_000;        // >50%
     uint256 public constant CITIZEN_QUORUM_BPS = 2_000;        // ≥20%
     uint256 public constant CONSTITUTIONAL_QUORUM_BPS = 5_000; // 章程修订 50%
@@ -173,8 +177,8 @@ contract AetherGovernance is AccessControl {
     uint256 public constant TIMELOCK_EMERGENCY = 12 hours;
 
     uint256 public constant IMPEACHMENT_SIGNATURES = 3;
-    uint256 public constant IMPEACHMENT_QUORUM_BPS = 4_000;    // 公民参与 ≥40%
-    uint256 public constant IMPEACHMENT_PASS_BPS = 6_000;      // 反对率 ≥60%
+    uint256 public constant IMPEACHMENT_QUORUM_BPS = 3_000;    // 公民参与 ≥30%
+    uint256 public constant IMPEACHMENT_PASS_BPS = 7_000;      // 支持率 ≥70%
     uint256 public constant VETO_SIGNATURES = 3;
     uint256 public constant RETURN_SIGNATURES = 2;
     uint256 public constant EMERGENCY_ELDER_APPROVALS = 3;
@@ -701,14 +705,14 @@ contract AetherGovernance is AccessControl {
         if (p.status != ProposalStatus.PublicVoteActive) revert NotPublicVoteActive();
         if (block.timestamp < p.publicVoteEndAt) revert PublicVoteNotEnded();
 
-        // 弹劾计票：公民参与率 ≥40% + 反对率 ≥60%
+        // 弹劾计票：公民参与率 ≥30% + 支持率 ≥70%
         // 注意：弹劾的 FOR = 支持弹劾，AGAINST = 反对弹劾
-        // 弹劾通过 = 反对率 ≥60%（citizenAgainst / citizenVotes）
+        // 弹劾通过 = 支持率 ≥70%（citizenFor / citizenVotes）
         uint256 citizenVotes = p.citizenFor + p.citizenAgainst + p.citizenAbstain;
         bool quorumMet = p.citizenTotalSnapshot > 0
             && (citizenVotes * BPS_DENOMINATOR) / p.citizenTotalSnapshot >= IMPEACHMENT_QUORUM_BPS;
         bool passRateMet = citizenVotes > 0
-            && ((p.citizenAgainst * BPS_DENOMINATOR) / citizenVotes >= IMPEACHMENT_PASS_BPS);
+            && ((p.citizenFor * BPS_DENOMINATOR) / citizenVotes >= IMPEACHMENT_PASS_BPS);
 
         bool passed = quorumMet && passRateMet;
 
