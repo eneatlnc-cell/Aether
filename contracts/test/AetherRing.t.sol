@@ -51,6 +51,9 @@ contract AetherRingTest is Test {
         ring = new AetherRing();
         safe = new MockSafe();
         ring.setSafeWallet(address(safe));
+        // 授予 Safe ADMIN_ROLE：appointElder 改回 onlyRole(ADMIN_ROLE)，
+        // 测试中所有 vm.prank(address(safe)) 调用 appointElder 需此权限
+        ring.grantRole(ring.ADMIN_ROLE(), address(safe));
         // 授予 GOVERNANCE_ROLE 用于 markVoteActivity 测试
         // 注：Solidity 0.8.26 不支持 ContractName.ConstantName 跨合约访问 public constant，
         //     必须通过实例 getter（ring.GOVERNANCE_ROLE()）获取
@@ -64,8 +67,8 @@ contract AetherRingTest is Test {
 
     function test_MintRing_AllTiers_TermCorrect() public {
         // tier 1 议员（基层）：365 days
-        ring.mintRing(alice, AetherRing.RingTier.PARLIAMENT_MEMBER, "");
-        AetherRing.RingInfo memory info = ring.getRingInfo(0);
+        ring.mintRing(alice, IAetherRing.RingTier.PARLIAMENT_MEMBER, "");
+        AetherRing.RingInfo memory info = ring.getRingInfo(1);
         assertEq(uint8(info.tier), 1);
         assertEq(info.termEndAt, info.mintedAt + 365 days);
         assertTrue(info.isActive);
@@ -75,90 +78,90 @@ contract AetherRingTest is Test {
         assertEq(info.lastActivityAt, info.mintedAt);
 
         // tier 2 参议员（中层）：730 days
-        ring.mintRing(bob, AetherRing.RingTier.PARLIAMENT_SENIOR, "");
-        info = ring.getRingInfo(1);
+        ring.mintRing(bob, IAetherRing.RingTier.PARLIAMENT_SENIOR, "");
+        info = ring.getRingInfo(2);
         assertEq(uint8(info.tier), 2);
         assertEq(info.termEndAt, info.mintedAt + 730 days);
 
         // tier 3 议长（高层）：终生
-        ring.mintRing(carol, AetherRing.RingTier.PARLIAMENT_SPEAKER, "");
-        info = ring.getRingInfo(2);
+        ring.mintRing(carol, IAetherRing.RingTier.PARLIAMENT_SPEAKER, "");
+        info = ring.getRingInfo(3);
         assertEq(uint8(info.tier), 3);
         assertEq(info.termEndAt, type(uint64).max);
 
         // tier 4 委员（基层）：365 days
         address d4 = address(0xD4);
-        ring.mintRing(d4, AetherRing.RingTier.FEDERATION_MEMBER, "");
-        info = ring.getRingInfo(3);
+        ring.mintRing(d4, IAetherRing.RingTier.FEDERATION_MEMBER, "");
+        info = ring.getRingInfo(4);
         assertEq(uint8(info.tier), 4);
         assertEq(info.termEndAt, info.mintedAt + 365 days);
 
         // tier 5 委员长（中层）：730 days
         address d5 = address(0xD5);
-        ring.mintRing(d5, AetherRing.RingTier.FEDERATION_SENIOR, "");
-        info = ring.getRingInfo(4);
+        ring.mintRing(d5, IAetherRing.RingTier.FEDERATION_SENIOR, "");
+        info = ring.getRingInfo(5);
         assertEq(uint8(info.tier), 5);
         assertEq(info.termEndAt, info.mintedAt + 730 days);
 
         // tier 6 执政（高层）：终生
         address d6 = address(0xD6);
-        ring.mintRing(d6, AetherRing.RingTier.FEDERATION_MINISTER, "");
-        info = ring.getRingInfo(5);
+        ring.mintRing(d6, IAetherRing.RingTier.FEDERATION_MINISTER, "");
+        info = ring.getRingInfo(6);
         assertEq(uint8(info.tier), 6);
         assertEq(info.termEndAt, type(uint64).max);
 
         // tier 7 法官（基层）：365 days
         address d7 = address(0xD7);
-        ring.mintRing(d7, AetherRing.RingTier.TRIBUNAL_JUDGE, "");
-        info = ring.getRingInfo(6);
+        ring.mintRing(d7, IAetherRing.RingTier.TRIBUNAL_JUDGE, "");
+        info = ring.getRingInfo(7);
         assertEq(uint8(info.tier), 7);
         assertEq(info.termEndAt, info.mintedAt + 365 days);
 
         // tier 8 大法官（中层）：730 days
         address d8 = address(0xD8);
-        ring.mintRing(d8, AetherRing.RingTier.TRIBUNAL_SENIOR, "");
-        info = ring.getRingInfo(7);
+        ring.mintRing(d8, IAetherRing.RingTier.TRIBUNAL_SENIOR, "");
+        info = ring.getRingInfo(8);
         assertEq(uint8(info.tier), 8);
         assertEq(info.termEndAt, info.mintedAt + 730 days);
 
         // tier 9 首席（高层）：终生
         address d9 = address(0xD9);
-        ring.mintRing(d9, AetherRing.RingTier.TRIBUNAL_CHIEF, "");
-        info = ring.getRingInfo(8);
+        ring.mintRing(d9, IAetherRing.RingTier.TRIBUNAL_CHIEF, "");
+        info = ring.getRingInfo(9);
         assertEq(uint8(info.tier), 9);
         assertEq(info.termEndAt, type(uint64).max);
 
         // tier 10 理事（理事会基层）：365 days
         address d10 = address(0xD10);
-        ring.mintRing(d10, AetherRing.RingTier.COUNCIL_MEMBER, "");
-        info = ring.getRingInfo(9);
+        ring.mintRing(d10, IAetherRing.RingTier.COUNCIL_MEMBER, "");
+        info = ring.getRingInfo(10);
         assertEq(uint8(info.tier), 10);
         assertEq(info.termEndAt, info.mintedAt + 365 days);
 
         // tier 11 常务理事（理事会中层）：365 days
         address d11 = address(0xD11);
-        ring.mintRing(d11, AetherRing.RingTier.COUNCIL_SENIOR, "");
-        info = ring.getRingInfo(10);
+        ring.mintRing(d11, IAetherRing.RingTier.COUNCIL_SENIOR, "");
+        info = ring.getRingInfo(11);
         assertEq(uint8(info.tier), 11);
         assertEq(info.termEndAt, info.mintedAt + 365 days);
 
         // tier 12 理事长（理事会高层）：4 年
         address d12 = address(0xD12);
-        ring.mintRing(d12, AetherRing.RingTier.COUNCIL_CHAIR, "");
-        info = ring.getRingInfo(11);
+        ring.mintRing(d12, IAetherRing.RingTier.COUNCIL_CHAIR, "");
+        info = ring.getRingInfo(12);
         assertEq(uint8(info.tier), 12);
         assertEq(info.termEndAt, info.mintedAt + 4 * 365 days);
 
         // tier 14 公民：无任期（type(uint64).max）
         address d14 = address(0xD14);
-        ring.mintRing(d14, AetherRing.RingTier.CITIZEN, "");
-        info = ring.getRingInfo(12);
+        ring.mintRing(d14, IAetherRing.RingTier.CITIZEN, "");
+        info = ring.getRingInfo(13);
         assertEq(uint8(info.tier), 14);
         assertEq(info.termEndAt, type(uint64).max);
 
         // tier 13 ELDER 不能直接 mint，必须走 appointElder
         vm.expectRevert(AetherRing.InvalidTier.selector);
-        ring.mintRing(address(0xDEAD), AetherRing.RingTier.ELDER, "");
+        ring.mintRing(address(0xDEAD), IAetherRing.RingTier.ELDER, "");
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -169,20 +172,20 @@ contract AetherRingTest is Test {
         // 铸 60 个议员成功
         for (uint256 i = 0; i < 60; i++) {
             address m = address(uint160(0x1000 + i));
-            ring.mintRing(m, AetherRing.RingTier.PARLIAMENT_MEMBER, "");
+            ring.mintRing(m, IAetherRing.RingTier.PARLIAMENT_MEMBER, "");
         }
-        assertEq(ring.getTierCount(AetherRing.RingTier.PARLIAMENT_MEMBER), 60);
+        assertEq(ring.getTierCount(IAetherRing.RingTier.PARLIAMENT_MEMBER), 60);
 
         // 第 61 个 revert
         vm.expectRevert(
             abi.encodeWithSelector(
                 AetherRing.SeatLimitExceeded.selector,
-                AetherRing.RingTier.PARLIAMENT_MEMBER,
+                IAetherRing.RingTier.PARLIAMENT_MEMBER,
                 60,
                 60
             )
         );
-        ring.mintRing(alice, AetherRing.RingTier.PARLIAMENT_MEMBER, "");
+        ring.mintRing(alice, IAetherRing.RingTier.PARLIAMENT_MEMBER, "");
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -192,19 +195,19 @@ contract AetherRingTest is Test {
     function test_SeatLimit_MidAt12() public {
         for (uint256 i = 0; i < 12; i++) {
             address m = address(uint160(0x2000 + i));
-            ring.mintRing(m, AetherRing.RingTier.PARLIAMENT_SENIOR, "");
+            ring.mintRing(m, IAetherRing.RingTier.PARLIAMENT_SENIOR, "");
         }
-        assertEq(ring.getTierCount(AetherRing.RingTier.PARLIAMENT_SENIOR), 12);
+        assertEq(ring.getTierCount(IAetherRing.RingTier.PARLIAMENT_SENIOR), 12);
 
         vm.expectRevert(
             abi.encodeWithSelector(
                 AetherRing.SeatLimitExceeded.selector,
-                AetherRing.RingTier.PARLIAMENT_SENIOR,
+                IAetherRing.RingTier.PARLIAMENT_SENIOR,
                 12,
                 12
             )
         );
-        ring.mintRing(alice, AetherRing.RingTier.PARLIAMENT_SENIOR, "");
+        ring.mintRing(alice, IAetherRing.RingTier.PARLIAMENT_SENIOR, "");
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -214,35 +217,35 @@ contract AetherRingTest is Test {
     function test_SeatLimit_CouncilAt12_4_2() public {
         // 理事 12
         for (uint256 i = 0; i < 12; i++) {
-            ring.mintRing(address(uint160(0x3000 + i)), AetherRing.RingTier.COUNCIL_MEMBER, "");
+            ring.mintRing(address(uint160(0x3000 + i)), IAetherRing.RingTier.COUNCIL_MEMBER, "");
         }
         vm.expectRevert(
             abi.encodeWithSelector(
-                AetherRing.SeatLimitExceeded.selector, AetherRing.RingTier.COUNCIL_MEMBER, 12, 12
+                AetherRing.SeatLimitExceeded.selector, IAetherRing.RingTier.COUNCIL_MEMBER, 12, 12
             )
         );
-        ring.mintRing(alice, AetherRing.RingTier.COUNCIL_MEMBER, "");
+        ring.mintRing(alice, IAetherRing.RingTier.COUNCIL_MEMBER, "");
 
         // 常务理事 4
         for (uint256 i = 0; i < 4; i++) {
-            ring.mintRing(address(uint160(0x4000 + i)), AetherRing.RingTier.COUNCIL_SENIOR, "");
+            ring.mintRing(address(uint160(0x4000 + i)), IAetherRing.RingTier.COUNCIL_SENIOR, "");
         }
         vm.expectRevert(
             abi.encodeWithSelector(
-                AetherRing.SeatLimitExceeded.selector, AetherRing.RingTier.COUNCIL_SENIOR, 4, 4
+                AetherRing.SeatLimitExceeded.selector, IAetherRing.RingTier.COUNCIL_SENIOR, 4, 4
             )
         );
-        ring.mintRing(bob, AetherRing.RingTier.COUNCIL_SENIOR, "");
+        ring.mintRing(bob, IAetherRing.RingTier.COUNCIL_SENIOR, "");
 
         // 理事长 2
-        ring.mintRing(carol, AetherRing.RingTier.COUNCIL_CHAIR, "");
-        ring.mintRing(address(0x5001), AetherRing.RingTier.COUNCIL_CHAIR, "");
+        ring.mintRing(carol, IAetherRing.RingTier.COUNCIL_CHAIR, "");
+        ring.mintRing(address(0x5001), IAetherRing.RingTier.COUNCIL_CHAIR, "");
         vm.expectRevert(
             abi.encodeWithSelector(
-                AetherRing.SeatLimitExceeded.selector, AetherRing.RingTier.COUNCIL_CHAIR, 2, 2
+                AetherRing.SeatLimitExceeded.selector, IAetherRing.RingTier.COUNCIL_CHAIR, 2, 2
             )
         );
-        ring.mintRing(address(0x5002), AetherRing.RingTier.COUNCIL_CHAIR, "");
+        ring.mintRing(address(0x5002), IAetherRing.RingTier.COUNCIL_CHAIR, "");
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -273,20 +276,20 @@ contract AetherRingTest is Test {
     function test_SeatLimit_CitizenAndElder_NoLimit() public {
         // 公民无上限（铸 200 个）
         for (uint256 i = 0; i < 200; i++) {
-            ring.mintRing(address(uint160(0x7000 + i)), AetherRing.RingTier.CITIZEN, "");
+            ring.mintRing(address(uint160(0x7000 + i)), IAetherRing.RingTier.CITIZEN, "");
         }
         assertEq(ring.getTotalCitizens(), 200);
 
         // 退休元老无上限（通过 retireToEmeritus 转换）
         // 先铸 3 个高层，退休后全部变 ELDER（退休元老不计入 appointedElderCount）
-        ring.mintRing(alice, AetherRing.RingTier.PARLIAMENT_SPEAKER, "");
-        ring.mintRing(bob, AetherRing.RingTier.FEDERATION_MINISTER, "");
-        ring.mintRing(carol, AetherRing.RingTier.TRIBUNAL_CHIEF, "");
+        ring.mintRing(alice, IAetherRing.RingTier.PARLIAMENT_SPEAKER, "");
+        ring.mintRing(bob, IAetherRing.RingTier.FEDERATION_MINISTER, "");
+        ring.mintRing(carol, IAetherRing.RingTier.TRIBUNAL_CHIEF, "");
 
         vm.startPrank(address(safe));
-        ring.retireToEmeritus(0);
-        ring.retireToEmeritus(1);
-        ring.retireToEmeritus(2);
+        ring.retireToEmeritus(201);
+        ring.retireToEmeritus(202);
+        ring.retireToEmeritus(203);
         vm.stopPrank();
 
         // 3 个退休元老，appointedElderCount 仍为 0
@@ -302,14 +305,14 @@ contract AetherRingTest is Test {
 
     function test_RetireToEmeritus_HighTier_Success() public {
         // tier 3 议长退休
-        ring.mintRing(alice, AetherRing.RingTier.PARLIAMENT_SPEAKER, "");
+        ring.mintRing(alice, IAetherRing.RingTier.PARLIAMENT_SPEAKER, "");
         assertTrue(ring.isBearer(alice));
 
         vm.prank(address(safe));
-        ring.retireToEmeritus(0);
+        ring.retireToEmeritus(1);
 
-        AetherRing.RingInfo memory info = ring.getRingInfo(0);
-        assertEq(uint8(info.tier), uint8(AetherRing.RingTier.ELDER)); // tier=13
+        AetherRing.RingInfo memory info = ring.getRingInfo(1);
+        assertEq(uint8(info.tier), uint8(IAetherRing.RingTier.ELDER)); // tier=13
         assertFalse(info.isActive); // 退休元老无投票权
         assertTrue(info.isEmeritus);
         assertTrue(info.isRetiredElder);
@@ -321,21 +324,21 @@ contract AetherRingTest is Test {
         assertFalse(ring.isBearer(alice));
 
         // tier 6 执政退休
-        ring.mintRing(bob, AetherRing.RingTier.FEDERATION_MINISTER, "");
-        vm.prank(address(safe));
-        ring.retireToEmeritus(1);
-        assertEq(uint8(ring.getRingInfo(1).tier), uint8(AetherRing.RingTier.ELDER));
-
-        // tier 9 首席退休
-        ring.mintRing(carol, AetherRing.RingTier.TRIBUNAL_CHIEF, "");
+        ring.mintRing(bob, IAetherRing.RingTier.FEDERATION_MINISTER, "");
         vm.prank(address(safe));
         ring.retireToEmeritus(2);
-        assertEq(uint8(ring.getRingInfo(2).tier), uint8(AetherRing.RingTier.ELDER));
+        assertEq(uint8(ring.getRingInfo(2).tier), uint8(IAetherRing.RingTier.ELDER));
+
+        // tier 9 首席退休
+        ring.mintRing(carol, IAetherRing.RingTier.TRIBUNAL_CHIEF, "");
+        vm.prank(address(safe));
+        ring.retireToEmeritus(3);
+        assertEq(uint8(ring.getRingInfo(3).tier), uint8(IAetherRing.RingTier.ELDER));
 
         // 原 tier 席位计数减 1
-        assertEq(ring.getTierCount(AetherRing.RingTier.PARLIAMENT_SPEAKER), 0);
-        assertEq(ring.getTierCount(AetherRing.RingTier.FEDERATION_MINISTER), 0);
-        assertEq(ring.getTierCount(AetherRing.RingTier.TRIBUNAL_CHIEF), 0);
+        assertEq(ring.getTierCount(IAetherRing.RingTier.PARLIAMENT_SPEAKER), 0);
+        assertEq(ring.getTierCount(IAetherRing.RingTier.FEDERATION_MINISTER), 0);
+        assertEq(ring.getTierCount(IAetherRing.RingTier.TRIBUNAL_CHIEF), 0);
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -343,17 +346,17 @@ contract AetherRingTest is Test {
     // ═══════════════════════════════════════════════════════════
 
     function test_RetireToEmeritus_CouncilChair_Success() public {
-        ring.mintRing(alice, AetherRing.RingTier.COUNCIL_CHAIR, "");
+        ring.mintRing(alice, IAetherRing.RingTier.COUNCIL_CHAIR, "");
         assertTrue(ring.isBearer(alice));
 
         vm.prank(address(safe));
-        ring.retireToEmeritus(0);
+        ring.retireToEmeritus(1);
 
-        AetherRing.RingInfo memory info = ring.getRingInfo(0);
-        assertEq(uint8(info.tier), uint8(AetherRing.RingTier.ELDER));
+        AetherRing.RingInfo memory info = ring.getRingInfo(1);
+        assertEq(uint8(info.tier), uint8(IAetherRing.RingTier.ELDER));
         assertTrue(info.isRetiredElder);
         assertFalse(info.isAppointedElder);
-        assertEq(ring.getTierCount(AetherRing.RingTier.COUNCIL_CHAIR), 0);
+        assertEq(ring.getTierCount(IAetherRing.RingTier.COUNCIL_CHAIR), 0);
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -362,28 +365,28 @@ contract AetherRingTest is Test {
 
     function test_RetireToEmeritus_LowTier_Revert() public {
         // tier 1 议员（基层）不能退休
-        ring.mintRing(alice, AetherRing.RingTier.PARLIAMENT_MEMBER, "");
-        vm.prank(address(safe));
-        vm.expectRevert(AetherRing.InvalidTier.selector);
-        ring.retireToEmeritus(0);
-
-        // tier 2 参议员（中层）不能退休
-        ring.mintRing(bob, AetherRing.RingTier.PARLIAMENT_SENIOR, "");
+        ring.mintRing(alice, IAetherRing.RingTier.PARLIAMENT_MEMBER, "");
         vm.prank(address(safe));
         vm.expectRevert(AetherRing.InvalidTier.selector);
         ring.retireToEmeritus(1);
 
-        // tier 10 理事不能退休
-        ring.mintRing(carol, AetherRing.RingTier.COUNCIL_MEMBER, "");
+        // tier 2 参议员（中层）不能退休
+        ring.mintRing(bob, IAetherRing.RingTier.PARLIAMENT_SENIOR, "");
         vm.prank(address(safe));
         vm.expectRevert(AetherRing.InvalidTier.selector);
         ring.retireToEmeritus(2);
 
-        // tier 14 公民不能退休
-        ring.mintRing(address(0xE14), AetherRing.RingTier.CITIZEN, "");
+        // tier 10 理事不能退休
+        ring.mintRing(carol, IAetherRing.RingTier.COUNCIL_MEMBER, "");
         vm.prank(address(safe));
         vm.expectRevert(AetherRing.InvalidTier.selector);
         ring.retireToEmeritus(3);
+
+        // tier 14 公民不能退休
+        ring.mintRing(address(0xE14), IAetherRing.RingTier.CITIZEN, "");
+        vm.prank(address(safe));
+        vm.expectRevert(AetherRing.InvalidTier.selector);
+        ring.retireToEmeritus(4);
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -391,10 +394,10 @@ contract AetherRingTest is Test {
     // ═══════════════════════════════════════════════════════════
 
     function test_RetireToEmeritus_SetsIsRetiredElder() public {
-        ring.mintRing(alice, AetherRing.RingTier.PARLIAMENT_SPEAKER, "");
+        ring.mintRing(alice, IAetherRing.RingTier.PARLIAMENT_SPEAKER, "");
 
         vm.prank(address(safe));
-        ring.retireToEmeritus(0);
+        ring.retireToEmeritus(1);
 
         // isElderActive 返回 false（退休元老无治理权）
         assertFalse(ring.isElderActive(alice));
@@ -409,13 +412,13 @@ contract AetherRingTest is Test {
     // ═══════════════════════════════════════════════════════════
 
     function test_RenounceCitizenship_Success() public {
-        ring.mintRing(alice, AetherRing.RingTier.CITIZEN, "");
+        ring.mintRing(alice, IAetherRing.RingTier.CITIZEN, "");
         assertEq(ring.getTotalCitizens(), 1);
         assertTrue(ring.isBearer(alice));
 
         vm.prank(alice);
         vm.expectEmit(true, true, false, false);
-        emit AetherRing.CitizenRenounced(0, alice);
+        emit AetherRing.CitizenRenounced(1, alice);
         ring.renounceCitizenship();
 
         // 放弃后：道环已 burn，walletToRingId=0
@@ -432,9 +435,9 @@ contract AetherRingTest is Test {
 
     function test_RenounceCitizenship_NonCitizen_Revert() public {
         // tier 1 议员不能放弃公民身份
-        ring.mintRing(alice, AetherRing.RingTier.PARLIAMENT_MEMBER, "");
+        ring.mintRing(alice, IAetherRing.RingTier.PARLIAMENT_MEMBER, "");
         vm.prank(alice);
-        vm.expectRevert(abi.encodeWithSelector(AetherRing.NotCitizen.selector, 0));
+        vm.expectRevert(abi.encodeWithSelector(AetherRing.NotCitizen.selector, 1));
         ring.renounceCitizenship();
 
         // 无道环者调用 revert
@@ -448,7 +451,7 @@ contract AetherRingTest is Test {
     // ═══════════════════════════════════════════════════════════
 
     function test_RenounceCitizenship_Cooldown30Days() public {
-        ring.mintRing(alice, AetherRing.RingTier.CITIZEN, "");
+        ring.mintRing(alice, IAetherRing.RingTier.CITIZEN, "");
 
         // 放弃前 canReacquire=true
         assertTrue(ring.canReacquireCitizenship(alice));
@@ -473,15 +476,15 @@ contract AetherRingTest is Test {
     // ═══════════════════════════════════════════════════════════
 
     function test_MarkDormantIfDue_After2Years() public {
-        ring.mintRing(alice, AetherRing.RingTier.CITIZEN, "");
+        ring.mintRing(alice, IAetherRing.RingTier.CITIZEN, "");
         assertFalse(ring.isDormant(alice));
 
         // 推进 2 年 + 1 秒
         vm.warp(block.timestamp + 2 * 365 days + 1);
 
         vm.expectEmit(true, true, false, false);
-        emit AetherRing.CitizenDormant(0, alice);
-        ring.markDormantIfDue(0);
+        emit AetherRing.CitizenDormant(1, alice);
+        ring.markDormantIfDue(1);
 
         // 休眠后：isDormant=true，isBearer=false（投票权暂停）
         assertTrue(ring.isDormant(alice));
@@ -494,12 +497,12 @@ contract AetherRingTest is Test {
     // ═══════════════════════════════════════════════════════════
 
     function test_MarkDormantIfDue_Before2Years_Revert() public {
-        ring.mintRing(alice, AetherRing.RingTier.CITIZEN, "");
+        ring.mintRing(alice, IAetherRing.RingTier.CITIZEN, "");
 
         // 1 年后：不足 2 年，revert
         vm.warp(block.timestamp + 365 days);
-        vm.expectRevert(abi.encodeWithSelector(AetherRing.DormancyNotDue.selector, 0));
-        ring.markDormantIfDue(0);
+        vm.expectRevert(abi.encodeWithSelector(AetherRing.DormancyNotDue.selector, 1));
+        ring.markDormantIfDue(1);
 
         // 仍然活跃
         assertFalse(ring.isDormant(alice));
@@ -511,8 +514,8 @@ contract AetherRingTest is Test {
     // ═══════════════════════════════════════════════════════════
 
     function test_MarkVoteActivity_UpdatesLastActivityAt() public {
-        ring.mintRing(alice, AetherRing.RingTier.CITIZEN, "");
-        uint64 originalActivity = ring.getRingInfo(0).lastActivityAt;
+        ring.mintRing(alice, IAetherRing.RingTier.CITIZEN, "");
+        uint64 originalActivity = ring.getRingInfo(1).lastActivityAt;
 
         // 推进 100 天
         vm.warp(block.timestamp + 100 days);
@@ -520,7 +523,7 @@ contract AetherRingTest is Test {
         // markVoteActivity 更新活动时间（admin 有 GOVERNANCE_ROLE）
         ring.markVoteActivity(alice);
 
-        AetherRing.RingInfo memory info = ring.getRingInfo(0);
+        AetherRing.RingInfo memory info = ring.getRingInfo(1);
         assertGt(info.lastActivityAt, originalActivity);
         assertEq(info.lastActivityAt, uint64(block.timestamp));
 
@@ -537,23 +540,23 @@ contract AetherRingTest is Test {
     function test_GetActiveCitizens_ExcludesDormant() public {
         // 铸 5 个公民
         for (uint256 i = 0; i < 5; i++) {
-            ring.mintRing(address(uint160(0x8000 + i)), AetherRing.RingTier.CITIZEN, "");
+            ring.mintRing(address(uint160(0x8000 + i)), IAetherRing.RingTier.CITIZEN, "");
         }
         assertEq(ring.getTotalCitizens(), 5);
         assertEq(ring.getActiveCitizens(), 5);
 
         // 推进 2 年+1 秒，标记 2 个休眠
         vm.warp(block.timestamp + 2 * 365 days + 1);
-        ring.markDormantIfDue(0);
         ring.markDormantIfDue(1);
+        ring.markDormantIfDue(2);
 
         // getActiveCitizens = 5 - 2 = 3
         assertEq(ring.getActiveCitizens(), 3);
         assertEq(ring.getTotalCitizens(), 5); // 含休眠
 
         // 已休眠的再次标记 revert
-        vm.expectRevert(abi.encodeWithSelector(AetherRing.AlreadyDormant.selector, 0));
-        ring.markDormantIfDue(0);
+        vm.expectRevert(abi.encodeWithSelector(AetherRing.AlreadyDormant.selector, 1));
+        ring.markDormantIfDue(1);
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -566,11 +569,11 @@ contract AetherRingTest is Test {
 
         vm.prank(address(safe));
         vm.expectEmit(true, true, false, false);
-        emit AetherRing.ElderAppointed(0, alice);
+        emit AetherRing.ElderAppointed(1, alice);
         ring.appointElder(alice, "ipfs://elder");
 
-        AetherRing.RingInfo memory info = ring.getRingInfo(0);
-        assertEq(uint8(info.tier), uint8(AetherRing.RingTier.ELDER));
+        AetherRing.RingInfo memory info = ring.getRingInfo(1);
+        assertEq(uint8(info.tier), uint8(IAetherRing.RingTier.ELDER));
         assertTrue(info.isAppointedElder);
         assertFalse(info.isRetiredElder);
         assertTrue(info.isActive); // 任命元老有治理权
@@ -586,15 +589,15 @@ contract AetherRingTest is Test {
 
     function test_AppointElder_ExistingCitizen() public {
         // alice 已是公民（tier 14）
-        ring.mintRing(alice, AetherRing.RingTier.CITIZEN, "");
+        ring.mintRing(alice, IAetherRing.RingTier.CITIZEN, "");
         assertEq(ring.getTotalCitizens(), 1);
 
         // 任命为元老
         vm.prank(address(safe));
         ring.appointElder(alice, "");
 
-        AetherRing.RingInfo memory info = ring.getRingInfo(0);
-        assertEq(uint8(info.tier), uint8(AetherRing.RingTier.ELDER));
+        AetherRing.RingInfo memory info = ring.getRingInfo(1);
+        assertEq(uint8(info.tier), uint8(IAetherRing.RingTier.ELDER));
         assertTrue(info.isAppointedElder);
         assertTrue(info.isActive);
         // 公民计数 -1（原 tier 14 席位释放）
@@ -609,9 +612,9 @@ contract AetherRingTest is Test {
 
     function test_AppointElder_RetiredElder_Reactivate() public {
         // alice 是议长，退休为退休元老
-        ring.mintRing(alice, AetherRing.RingTier.PARLIAMENT_SPEAKER, "");
+        ring.mintRing(alice, IAetherRing.RingTier.PARLIAMENT_SPEAKER, "");
         vm.prank(address(safe));
-        ring.retireToEmeritus(0);
+        ring.retireToEmeritus(1);
 
         assertTrue(ring.isRetiredElder(alice));
         assertFalse(ring.isElderActive(alice));
@@ -621,7 +624,7 @@ contract AetherRingTest is Test {
         vm.prank(address(safe));
         ring.appointElder(alice, "");
 
-        AetherRing.RingInfo memory info = ring.getRingInfo(0);
+        AetherRing.RingInfo memory info = ring.getRingInfo(1);
         assertTrue(info.isAppointedElder);
         assertFalse(info.isRetiredElder); // 退休标记清除
         assertTrue(info.isActive); // 恢复治理权
@@ -661,14 +664,14 @@ contract AetherRingTest is Test {
         assertTrue(ring.isElderActive(alice));
 
         // 退休元老：isElderActive=false
-        ring.mintRing(bob, AetherRing.RingTier.FEDERATION_MINISTER, "");
+        ring.mintRing(bob, IAetherRing.RingTier.FEDERATION_MINISTER, "");
         vm.prank(address(safe));
-        ring.retireToEmeritus(1);
+        ring.retireToEmeritus(2);
         assertFalse(ring.isElderActive(bob));
         assertTrue(ring.isRetiredElder(bob));
 
         // 普通公民：isElderActive=false
-        ring.mintRing(carol, AetherRing.RingTier.CITIZEN, "");
+        ring.mintRing(carol, IAetherRing.RingTier.CITIZEN, "");
         assertFalse(ring.isElderActive(carol));
 
         // 无道环者：isElderActive=false
@@ -680,22 +683,29 @@ contract AetherRingTest is Test {
     // ═══════════════════════════════════════════════════════════
 
     function test_SafeWallet_OnlyMultisig_RetireAppoint() public {
-        ring.mintRing(alice, AetherRing.RingTier.PARLIAMENT_SPEAKER, "");
+        ring.mintRing(alice, IAetherRing.RingTier.PARLIAMENT_SPEAKER, "");
 
         // 非 Safe 调 retireToEmeritus → revert
         vm.prank(bob);
         vm.expectRevert(abi.encodeWithSelector(AetherRing.NotSafeWallet.selector, bob));
-        ring.retireToEmeritus(0);
+        ring.retireToEmeritus(1);
 
-        // 非 Safe 调 appointElder → revert
+        // 无 ADMIN_ROLE 调 appointElder → revert（AccessControlUnauthorizedAccount）
         vm.prank(bob);
-        vm.expectRevert(abi.encodeWithSelector(AetherRing.NotSafeWallet.selector, bob));
+        vm.expectRevert(
+            abi.encodeWithSelector(
+                bytes4(keccak256("AccessControlUnauthorizedAccount(address,bytes32)")),
+                bob,
+                ring.ADMIN_ROLE()
+            )
+        );
         ring.appointElder(carol, "");
 
-        // Safe 调用成功
+        // Safe 调 retireToEmeritus 成功（retireToEmeritus 仍要求 Safe）
         vm.prank(address(safe));
-        ring.retireToEmeritus(0);
+        ring.retireToEmeritus(1);
 
+        // ADMIN_ROLE（此处为 Safe，已在 setUp 授予）调 appointElder 成功
         vm.prank(address(safe));
         ring.appointElder(carol, "");
         assertTrue(ring.isElderActive(carol));
@@ -706,14 +716,14 @@ contract AetherRingTest is Test {
     // ═══════════════════════════════════════════════════════════
 
     function test_UpdateTier_ResetTerm_NewTerm() public {
-        ring.mintRing(alice, AetherRing.RingTier.PARLIAMENT_MEMBER, "");
-        uint64 oldTermEnd = ring.getRingInfo(0).termEndAt;
+        ring.mintRing(alice, IAetherRing.RingTier.PARLIAMENT_MEMBER, "");
+        uint64 oldTermEnd = ring.getRingInfo(1).termEndAt;
 
         // 推进 100 天后升级到参议员（中层），重置任期
         vm.warp(block.timestamp + 100 days);
-        ring.updateTier(0, AetherRing.RingTier.PARLIAMENT_SENIOR, true);
+        ring.updateTier(1, IAetherRing.RingTier.PARLIAMENT_SENIOR, true);
 
-        AetherRing.RingInfo memory info = ring.getRingInfo(0);
+        AetherRing.RingInfo memory info = ring.getRingInfo(1);
         assertEq(uint8(info.tier), 2);
         // 新任期 = 当前时间 + 730 days（中层）
         assertEq(info.termEndAt, uint64(block.timestamp + 730 days));
@@ -724,8 +734,8 @@ contract AetherRingTest is Test {
 
         // 不重置任期时，termEndAt 不变
         uint64 termBefore = info.termEndAt;
-        ring.updateTier(0, AetherRing.RingTier.PARLIAMENT_MEMBER, false);
-        info = ring.getRingInfo(0);
+        ring.updateTier(1, IAetherRing.RingTier.PARLIAMENT_MEMBER, false);
+        info = ring.getRingInfo(1);
         assertEq(uint8(info.tier), 1);
         assertEq(info.termEndAt, termBefore); // 任期不变
     }
@@ -735,9 +745,9 @@ contract AetherRingTest is Test {
     // ═══════════════════════════════════════════════════════════
 
     function test_MarkExpiredIfDue_AfterTermEnds() public {
-        ring.mintRing(alice, AetherRing.RingTier.PARLIAMENT_MEMBER, "");
+        ring.mintRing(alice, IAetherRing.RingTier.PARLIAMENT_MEMBER, "");
         assertTrue(ring.isBearer(alice));
-        assertFalse(ring.isExpired(0));
+        assertFalse(ring.isExpired(1));
 
         // 推进到任期结束之后
         vm.warp(block.timestamp + 366 days);
@@ -748,21 +758,21 @@ contract AetherRingTest is Test {
 
         // 主动标记过期
         vm.expectEmit(true, false, false, true);
-        emit AetherRing.RingExpired(0, ring.getRingInfo(0).termEndAt);
-        ring.markExpiredIfDue(0);
+        emit AetherRing.RingExpired(1, ring.getRingInfo(1).termEndAt);
+        ring.markExpiredIfDue(1);
 
-        AetherRing.RingInfo memory info = ring.getRingInfo(0);
+        AetherRing.RingInfo memory info = ring.getRingInfo(1);
         assertTrue(info.isExpired);
 
         // 重复标记 no-op（不 revert）
-        ring.markExpiredIfDue(0);
+        ring.markExpiredIfDue(1);
 
         // 高层（终生任期）不会过期
-        ring.mintRing(bob, AetherRing.RingTier.PARLIAMENT_SPEAKER, "");
+        ring.mintRing(bob, IAetherRing.RingTier.PARLIAMENT_SPEAKER, "");
         vm.warp(block.timestamp + 100 * 365 days);
-        assertFalse(ring.isExpired(1));
-        ring.markExpiredIfDue(1);
-        assertFalse(ring.getRingInfo(1).isExpired);
+        assertFalse(ring.isExpired(2));
+        ring.markExpiredIfDue(2);
+        assertFalse(ring.getRingInfo(2).isExpired);
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -770,18 +780,18 @@ contract AetherRingTest is Test {
     // ═══════════════════════════════════════════════════════════
 
     function test_SBT_TransferReverts() public {
-        ring.mintRing(alice, AetherRing.RingTier.CITIZEN, "");
+        ring.mintRing(alice, IAetherRing.RingTier.CITIZEN, "");
         vm.startPrank(alice);
         vm.expectRevert(AetherRing.SoulboundNoTransfer.selector);
-        ring.transferFrom(alice, bob, 0);
+        ring.transferFrom(alice, bob, 1);
         vm.stopPrank();
     }
 
     function test_SBT_ApproveReverts() public {
-        ring.mintRing(alice, AetherRing.RingTier.CITIZEN, "");
+        ring.mintRing(alice, IAetherRing.RingTier.CITIZEN, "");
         vm.startPrank(alice);
         vm.expectRevert(AetherRing.SoulboundNoApproval.selector);
-        ring.approve(bob, 0);
+        ring.approve(bob, 1);
         vm.stopPrank();
     }
 

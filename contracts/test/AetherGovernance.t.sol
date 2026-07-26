@@ -3,6 +3,7 @@ pragma solidity ^0.8.26;
 
 import {Test} from "forge-std/Test.sol";
 import {AetherRing} from "../src/AetherRing.sol";
+import {IAetherRing} from "../src/interfaces/IAetherRing.sol";
 import {AetherGovernance} from "../src/AetherGovernance.sol";
 
 /**
@@ -56,30 +57,30 @@ contract AetherGovernanceTest is Test {
         ring.grantRole(ring.ADMIN_ROLE(), address(gov));
 
         // 铸道环
-        ring.mintRing(fedMember, AetherRing.RingTier.FEDERATION_MEMBER, "");
-        ring.mintRing(parMember, AetherRing.RingTier.PARLIAMENT_MEMBER, "");
-        ring.mintRing(parSpeaker, AetherRing.RingTier.PARLIAMENT_SPEAKER, "");
-        ring.mintRing(tribJudge, AetherRing.RingTier.TRIBUNAL_JUDGE, "");
-        ring.mintRing(tribChief, AetherRing.RingTier.TRIBUNAL_CHIEF, "");
-        ring.mintRing(councilMember1, AetherRing.RingTier.COUNCIL_MEMBER, "");
-        ring.mintRing(councilMember2, AetherRing.RingTier.COUNCIL_MEMBER, "");
-        ring.mintRing(councilChair, AetherRing.RingTier.COUNCIL_CHAIR, "");
+        ring.mintRing(fedMember, IAetherRing.RingTier.FEDERATION_MEMBER, "");
+        ring.mintRing(parMember, IAetherRing.RingTier.PARLIAMENT_MEMBER, "");
+        ring.mintRing(parSpeaker, IAetherRing.RingTier.PARLIAMENT_SPEAKER, "");
+        ring.mintRing(tribJudge, IAetherRing.RingTier.TRIBUNAL_JUDGE, "");
+        ring.mintRing(tribChief, IAetherRing.RingTier.TRIBUNAL_CHIEF, "");
+        ring.mintRing(councilMember1, IAetherRing.RingTier.COUNCIL_MEMBER, "");
+        ring.mintRing(councilMember2, IAetherRing.RingTier.COUNCIL_MEMBER, "");
+        ring.mintRing(councilChair, IAetherRing.RingTier.COUNCIL_CHAIR, "");
 
         // 任命元老（通过 setSafeWallet + appointElder）
+        // appointElder 用 onlyRole(ADMIN_ROLE)，测试合约 address(this) 持有 ADMIN_ROLE（构造时授予），
+        // 这里直接由 address(this) 调用；retireToEmeritus 仍要求 Safe
         address mockSafe = address(0x5AFE);
         ring.setSafeWallet(mockSafe);
-        vm.startPrank(mockSafe);
         ring.appointElder(elder1, "");
         ring.appointElder(elder2, "");
         ring.appointElder(elder3, "");
-        vm.stopPrank();
 
         // 铸公民道环
-        ring.mintRing(citizen1, AetherRing.RingTier.CITIZEN, "");
-        ring.mintRing(citizen2, AetherRing.RingTier.CITIZEN, "");
-        ring.mintRing(citizen3, AetherRing.RingTier.CITIZEN, "");
-        ring.mintRing(citizen4, AetherRing.RingTier.CITIZEN, "");
-        ring.mintRing(citizen5, AetherRing.RingTier.CITIZEN, "");
+        ring.mintRing(citizen1, IAetherRing.RingTier.CITIZEN, "");
+        ring.mintRing(citizen2, IAetherRing.RingTier.CITIZEN, "");
+        ring.mintRing(citizen3, IAetherRing.RingTier.CITIZEN, "");
+        ring.mintRing(citizen4, IAetherRing.RingTier.CITIZEN, "");
+        ring.mintRing(citizen5, IAetherRing.RingTier.CITIZEN, "");
 
         // 给 fedMember 授 PROPOSER_ROLE
         gov.grantProposerRole(fedMember);
@@ -366,12 +367,12 @@ contract AetherGovernanceTest is Test {
     function test_Veto_RetiredElder_Revert() public {
         _advanceToPendingVeto(0);
 
-        // 退休元老（先 appoint 再 retire）
+        // 退休元老（先铸一个可退休的 tier 3 道环，再通过 safe 退休转元老）
         address retiredElder = address(0xEE04);
-        vm.prank(address(0x5AFE));
-        ring.appointElder(retiredElder, "");
-        vm.prank(address(0x5AFE));
+        ring.mintRing(retiredElder, IAetherRing.RingTier.PARLIAMENT_SPEAKER, "");
+        vm.startPrank(address(0x5AFE));
         ring.retireToEmeritus(ring.getRingId(retiredElder));
+        vm.stopPrank();
 
         vm.prank(retiredElder);
         vm.expectRevert(AetherGovernance.NotAppointedElder.selector);
@@ -435,6 +436,10 @@ contract AetherGovernanceTest is Test {
 
         _advanceToQueued(id);
 
+        // 先跳过紧急 Timelock 12h，才能测到 EmergencyApprovalNotMet
+        // （executeProposal 先检查 timelock 再检查 emergency approvals）
+        skip(12 hours + 1);
+
         // 未获 3 元老批准 → revert
         vm.expectRevert(AetherGovernance.EmergencyApprovalNotMet.selector);
         gov.executeProposal(id);
@@ -447,10 +452,8 @@ contract AetherGovernanceTest is Test {
         vm.prank(elder3);
         gov.approveEmergencyTreasury(id);
 
-        // 紧急 Timelock 12h
-        vm.warp(block.timestamp + 12 hours + 1);
-        // 执行可能因 target 无代码失败，这里只验证 approval 逻辑通过
-        // 实际执行需要真实 target
+        // 执行（target 无代码但 call 仍返回 ok，提案状态变为 Executed）
+        gov.executeProposal(id);
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -585,7 +588,7 @@ contract AetherGovernanceTest is Test {
         address[] memory members = new address[](8);
         for (uint256 i = 0; i < 8; i++) {
             members[i] = address(uint160(0xC200 + i));
-            ring.mintRing(members[i], AetherRing.RingTier.COUNCIL_MEMBER, "");
+            ring.mintRing(members[i], IAetherRing.RingTier.COUNCIL_MEMBER, "");
         }
 
         // 8 理事签名
@@ -609,7 +612,7 @@ contract AetherGovernanceTest is Test {
         address[] memory members = new address[](8);
         for (uint256 i = 0; i < 8; i++) {
             members[i] = address(uint160(0xC300 + i));
-            ring.mintRing(members[i], AetherRing.RingTier.COUNCIL_MEMBER, "");
+            ring.mintRing(members[i], IAetherRing.RingTier.COUNCIL_MEMBER, "");
         }
         for (uint256 i = 0; i < 8; i++) {
             vm.prank(members[i]);
@@ -634,7 +637,7 @@ contract AetherGovernanceTest is Test {
         address[] memory members = new address[](8);
         for (uint256 i = 0; i < 8; i++) {
             members[i] = address(uint160(0xC400 + i));
-            ring.mintRing(members[i], AetherRing.RingTier.COUNCIL_MEMBER, "");
+            ring.mintRing(members[i], IAetherRing.RingTier.COUNCIL_MEMBER, "");
         }
         for (uint256 i = 0; i < 8; i++) {
             vm.prank(members[i]);
@@ -758,21 +761,21 @@ contract AetherGovernanceTest is Test {
         gov.castPublicVote(id, AetherGovernance.VoteOption.FOR);
 
         // 10. finalize → PendingVeto
-        vm.warp(block.timestamp + 7 days + 1);
+        skip(7 days + 1);
         gov.finalizeProposal(id);
 
         (, , , , , AetherGovernance.ProposalStatus status, , , , , , , , , , , , , ) = gov.getProposal(id);
         assertEq(uint8(status), uint8(AetherGovernance.ProposalStatus.PendingVeto));
 
         // 11. 72h 超时 → Queued
-        vm.warp(block.timestamp + 72 hours + 1);
+        skip(72 hours + 1);
         gov.finalizeVetoWindow(id);
 
         (, , , , , status, , , , , , , , , , , , , ) = gov.getProposal(id);
         assertEq(uint8(status), uint8(AetherGovernance.ProposalStatus.Queued));
 
         // 12. Timelock 到期 → 执行
-        vm.warp(block.timestamp + 48 hours + 1);
+        skip(48 hours + 1);
         gov.executeProposal(id);
 
         (, , , , , status, , , , , , , , , , , , , ) = gov.getProposal(id);

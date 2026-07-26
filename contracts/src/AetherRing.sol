@@ -290,7 +290,7 @@ contract AetherRing is ERC721, AccessControl, IAetherRing {
     // ═══════════════════════════════════════════════════════════
 
     function revokeRing(uint256 tokenId) external {
-        if (!_hasRole(ADMIN_ROLE, msg.sender) && !_hasRole(GOVERNANCE_ROLE, msg.sender)) {
+        if (!hasRole(ADMIN_ROLE, msg.sender) && !hasRole(GOVERNANCE_ROLE, msg.sender)) {
             revert Unauthorized();
         }
         if (!_exists(tokenId)) revert RingDoesNotExist(tokenId);
@@ -484,7 +484,7 @@ contract AetherRing is ERC721, AccessControl, IAetherRing {
     /**
      * @notice 检查地址是否可重新获取公民身份（30 天冷却期）
      */
-    function canReacquireCitizenship(address user) external view returns (bool) {
+    function canReacquireCitizenship(address user) public view returns (bool) {
         uint256 lastRenounced = lastRenouncedAt[user];
         if (lastRenounced == 0) return true;
         return block.timestamp >= lastRenounced + RENOUNCE_COOLDOWN;

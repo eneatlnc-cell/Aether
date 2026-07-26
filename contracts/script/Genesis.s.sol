@@ -3,6 +3,7 @@ pragma solidity ^0.8.26;
 
 import {Script, console2} from "forge-std/Script.sol";
 import {AetherRing} from "../src/AetherRing.sol";
+import {IAetherRing} from "../src/interfaces/IAetherRing.sol";
 import {AetherGovernance} from "../src/AetherGovernance.sol";
 import {AetherElection} from "../src/AetherElection.sol";
 
@@ -84,7 +85,7 @@ contract Genesis is Script {
     function _mintInitial(
         AetherRing ring,
         string memory envKey,
-        AetherRing.RingTier tier,
+        IAetherRing.RingTier tier,
         address deployer
     ) internal {
         (address addr, bool ok) = _optionalAddr(envKey, deployer);
@@ -133,36 +134,36 @@ contract Genesis is Script {
         // ── 1. 铸造三院高层（deployer 持有 MINTER_ROLE） ──
         console2.log("=== Minting high-tier rings ===");
         // 议长 tier 3（2 人）
-        _mintInitial(ring, "PAR_SPEAKER_1", AetherRing.RingTier.PARLIAMENT_SPEAKER, deployer);
-        _mintInitial(ring, "PAR_SPEAKER_2", AetherRing.RingTier.PARLIAMENT_SPEAKER, deployer);
+        _mintInitial(ring, "PAR_SPEAKER_1", IAetherRing.RingTier.PARLIAMENT_SPEAKER, deployer);
+        _mintInitial(ring, "PAR_SPEAKER_2", IAetherRing.RingTier.PARLIAMENT_SPEAKER, deployer);
 
         // 执政 tier 6（2 人）
-        _mintInitial(ring, "FED_MINISTER_1", AetherRing.RingTier.FEDERATION_MINISTER, deployer);
-        _mintInitial(ring, "FED_MINISTER_2", AetherRing.RingTier.FEDERATION_MINISTER, deployer);
+        _mintInitial(ring, "FED_MINISTER_1", IAetherRing.RingTier.FEDERATION_MINISTER, deployer);
+        _mintInitial(ring, "FED_MINISTER_2", IAetherRing.RingTier.FEDERATION_MINISTER, deployer);
 
         // 首席 tier 9（2 人）
-        _mintInitial(ring, "TRIB_CHIEF_1", AetherRing.RingTier.TRIBUNAL_CHIEF, deployer);
-        _mintInitial(ring, "TRIB_CHIEF_2", AetherRing.RingTier.TRIBUNAL_CHIEF, deployer);
+        _mintInitial(ring, "TRIB_CHIEF_1", IAetherRing.RingTier.TRIBUNAL_CHIEF, deployer);
+        _mintInitial(ring, "TRIB_CHIEF_2", IAetherRing.RingTier.TRIBUNAL_CHIEF, deployer);
 
         // ── 2. 铸造理事会 ──
         console2.log("=== Minting council rings ===");
         // 理事 tier 10（2 人）
-        _mintInitial(ring, "COUNCIL_1", AetherRing.RingTier.COUNCIL_MEMBER, deployer);
-        _mintInitial(ring, "COUNCIL_2", AetherRing.RingTier.COUNCIL_MEMBER, deployer);
+        _mintInitial(ring, "COUNCIL_1", IAetherRing.RingTier.COUNCIL_MEMBER, deployer);
+        _mintInitial(ring, "COUNCIL_2", IAetherRing.RingTier.COUNCIL_MEMBER, deployer);
 
         // 常务理事 tier 11（2 人）
-        _mintInitial(ring, "COUNCIL_SENIOR_1", AetherRing.RingTier.COUNCIL_SENIOR, deployer);
-        _mintInitial(ring, "COUNCIL_SENIOR_2", AetherRing.RingTier.COUNCIL_SENIOR, deployer);
+        _mintInitial(ring, "COUNCIL_SENIOR_1", IAetherRing.RingTier.COUNCIL_SENIOR, deployer);
+        _mintInitial(ring, "COUNCIL_SENIOR_2", IAetherRing.RingTier.COUNCIL_SENIOR, deployer);
 
         // 理事长 tier 12（1 人）
-        _mintInitial(ring, "COUNCIL_CHAIR", AetherRing.RingTier.COUNCIL_CHAIR, deployer);
+        _mintInitial(ring, "COUNCIL_CHAIR", IAetherRing.RingTier.COUNCIL_CHAIR, deployer);
 
         // ── 3. H6：铸造初始公民（tier 14，10 人） ──
         // 正式环境公民由捐款产生，此处仅用于初始测试网（quorum 分母需要 ≥1）
         console2.log("=== Minting 10 initial citizens (H6) ===");
         for (uint256 i = 1; i <= 10; i++) {
             string memory envKey = _citizenEnvKey(i);
-            _mintInitial(ring, envKey, AetherRing.RingTier.CITIZEN, deployer);
+            _mintInitial(ring, envKey, IAetherRing.RingTier.CITIZEN, deployer);
         }
 
         // ── 4. C3：实际任命 5 位元老 ──

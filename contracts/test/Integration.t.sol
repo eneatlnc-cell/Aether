@@ -63,6 +63,7 @@ contract IntegrationTest is Test {
         // ── 2. 交叉授权（与 Deploy.s.sol 一致） ──
         ring.grantRole(ring.ADMIN_ROLE(), address(gov));
         ring.grantRole(ring.ADMIN_ROLE(), address(election));
+        ring.grantRole(ring.ADMIN_ROLE(), address(safe)); // appointElder 用 onlyRole(ADMIN_ROLE)，Safe 需此权限
         ring.grantRole(ring.MINTER_ROLE(), address(election));
         ring.grantRole(ring.MINTER_ROLE(), address(donation));
         ring.grantRole(ring.GOVERNANCE_ROLE(), address(gov));
@@ -70,18 +71,18 @@ contract IntegrationTest is Test {
 
         // ── 3. 铸造初始道环 ──
         ring.grantRole(ring.MINTER_ROLE(), address(this));
-        ring.mintRing(chair, AetherRing.RingTier.COUNCIL_CHAIR, "");
-        ring.mintRing(parMember, AetherRing.RingTier.PARLIAMENT_MEMBER, "");
-        ring.mintRing(parSpeaker, AetherRing.RingTier.PARLIAMENT_SPEAKER, "");
-        ring.mintRing(fedMember, AetherRing.RingTier.FEDERATION_MEMBER, "");
-        ring.mintRing(fedMinister, AetherRing.RingTier.FEDERATION_MINISTER, "");
-        ring.mintRing(tribJudge, AetherRing.RingTier.TRIBUNAL_JUDGE, "");
-        ring.mintRing(tribChief, AetherRing.RingTier.TRIBUNAL_CHIEF, "");
-        ring.mintRing(citizen1, AetherRing.RingTier.CITIZEN, "");
-        ring.mintRing(citizen2, AetherRing.RingTier.CITIZEN, "");
-        ring.mintRing(citizen3, AetherRing.RingTier.CITIZEN, "");
-        ring.mintRing(citizen4, AetherRing.RingTier.CITIZEN, "");
-        ring.mintRing(citizen5, AetherRing.RingTier.CITIZEN, "");
+        ring.mintRing(chair, IAetherRing.RingTier.COUNCIL_CHAIR, "");
+        ring.mintRing(parMember, IAetherRing.RingTier.PARLIAMENT_MEMBER, "");
+        ring.mintRing(parSpeaker, IAetherRing.RingTier.PARLIAMENT_SPEAKER, "");
+        ring.mintRing(fedMember, IAetherRing.RingTier.FEDERATION_MEMBER, "");
+        ring.mintRing(fedMinister, IAetherRing.RingTier.FEDERATION_MINISTER, "");
+        ring.mintRing(tribJudge, IAetherRing.RingTier.TRIBUNAL_JUDGE, "");
+        ring.mintRing(tribChief, IAetherRing.RingTier.TRIBUNAL_CHIEF, "");
+        ring.mintRing(citizen1, IAetherRing.RingTier.CITIZEN, "");
+        ring.mintRing(citizen2, IAetherRing.RingTier.CITIZEN, "");
+        ring.mintRing(citizen3, IAetherRing.RingTier.CITIZEN, "");
+        ring.mintRing(citizen4, IAetherRing.RingTier.CITIZEN, "");
+        ring.mintRing(citizen5, IAetherRing.RingTier.CITIZEN, "");
 
         // ── 4. 任命 3 位元老（通过 Safe 多签 mock） ──
         vm.prank(address(safe));
@@ -126,7 +127,7 @@ contract IntegrationTest is Test {
         gov.castFirstVote(id, AetherGovernance.VoteOption.FOR);
 
         // 4. 一审结束（5 天）
-        vm.warp(block.timestamp + 5 days + 1);
+        skip(5 days + 1);
         gov.finalizeFirstVote(id);
 
         // 5. 正式提交 + 法庭合规
@@ -136,7 +137,7 @@ contract IntegrationTest is Test {
         gov.castComplianceVote(id, AetherGovernance.VoteOption.FOR);
 
         // 6. 合规结束（3 天）→ 进入公投
-        vm.warp(block.timestamp + 3 days + 1);
+        skip(3 days + 1);
         gov.finalizeCompliance(id);
 
         // 7. 公投（三院 + 公民全部 FOR）
@@ -152,15 +153,15 @@ contract IntegrationTest is Test {
         gov.castPublicVote(id, AetherGovernance.VoteOption.FOR);
 
         // 8. 公投结束（7 天）→ PendingVeto
-        vm.warp(block.timestamp + 7 days + 1);
+        skip(7 days + 1);
         gov.finalizeProposal(id);
 
         // 9. 元老否决窗口超时（72h）→ Queued
-        vm.warp(block.timestamp + 72 hours + 1);
+        skip(72 hours + 1);
         gov.finalizeVetoWindow(id);
 
         // 10. Timelock 到期（48h）→ 执行
-        vm.warp(block.timestamp + 48 hours + 1);
+        skip(48 hours + 1);
         gov.executeProposal(id);
 
         (,,,,, AetherGovernance.ProposalStatus status,,,,,,,,,,,,,) = gov.getProposal(id);
@@ -236,7 +237,7 @@ contract IntegrationTest is Test {
         election.registerCandidate(id);
 
         // 3. 注册期结束（7 天）→ 理事会整理
-        vm.warp(block.timestamp + 7 days + 1);
+        skip(7 days + 1);
         election.advanceToCouncilReview(id);
 
         // 4. 理事长批准全部 3 个候选人
@@ -248,7 +249,7 @@ contract IntegrationTest is Test {
         election.approveCandidate(id, citizen3);
 
         // 5. 理事会期结束（3 天）→ 议会审批
-        vm.warp(block.timestamp + 3 days + 1);
+        skip(3 days + 1);
         election.advanceToParliamentApproval(id);
 
         // 6. 议员批准（阈值=1）
@@ -262,11 +263,11 @@ contract IntegrationTest is Test {
         election.castVote(id, citizen1);
 
         // 8. 投票期结束（7 天）→ finalize
-        vm.warp(block.timestamp + 7 days + 1);
+        skip(7 days + 1);
         election.finalizeElection(id);
 
         // 9. 验证：citizen1 当选并晋升为 PARLIAMENT_MEMBER (tier 1)
-        assertEq(uint8(ring.getTier(citizen1)), uint8(AetherRing.RingTier.PARLIAMENT_MEMBER));
+        assertEq(uint8(ring.getTier(citizen1)), uint8(IAetherRing.RingTier.PARLIAMENT_MEMBER));
 
         address[] memory winners = election.getWinners(id);
         assertEq(winners.length, 2);
@@ -290,7 +291,7 @@ contract IntegrationTest is Test {
         uint256 tokenId = donation.mintDonation(newDonor, DONATION_AMOUNT, "PP-TX-001", paypalHash);
 
         // 2. 验证：newDonor 自动获得公民道环
-        assertEq(uint8(ring.getTier(newDonor)), uint8(AetherRing.RingTier.CITIZEN));
+        assertEq(uint8(ring.getTier(newDonor)), uint8(IAetherRing.RingTier.CITIZEN));
         assertTrue(ring.getRingId(newDonor) != 0);
 
         // 3. 多签结算（admin 占位）
@@ -332,8 +333,9 @@ contract IntegrationTest is Test {
         gov.createImpeachmentProposal(fedMember, "Should fail", "ipfs");
 
         // 5. 退休元老不能发起弹劾（先制造一个退休元老）
-        vm.prank(address(safe));
+        vm.startPrank(address(safe));
         ring.retireToEmeritus(ring.getRingId(fedMinister)); // 执政退休转元老
+        vm.stopPrank();
         assertTrue(ring.isRetiredElder(fedMinister));
         assertFalse(ring.isElderActive(fedMinister));
 
@@ -378,7 +380,7 @@ contract IntegrationTest is Test {
 
         // 1.3 验证：newDonor 自动获得公民道环（tier 14）
         assertTrue(ring.getRingId(newDonor) != 0);
-        assertEq(uint8(ring.getTier(newDonor)), uint8(AetherRing.RingTier.CITIZEN));
+        assertEq(uint8(ring.getTier(newDonor)), uint8(IAetherRing.RingTier.CITIZEN));
         assertTrue(ring.isBearer(newDonor));
 
         // 1.4 验证活跃公民数已增加（5 → 6，newDonor 已加入）
@@ -408,7 +410,7 @@ contract IntegrationTest is Test {
         gov.castFirstVote(proposalId, AetherGovernance.VoteOption.FOR);
 
         // 2.3 一审结束（5 天）→ 正式提交 + 法庭合规
-        vm.warp(block.timestamp + 5 days + 1);
+        skip(5 days + 1);
         gov.finalizeFirstVote(proposalId);
         vm.prank(fedMember);
         gov.submitFormalProposal(proposalId);
@@ -417,7 +419,7 @@ contract IntegrationTest is Test {
 
         // 2.4 合规结束（3 天）→ 进入公投
         //     此时 citizenTotalSnapshot = 6（含 newDonor）
-        vm.warp(block.timestamp + 3 days + 1);
+        skip(3 days + 1);
         gov.finalizeCompliance(proposalId);
 
         // 2.5 newDonor 作为新公民参与公投（关键：验证捐款获得的身份可投票）
@@ -437,7 +439,7 @@ contract IntegrationTest is Test {
         gov.castPublicVote(proposalId, AetherGovernance.VoteOption.FOR);
 
         // 2.7 公投结束（7 天）→ 验证提案通过（newDonor 的票已被计入）
-        vm.warp(block.timestamp + 7 days + 1);
+        skip(7 days + 1);
         gov.finalizeProposal(proposalId);
 
         // 验证 citizenFor = 3（newDonor + citizen1 + citizen2），citizenTotalSnapshot = 6
@@ -463,7 +465,7 @@ contract IntegrationTest is Test {
         election.registerCandidate(electionId);
 
         // 3.3 注册期结束（7 天）→ 理事会整理
-        vm.warp(block.timestamp + 7 days + 1);
+        skip(7 days + 1);
         election.advanceToCouncilReview(electionId);
 
         // 3.4 理事长批准 newDonor
@@ -471,7 +473,7 @@ contract IntegrationTest is Test {
         election.approveCandidate(electionId, newDonor);
 
         // 3.5 理事会期结束（3 天）→ 议会审批
-        vm.warp(block.timestamp + 3 days + 1);
+        skip(3 days + 1);
         election.advanceToParliamentApproval(electionId);
 
         // 3.6 议员批准（阈值=1）
@@ -485,12 +487,12 @@ contract IntegrationTest is Test {
         election.castVote(electionId, newDonor);
 
         // 3.8 投票期结束（7 天）→ finalize → newDonor 当选
-        vm.warp(block.timestamp + 7 days + 1);
+        skip(7 days + 1);
         election.finalizeElection(electionId);
 
         // 3.9 验证：newDonor 已晋升为 PARLIAMENT_MEMBER (tier 1)
         //     （_applyPromotion 通过 updateTier 升级，因为 newDonor 已持有公民道环）
-        assertEq(uint8(ring.getTier(newDonor)), uint8(AetherRing.RingTier.PARLIAMENT_MEMBER), "newDonor should be promoted to PARLIAMENT_MEMBER");
+        assertEq(uint8(ring.getTier(newDonor)), uint8(IAetherRing.RingTier.PARLIAMENT_MEMBER), "newDonor should be promoted to PARLIAMENT_MEMBER");
 
         // 3.10 验证 winners 列表
         address[] memory winners = election.getWinners(electionId);
