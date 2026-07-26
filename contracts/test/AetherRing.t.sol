@@ -686,12 +686,11 @@ contract AetherRingTest is Test {
         ring.mintRing(alice, IAetherRing.RingTier.PARLIAMENT_SPEAKER, "");
 
         // 非 Safe 调 retireToEmeritus → revert
-        vm.prank(bob);
         vm.expectRevert(abi.encodeWithSelector(AetherRing.NotSafeWallet.selector, bob));
+        vm.prank(bob);
         ring.retireToEmeritus(1);
 
         // 无 ADMIN_ROLE 调 appointElder → revert（AccessControlUnauthorizedAccount）
-        vm.prank(bob);
         vm.expectRevert(
             abi.encodeWithSelector(
                 bytes4(keccak256("AccessControlUnauthorizedAccount(address,bytes32)")),
@@ -699,6 +698,7 @@ contract AetherRingTest is Test {
                 ring.ADMIN_ROLE()
             )
         );
+        vm.prank(bob);
         ring.appointElder(carol, "");
 
         // Safe 调 retireToEmeritus 成功（retireToEmeritus 仍要求 Safe）

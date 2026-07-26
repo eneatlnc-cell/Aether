@@ -121,7 +121,8 @@ contract IntegrationTest is Test {
         vm.prank(chair);
         gov.advanceProposal(id);
 
-        // 3. 议会一审
+        // 3. 议会一审（H-6: startFirstVote 需提案者或理事长权限）
+        vm.prank(chair);
         gov.startFirstVote(id);
         vm.prank(parMember);
         gov.castFirstVote(id, AetherGovernance.VoteOption.FOR);
@@ -405,6 +406,7 @@ contract IntegrationTest is Test {
         // 2.2 理事长推进 → 议会一审
         vm.prank(chair);
         gov.advanceProposal(proposalId);
+        vm.prank(chair);
         gov.startFirstVote(proposalId);
         vm.prank(parMember);
         gov.castFirstVote(proposalId, AetherGovernance.VoteOption.FOR);

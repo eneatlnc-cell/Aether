@@ -69,8 +69,8 @@ contract AetherGovernanceTest is Test {
         // 任命元老（通过 setSafeWallet + appointElder）
         // appointElder 用 onlyRole(ADMIN_ROLE)，测试合约 address(this) 持有 ADMIN_ROLE（构造时授予），
         // 这里直接由 address(this) 调用；retireToEmeritus 仍要求 Safe
-        address mockSafe = address(0x5AFE);
-        ring.setSafeWallet(mockSafe);
+        // 使用已部署的 gov 合约地址作为 safeWallet（setSafeWallet 要求地址有代码）
+        ring.setSafeWallet(address(gov));
         ring.appointElder(elder1, "");
         ring.appointElder(elder2, "");
         ring.appointElder(elder3, "");
@@ -370,7 +370,7 @@ contract AetherGovernanceTest is Test {
         // 退休元老（先铸一个可退休的 tier 3 道环，再通过 safe 退休转元老）
         address retiredElder = address(0xEE04);
         ring.mintRing(retiredElder, IAetherRing.RingTier.PARLIAMENT_SPEAKER, "");
-        vm.startPrank(address(0x5AFE));
+        vm.startPrank(address(gov));
         ring.retireToEmeritus(ring.getRingId(retiredElder));
         vm.stopPrank();
 
@@ -726,6 +726,7 @@ contract AetherGovernanceTest is Test {
         gov.advanceProposal(id);
 
         // 3. 开始一审
+        vm.prank(councilChair);
         gov.startFirstVote(id);
 
         // 4. 议会投票
@@ -793,6 +794,7 @@ contract AetherGovernanceTest is Test {
         );
         vm.prank(councilChair);
         gov.advanceProposal(id);
+        vm.prank(councilChair);
         gov.startFirstVote(id);
     }
 
