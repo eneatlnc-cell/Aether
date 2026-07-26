@@ -1,6 +1,6 @@
 "use client";
 
-import { createConfig, http, WagmiProvider as WagmiProviderBase } from "wagmi";
+import { createConfig, createConnector, http, WagmiProvider as WagmiProviderBase } from "wagmi";
 import { arbitrum, arbitrumSepolia, mainnet } from "wagmi/chains";
 import { walletConnect, injected, coinbaseWallet } from "@wagmi/connectors";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -16,9 +16,9 @@ const config = createConfig({
     [mainnet.id]: http(),
   },
   connectors: [
-    injected({ shimDisconnect: true }),
-    walletConnect({ projectId: WALLETCONNECT_PROJECT_ID, showQrModal: true }),
-    coinbaseWallet({ appName: "Aether DAO" }),
+    createConnector(walletConnect({ projectId: WALLETCONNECT_PROJECT_ID, showQrModal: true })),
+    createConnector(injected({ shimDisconnect: true })),
+    createConnector(coinbaseWallet({ appName: "Aether DAO" })),
   ],
   ssr: true,
 });
