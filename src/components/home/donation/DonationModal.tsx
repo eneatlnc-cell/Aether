@@ -159,25 +159,8 @@ function FormView({
         />
       </Field>
 
-      {/* 用途 */}
-      <Field label={t("purpose")}>
-        <div className="grid grid-cols-2 gap-2">
-          {PURPOSES.map((p) => (
-            <button
-              key={p}
-              type="button"
-              onClick={() => setPurpose(p)}
-              className={`px-3 py-2 rounded-[8px] text-xs font-medium border transition-colors text-left ${
-                purpose === p
-                  ? "bg-bg text-accent border-accent"
-                  : "bg-card text-ink border-border hover:border-accent"
-              }`}
-            >
-              {t(`purposes.${p}` as never)}
-            </button>
-          ))}
-        </div>
-      </Field>
+      {/* 用途选择暂时隐藏 - 项目尚未确定 */}
+      {/* TODO: 项目确定后恢复用途选择功能 */}
 
       {/* 未连接钱包提示 */}
       {!isConnected && (
