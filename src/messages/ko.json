@@ -92,11 +92,21 @@
     "seniorResearcher": "수석 연구원",
     "ecosystemBuilder": "생태계 빌더",
     "members": {
-      "aria": { "focus": "재무 관리 및 거버넌스" },
-      "kenji": { "focus": "대륙 간 비디오 프로토콜" },
-      "linnea": { "focus": "AI 응용 프레임워크" },
-      "diego": { "focus": "자기조직화 네트워크 연구" },
-      "priya": { "focus": "생태계 파트너십" }
+      "aria": {
+        "focus": "재무 관리 및 거버넌스"
+      },
+      "kenji": {
+        "focus": "대륙 간 비디오 프로토콜"
+      },
+      "linnea": {
+        "focus": "AI 응용 프레임워크"
+      },
+      "diego": {
+        "focus": "자기조직화 네트워크 연구"
+      },
+      "priya": {
+        "focus": "생태계 파트너십"
+      }
     }
   },
   "donation": {
@@ -145,7 +155,7 @@
     "label": "기술 백서",
     "tableOfContents": "목차",
     "downloadPdf": "PDF 다운로드",
-    "placeholderNote": "이것은 일반 백서 템플릿입니다. 최종 콘텐츠는 프로젝트 팀이 제공합니다.",
+    "placeholderNote": "Whitepaper content is based on the source code of each flagship repository. Numbers and milestones reflect the latest public commit at the time of writing.",
     "sections": {
       "overview": "개요",
       "architecture": "아키텍처",
@@ -153,22 +163,22 @@
       "team": "팀"
     },
     "ai-framework": {
-      "overview": "차세대 AI 응용 프레임워크는 컨텍스트 인식 및 멀티모달 AI 응용을 대규모로 구축하기 위한 모듈식 오픈소스 런타임입니다. (자리표시자 콘텐츠)",
-      "architecture": "프레임워크는 컨텍스트 엔진, 멀티모달 라우터, 플러그형 도구 레이어로 구성됩니다. 상세 아키텍처 다이어그램은 최종 개정판에 추가됩니다.",
-      "roadmap": "2026 Q1: 컨텍스트 엔진 베타. 2026 Q2: 멀티모달 라우터 GA. 2026 Q3: 생태계 보조 트랙 출시.",
-      "team": "핵심 기여자에는 재단 소속 연구원과 외부 보조금 수혜자가 포함됩니다. 전체 명단은 추후 게시됩니다."
+      "overview": "The Next-Gen AI Application Framework is the Foundation's flagship AI initiative, implemented as an open-source project (codename Memento-X) that turns natural-language creative intent into a deterministic, locally-executed video production workflow. The defining principle is that AI is restricted to a single role — intent understanding — while every pixel-level operation is delegated to deterministic tools (FFmpeg, DaVinci Resolve, ComfyUI, BiRefNet, SAM2). This separation yields two properties that end-to-end generative pipelines cannot offer: reproducible output for the same input (modulo random seeds), and a per-job cost on the order of ¥0.01–0.05 because only the intent-understanding step invokes a paid LLM.\n\nIn its current MVP the framework targets professional video editors and VFX artists, but the underlying primitives — a typed workflow schema, a pluggable tool registry, a DAG scheduler, and a self-correcting intent engine — are domain-agnostic and form the substrate for future general-purpose AI application composition.",
+      "architecture": "Four-layer architecture, split across cloud and local:\n\n- Cloud (FastAPI): intent engine, account/quota system, task dispatcher, WebSocket push service. Cloud stores no media files — only text, JSON, and status.\n- Local (Electron + React): UI for input, preview, and result display; local REST API; WebSocket manager.\n- Scheduler (local): DAG builder with cycle detection, topological sort, parallel-group planning, executor with per-step fallback.\n- Tool registry (local): Tool abstract base class + auto-discovery of tools under local/tools/; aliases map workflow actions (e.g. scene_edit → birefnet, color_grade → davinci).\n\nIntent engine uses Qwen-VL-Pro via DashScope with temperature 0.1 and max 2 self-correction retries: AI output is parsed as JSON, validated against a JSON Schema Draft-07 workflow definition (10 actions × typed params), and any schema violation is fed back to the model with the error list. The workflow schema enforces: 1–50 steps, version pinned to \"1.0\", depends_on must reference existing step IDs, additionalProperties=false.",
+      "roadmap": "Current status: v0.2.0 — core scheduling closed-loop complete, intent engine with schema validation and self-correction in production, account/quota system with free 10/day and Pro 200/day tiers deployed on Alibaba Cloud ECS.\n\nNext milestones:\n\n- Q1 2026: complete the tool-chain hardening — replace ComfyUI placeholder workflow templates with full API integration, ship BiRefNet/SAM2 self-contained runners, fill missing SHA256 manifests for the tool downloader.\n- Q2 2026: persistent task storage (PostgreSQL replacing in-memory dict in DispatchService and local routes), FCM push notifications, dataset management API.\n- Q3 2026: extract the workflow schema, tool registry, and DAG scheduler into a standalone SDK package to make the framework genuinely domain-agnostic; publish a grant track for non-video use cases.\n- 2027: explore on-chain attestation of generated artifacts (tying output provenance to Aether DAO's transparency ledger).",
+      "team": "The project is developed under the Foundation's AI research track with the codename Memento-X. The team follows an internal code-review process (commits carry change-tags such as C-4, H-9, M-10) and ships documentation in both Chinese and English. Specific contributor names are not disclosed; the maintainer label in the public Dockerfile is \"Memento-X Team\" and the GitHub organization is eneatlnc-cell. The Foundation expects to publish a named roster once the framework SDK is extracted in Q3 2026."
     },
     "video-protocol": {
-      "overview": "대륙 간 저지연 비디오 플레이어 프로토콜은 대륙 간 서브초 스트리밍을 위해 설계된 P2P 미디어 프로토콜입니다. (자리표시자 콘텐츠)",
-      "architecture": "프로토콜은 WebRTC 위에 릴레이 메시를 계층화하며, 적응형 비트레이트 협상과 평판 가중 피어 선택을 포함합니다.",
-      "roadmap": "2026 Q1: 대륙 간 릴레이 확장. 2026 Q2: 프로토콜 사양 v1. 2026 Q3: 제3자 상호운용성 테스트.",
-      "team": "재단 시니어 연구원이 이끌며, 스트리밍, 네트워킹, 암호학에 대한 다학문 전문성을 보유하고 있습니다."
+      "overview": "The Video Player Protocol is the Foundation's flagship media-access initiative, implemented as an open-source Android client (codename Memento) that combines sing-box TUN-based cross-continent network access, yt-dlp search and direct-link resolution, and ExoPlayer playback into a single signed APK. It targets users in network regions where direct access to global video sources (YouTube, Vimeo, Dailymotion, Bilibili) is unreliable, and pairs a one-device-one-code offline license model with JWT-based session management.\n\nThe MVP is a working end-to-end client — not yet a formally specified protocol — and the Foundation is transparent that the word \"protocol\" in the current name refers to the architectural intent of extracting the client's transport and resolution layers into a publishable specification once the field deployment proves which optimizations are worth standardizing.",
+      "architecture": "Three-tier separation, strict by design:\n\n- Android client (Kotlin, JVM 17, minSdk 23, targetSdk 34): ActivationActivity (device-bound license) → MainActivity (search) → PlayerActivity (landscape ExoPlayer). MyApp handles process-level init for Chaquopy (embedded Python 3.11 running yt-dlp), sing-box libbox (v1.13.14), Room, Retrofit, EncryptedSharedPreferences.\n- Cloud VPS (Python FastAPI, stateless): POST /activate verifies HMAC activation codes with constant-time comparison and issues HS256 JWT (7-day TTL, jti recorded for per-token revocation); GET /resolve runs yt-dlp server-side and returns a direct media URL; GET /health for liveness. SQLite WAL stores activated_devices and issued_jtis. Rate-limited at 5/min and 30/min respectively.\n- Local license tool (pure Python stdlib): generates XXXX-XXXX-XXXX-XXXX activation codes from HMAC-SHA256(SECRET, device_lock), no network access; SECRET is shared only between VPS env and the operator's machine, never bundled in the APK.\n\nDevice lock = SHA-256(ANDROID_ID + \"|\" + UUID), persisted in EncryptedSharedPreferences. SQLite (Room) is wrapped by SQLCipher 4.5.4 with a 32-byte random key stored in the Android Keystore. The sing-box TUN runs at MTU 9000 with auto_route and strict_route, VLESS+uTLS(chrome) outbound.",
+      "roadmap": "Current status: versionCode 1, versionName 1.0 — MVP fully functional across activation, search, playback, download, and VPN. Tested through Android 14 with FOREGROUND_SERVICE_TYPE_SPECIAL_USE handling.\n\nNext milestones:\n\n- Q1 2026: protocol specification v0.1 — formally document the activation flow, JWT jti revocation semantics, and the /resolve response shape so third-party clients can interoperate.\n- Q2 2026: add adaptive bitrate (HLS/DASH) handling in PlayerActivity to reduce first-frame latency and recover from direct-link expiry without a full re-resolve round trip.\n- Q3 2026: edge resolver deployment in three regions (US/EU/SG) with shared JWT issuer, eliminating the current single-point VPS bottleneck for cross-continent resolution latency.\n- 2027: extract the sing-box + libbox integration as a reusable Foundation SDK so that other Foundation media initiatives can adopt the same transport layer without re-implementing it.",
+      "team": "Developed under the Foundation's media research track with the codename Memento. The codebase shows evidence of an internal review process (commits carry tags such as C-4/C-5/C-6/H-1/H-9/H-10/M-10/M-14) and evolved from an earlier internal project codenamed Lumine (SingBoxManager.kt still carries migration notes). DEPLOYMENT.md and USER_GUIDE.md total ~900 lines and are written in Chinese with English technical terms. The maintainer labels itself simply as \"memento.app\" (applicationId); specific contributor names are not yet published. The Foundation will release a named roster alongside the Q1 2026 protocol specification."
     },
     "self-organizing-net": {
-      "overview": "탈중앙화 자기조직화 네트워크는 중앙 조정 없이 자가 치유 및 재구성이 가능한 자율 메시 라우팅 계층입니다. (자리표시자 콘텐츠)",
-      "architecture": "노드는 가십으로 피어를 발견하고, 수정된 AODV로 경로를 계산하며, 온체인 증명으로 상태를 신호합니다.",
-      "roadmap": "2026 Q1: 3개 지역 테스트베드 배포. 2026 Q2: 동료 평가 마일스톤 보고서. 2026 Q3: 공개 테스트넷.",
-      "team": "재단 분산 시스템 시니어 연구원이 이끌며, 외부 학계 협력자와 함께 연구합니다."
+      "overview": "The Decentralized Self-Organizing Network is the Foundation's flagship P2P overlay initiative, implemented as the open-source Havix protocol — a Haven of Affinity for high-cognition individuals. Havix is built to validate a sociological hypothesis: that a stratified, self-organizing network can sustain a parallel coordination space without relying on either centralized platforms or pure-anonymity overlays like Tor. Its three defining primitives are decentralized transport (libp2p + IPFS, no central servers), gated admission (4-context DID derivation + weighted vouch), and reputation-anchored economics (Reputation/Credit dual-ledger with frozen-credit Faucet).\n\nThe current milestone (M10) has the validation form complete: 1021 MVP tests + 213 Embas translation-market tests = 1234/1234 passing, with 5 P0 + 15 P1 audit findings all fixed. The network is in private internal beta pending M11 multi-app coexistence and weighted-transition rollout.",
+      "architecture": "Four-layer protocol stack, with a critical dual-plane isolation that distinguishes Havix from naive \"encrypt everything\" designs:\n\n- Application layer (parasitic): Wiki SPA, Market SPA, private-message tunnels, CLI — all loaded as signed apps through the M9 AppManager with manifest-based permission whitelisting (28 permissions across 8 categories).\n- Identity layer: a single master DID derives 4 context sub-identities (A=public, B=market, C=tunnel, D=wiki) via HKDF-SHA256; sub-identities are cryptographically unlinkable.\n- Protocol layer (public + private): Vouch, Wiki, Market, Offer·Credit, Arbitration — split across a public plane (gossipsub mesh + KadDHT for Wiki CIDs only + Rendezvous) and a private plane (private gossipsub topics whose names are SHA-256 of invite tokens, message bodies AES-256-GCM re-encrypted with HKDF-derived keys).\n- Economic layer: Reputation (cumulative, non-transferable) ↔ Credit (consumable, transferable) dual ledger; high-reputation nodes can issue Credit only by freezing an equal amount of their own Reputation, anchoring Credit value to the issuer's reputation.\n\nThe S-Node class is the local node instance: libp2p (TCP + noise + yamux/mplex + gossipsub + mDNS + KadDHT) + helia IPFS + 8 local ledgers (reputation, credit, vouch, wiki, arbitration, treasury, market, credit-nonces). Cross-node consistency is achieved via gossipsub message convergence.",
+      "roadmap": "Current milestone: M10 — translation market (Embas) end-to-end working, full-stack security hardening (M9.6 + AUDIT-M10) complete. Embas uses context-B only (deliberately avoiding context-A to preserve unlinkability) with minReputation=30 and trustWeight=0.8; the complete publish→accept→deliver→approve→dispute→arbitrate flow runs with 5-node ad-hoc arbitration panels (≥3 verdict majority) and slash distribution of 50% to victim + 50% to treasury.\n\nStage plan (four phases total):\n\n- M1–M10 Validation form: ✅ complete (1234/1234 tests passing).\n- M11–M12 Complete form: multi-app coexistence (teaching market + wiki app), FW-01 weighted-transition algorithm v0 (trustWeight = real-flow ratio × counterparty diversity × minReputation coefficient, with collusion detection via Herfindahl index), 6 node-level attack defenses (rate limiting, eclipse detection, collusion statistics, exit penalty, commit-reveal front-running defense, reverse audit).\n- M13–M14 Network form: Rust reimplementation of credit/arbitration/identity/market/wiki (with lmdb/sled storage + rust-libp2p); slot-based saturated cover-traffic protocol for sovereign-boundary defense against observer attacks.\n- M15+ Ecosystem form: multi-language SDK, cross-network federation, mobile node support.\n\nRelay rotation: 20% probability per 1-hour epoch, top 30% reputation + ≥3 vouches required to serve as relay. Tunnel: 3 parallel relays, MAX_CHUNK_SIZE 64 KiB, hard-cut switching (no circuit migration). Self-healing verified in 4-node star topology — 90-second detection and re-convergence after forced center-node shutdown.",
+      "team": "Havix is developed by \"Havix Contributors\" under the MIT license, with the GitHub organization eneatlnc-cell. The codebase is unusually well-documented for its maturity: the Technical Whitepaper v0.1.0-draft lists 18 explicit design decisions with rationale, M8/M9/M10 each have full audit reports with P0/P1/P2 severity classifications, and the NEXT-STEPS.md runs to a six-layer recursive structure (Layer 0–5) for traceable decision-making. The development workflow uses parallel AI-agent-assisted audits (explicitly acknowledged in AUDIT-M9 and AUDIT-M10). Comments and design docs are predominantly in Chinese with English technical identifiers. The Foundation expects the named maintainer roster to be published once M11 multi-app coexistence stabilizes."
     }
   },
   "proposalDetail": {
@@ -251,11 +261,21 @@
     "error": "문제가 발생했습니다. 다시 시도해 주십시오."
   },
   "footer": {
-    "tagline": "탈중앙화 인프라 및 인공지능 연구를 발전시키는 비영리 재단입니다.",
-    "treasury": "재무",
-    "governance": "거버넌스",
-    "transparency": "투명성",
-    "languageNote": "상단 내비게이션에서 언어를 전환하십시오."
+    "tagline": "A non-profit foundation advancing decentralized infrastructure and artificial intelligence research.",
+    "governance": "Governance",
+    "transparency": "Transparency",
+    "programs": "Programs",
+    "proposals": "Proposals",
+    "council": "Council",
+    "foundation": "Foundation",
+    "audit": "Audit Reports",
+    "tokenless": "Tokenless · Non-profit",
+    "mission": "Three chambers, one ledger, zero tokens — building public-good infrastructure the way it should be.",
+    "org": "Aether Foundation",
+    "chain": "Deployed on Arbitrum One",
+    "license": "MIT License",
+    "statusLive": "Mainnet pending",
+    "statusArbitrum": "Arbitrum L2"
   },
   "common": {
     "loading": "불러오는 중...",

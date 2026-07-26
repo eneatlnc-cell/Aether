@@ -14,8 +14,17 @@ export function useWallet() {
   const chains = useChains();
 
   const connect = async () => {
-    const connector = connectors[0];
-    if (!connector) return;
+    if (connectors.length === 0) return;
+    // 智能选择 connector：
+    // - 浏览器装了 EIP-1193 钱包扩展（MetaMask 等）→ 用 injected 直连
+    // - 否则（移动端浏览器 / PC 无扩展）→ 用 walletConnect 弹 QR
+    const hasInjected =
+      typeof window !== "undefined" &&
+      typeof (window as unknown as { ethereum?: unknown }).ethereum !== "undefined";
+    const connector =
+      (hasInjected
+        ? connectors.find((c) => c.id === "injected")
+        : connectors.find((c) => c.id === "walletConnect")) ?? connectors[0];
     try {
       await connectAsync({ connector, chainId: chains[0]?.id });
       push(tToast("walletConnected"), "success");

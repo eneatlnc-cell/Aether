@@ -92,11 +92,21 @@
     "seniorResearcher": "高級研究員",
     "ecosystemBuilder": "生態建設者",
     "members": {
-      "aria": { "focus": "金庫管理與治理" },
-      "kenji": { "focus": "跨洲際視訊協定" },
-      "linnea": { "focus": "AI 應用框架" },
-      "diego": { "focus": "自組織網路研究" },
-      "priya": { "focus": "生態夥伴關係" }
+      "aria": {
+        "focus": "金庫管理與治理"
+      },
+      "kenji": {
+        "focus": "跨洲際視訊協定"
+      },
+      "linnea": {
+        "focus": "AI 應用框架"
+      },
+      "diego": {
+        "focus": "自組織網路研究"
+      },
+      "priya": {
+        "focus": "生態夥伴關係"
+      }
     }
   },
   "donation": {
@@ -145,7 +155,7 @@
     "label": "技術白皮書",
     "tableOfContents": "目錄",
     "downloadPdf": "下載 PDF",
-    "placeholderNote": "此為通用白皮書範本，最終內容將由計畫團隊提供。",
+    "placeholderNote": "白皮書內容基於各旗艦倉庫的原始碼撰寫。數字與里程碑反映撰寫時的最新公開 commit。",
     "sections": {
       "overview": "概述",
       "architecture": "架構",
@@ -153,22 +163,22 @@
       "team": "團隊"
     },
     "ai-framework": {
-      "overview": "下一代 AI 應用框架是一個模組化、開源的執行階層，用於大規模打造具備上下文感知與多模態能力的 AI 應用。（占位內容）",
-      "architecture": "框架由上下文引擎、多模態路由器與可插拔工具層組成。詳細架構圖將於最終版補充。",
-      "roadmap": "2026 Q1：上下文引擎測試版。2026 Q2：多模態路由器正式版。2026 Q3：生態資助軌道啟動。",
-      "team": "核心貢獻者包含基金會研究員與外部受贊助者。完整名單後續公布。"
+      "overview": "下一代 AI 應用框架是基金會的旗艦 AI 計畫，以開源專案形式實作（代號 Memento-X），將自然語言創作意圖轉譯為可在本地端確定性執行的視訊製作工作流。核心原則是 AI 僅承擔單一角色——意圖理解——所有像素級操作皆交由確定性工具（FFmpeg、DaVinci Resolve、ComfyUI、BiRefNet、SAM2）完成。這個分離帶來端到端生成式管線無法提供的兩個性質：相同輸入產生可重現的輸出（除隨機種子外），以及每次任務成本僅約 ¥0.01–0.05，因為只有意圖理解步驟會呼叫付費 LLM。\n\n在目前 MVP 階段，框架以專業視訊剪輯師與 VFX 藝術家為目標對象，但底層原語——具型別的工作流綱要、可插拔工具註冊表、DAG 排程器與自我修正意圖引擎——是領域無關的，構成未來通用 AI 應用編排的基礎。",
+      "architecture": "四層架構，雲端與本地分離：\n\n- 雲端（FastAPI）：意圖引擎、帳號/配額系統、任務分派器、WebSocket 推送服務。雲端不儲存任何媒體檔案——只有文字、JSON 與狀態。\n- 本地（Electron + React）：輸入、預覽、結果顯示 UI；本地 REST API；WebSocket 管理器。\n- 排程器（本地）：DAG 建構器含循環偵測、拓撲排序、並行群組規劃，執行器支援每步驟 fallback。\n- 工具註冊表（本地）：Tool 抽象基底類別 + 自動發現 local/tools/ 下的工具；別名將工作流動作對應到工具（例如 scene_edit → birefnet、color_grade → davinci）。\n\n意圖引擎透過 DashScope 呼叫 Qwen-VL-Pro，temperature 0.1、最多 2 次自我修正重試：AI 輸出被解析為 JSON，依 JSON Schema Draft-07 工作流定義（10 個 action × 型別化參數）驗證，任何綱要違規會連同錯誤清單回饋給模型。工作流綱要強制：1–50 個步驟、版本固定為 \"1.0\"、depends_on 必須參照已存在的步驟 ID、additionalProperties=false。",
+      "roadmap": "目前狀態：v0.2.0——核心排程閉環完成，意圖引擎含綱要驗證與自我修正已上線，帳號/配額系統提供免費 10 次/日與 Pro 200 次/日兩種方案，部署於阿里雲 ECS。\n\n下一階段里程碑：\n\n- 2026 Q1：完成工具鏈硬化——以完整 API 整合取代 ComfyUI 占位工作流範本、交付 BiRefNet/SAM2 自包含執行器、補齊工具下載器缺失的 SHA256 清單。\n- 2026 Q2：任務持久化（PostgreSQL 取代 DispatchService 與本地路由中的記憶體字典）、FCM 推播通知、資料集管理 API。\n- 2026 Q3：將工作流綱要、工具註冊表與 DAG 排程器抽取為獨立 SDK 套件，使框架真正具備領域通用性；啟動非視訊應用場景的資助軌道。\n- 2027：探索生成成果的鏈上證明（將輸出溯源綁定至 Aether DAO 的透明性帳本）。",
+      "team": "本計畫於基金會 AI 研究軸線下開發，代號 Memento-X。團隊遵循內部程式碼審查流程（commit 帶有 C-4、H-9、M-10 等變更標籤），文件同時以中文與英文撰寫。具體貢獻者姓名尚未公開；公開 Dockerfile 中的維護者標籤為「Memento-X Team」，GitHub 組織為 eneatlnc-cell。基金會預計於 2026 Q3 完成 SDK 抽取後，公布具名維護者名單。"
     },
     "video-protocol": {
-      "overview": "跨洲際低延遲視訊播放器協定是一個點對點媒體協定，專為跨洲際次秒級串流而設計。（占位內容）",
-      "architecture": "協定在 WebRTC 上層建構中繼網狀結構，含自適應位元率協商與信譽加權節點選擇。",
-      "roadmap": "2026 Q1：跨洲中繼擴展。2026 Q2：協定規格 v1。2026 Q3：第三方互通性測試。",
-      "team": "由基金會高級研究員領銜，跨領域專長涵蓋串流、網路與密碼學。"
+      "overview": "視訊播放器協定是基金會的旗艦媒體存取計畫，以開源 Android 用戶端形式實作（代號 Memento），將 sing-box TUN 跨洲網路存取、yt-dlp 搜尋與直鏈解析、ExoPlayer 播放整合進單一簽署 APK。目標使用者為直接存取全球視訊來源（YouTube、Vimeo、Dailymotion、Bilibili）不穩定的網路區域使用者，並以一機一碼的離線授權模型搭配 JWT 工作階段管理。\n\nMVP 已是端到端可運作的用戶端——尚未成為正式規格化的協定——基金會對目前名稱中的「協定」一詞保持透明：這是指未來在實地部署驗證哪些優化值得標準化後，將用戶端的傳輸層與解析層抽取為可公開發布規格的架構意圖。",
+      "architecture": "三層分離，設計嚴格：\n\n- Android 用戶端（Kotlin, JVM 17, minSdk 23, targetSdk 34）：ActivationActivity（裝置綁定授權）→ MainActivity（搜尋）→ PlayerActivity（橫向 ExoPlayer）。MyApp 負責 Chaquopy（嵌入式 Python 3.11 跑 yt-dlp）、sing-box libbox（v1.13.14）、Room、Retrofit、EncryptedSharedPreferences 的程序級初始化。\n- 雲端 VPS（Python FastAPI, 無狀態）：POST /activate 以常數時間比較驗證 HMAC 啟動碼並簽發 HS256 JWT（7 日 TTL，jti 記錄以支援單 token 撤銷）；GET /resolve 在伺服器端跑 yt-dlp 並回傳媒體直鏈；GET /health 健康檢查。SQLite WAL 儲存 activated_devices 與 issued_jtis。分別限流 5/min 與 30/min。\n- 本地授權工具（純 Python 標準庫）：以 HMAC-SHA256(SECRET, device_lock) 產生 XXXX-XXXX-XXXX-XXXX 啟動碼，不聯網；SECRET 僅在 VPS 環境變數與營運者機器間共用，絕不打包進 APK。\n\n裝置鎖 = SHA-256(ANDROID_ID + \"|\" + UUID)，以 EncryptedSharedPreferences 持久化。SQLite（Room）以 SQLCipher 4.5.4 包覆，使用 32 位元組隨機金鑰存於 Android Keystore。sing-box TUN 以 MTU 9000、auto_route、strict_route 運作，VLESS+uTLS(chrome) 出站。",
+      "roadmap": "目前狀態：versionCode 1, versionName 1.0——啟動、搜尋、播放、下載與 VPN 全功能 MVP。已通過 Android 14 FOREGROUND_SERVICE_TYPE_SPECIAL_USE 處理測試。\n\n下一階段里程碑：\n\n- 2026 Q1：協定規格 v0.1——正式記錄啟動流程、JWT jti 撤銷語意與 /resolve 回應結構，使第三方用戶端可互通。\n- 2026 Q2：在 PlayerActivity 加入自適應位元率（HLS/DASH）處理，降低首幀延遲，並在直鏈過期時免完整重新解析即可恢復。\n- 2026 Q3：在美／歐／新加坡三區部署邊緣解析器，共用 JWT 簽發者，消除目前單點 VPS 對跨洲解析延遲的瓶頸。\n- 2027：將 sing-box + libbox 整合抽取為可重用的基金會 SDK，讓其他基金會媒體計畫可直接採用相同傳輸層而無需重新實作。",
+      "team": "本計畫於基金會媒體研究軸線下開發，代號 Memento。程式碼庫顯示有內部審查流程（commit 帶有 C-4/C-5/C-6/H-1/H-9/H-10/M-10/M-14 標籤），並從早期內部專案代號 Lumine 演化而來（SingBoxManager.kt 仍保留遷移註記）。DEPLOYMENT.md 與 USER_GUIDE.md 合計約 900 行，以中文撰寫、夾雜英文技術名詞。維護者標籤僅標示為「memento.app」（applicationId）；具體貢獻者姓名尚未公布。基金會將於 2026 Q1 協定規格發布時，一併公布具名維護者名單。"
     },
     "self-organizing-net": {
-      "overview": "去中心化自組織網路是一個自主網狀路由層，能夠自我修復並在無中央協調下重新組態。（占位內容）",
-      "architecture": "節點透過 gossip 發現對等點，以修改版 AODV 計算路由，並透過鏈上證明回報健康狀態。",
-      "roadmap": "2026 Q1：3 區域測試床部署。2026 Q2：同儕審查里程碑報告。2026 Q3：公開測試網。",
-      "team": "由基金會分散式系統高級研究員領銜，與外部學術合作者共同研究。"
+      "overview": "去中心化自組織網路是基金會的旗艦 P2P 覆蓋網路計畫，以開源 Havix 協定形式實作——為高認知個體打造的「Haven of Affinity（親和之港）」。Havix 旨在驗證一項社會學假設：分層自組織網路能夠在不依賴中心化平台或 Tor 這類純匿名覆蓋的情況下，維持一個平行的協調空間。三個定義性原語為：去中心化傳輸（libp2p + IPFS，無中央伺服器）、準入制空間（4-context DID 派生 + 加權 vouch）、信譽錨定經濟（Reputation/Credit 雙軌帳本，含凍結信用 Faucet）。\n\n目前里程碑（M10）已完成驗證形態：1021 個 MVP 測試 + 213 個 Embas 翻譯市場測試 = 1234/1234 通過，5 項 P0 + 15 項 P1 審計發現全數修復。網路處於私有內測階段，等待 M11 多 App 共存與加權轉換機制上線。",
+      "architecture": "四層協定堆疊，含一個關鍵的雙平面隔離，使 Havix 有別於「全部加密」的單純設計：\n\n- 應用層（寄生）：Wiki SPA、Market SPA、私訊隧道、CLI——皆以簽署 App 形式透過 M9 AppManager 載入，含 manifest 驅動的權限白名單（8 大類 28 項權限）。\n- 身分層：單一主 DID 透過 HKDF-SHA256 派生 4 個 context 子身分（A=公開、B=市場、C=隧道、D=wiki）；子身分在密碼學上不可關聯。\n- 協定層（公共 + 私域）：Vouch、Wiki、Market、Offer·Credit、Arbitration——分為公共平面（gossipsub mesh + KadDHT 僅用於 Wiki CID 尋址 + Rendezvous）與私域平面（私有 gossipsub topic，topic 名 = 邀請令牌的 SHA-256，訊息內容再以 HKDF 派生金鑰做 AES-256-GCM 加密）。\n- 經濟層：Reputation（累積、不可轉讓）↔ Credit（可消耗、可轉讓）雙軌帳本；高信譽節點發行 Credit 時必須凍結等額自身 Reputation，使 Credit 價值錨定於發行者的信譽。\n\nS-Node 類別是本地節點實例：libp2p（TCP + noise + yamux/mplex + gossipsub + mDNS + KadDHT）+ helia IPFS + 8 個本地帳本（reputation、credit、vouch、wiki、arbitration、treasury、market、credit-nonces）。跨節點一致性透過 gossipsub 訊息收斂達成。",
+      "roadmap": "目前里程碑：M10——翻譯市場（Embas）端到端運作，全棧安全強化（M9.6 + AUDIT-M10）完成。Embas 僅使用 context-B（刻意向 A 說不，以保留不可關聯性），minReputation=30、trustWeight=0.8；完整的 publish→accept→deliver→approve→dispute→arbitrate 流程以 5 節點臨時仲裁團（≥3 票決議多數）運作，slash 分配為 50% 賠受害者 + 50% 進金庫。\n\n階段計畫（共四階段）：\n\n- M1–M10 驗證形態：✅ 完成（1234/1234 測試通過）。\n- M11–M12 完整化形態：多 App 共存（教學市場 + wiki 應用）、FW-01 加權轉換演算法 v0（trustWeight = 真實流水比 × 對手多樣性 × minReputation 係數，含 Herfindahl 指數合謀偵測）、6 項節點級攻擊防禦（速率限制、Eclipse 偵測、合謀統計、退出懲罰、commit-reveal 搶跑防禦、反向審計）。\n- M13–M14 網路化形態：credit/arbitration/identity/market/wiki 的 Rust 重新實作（搭配 lmdb/sled 儲存 + rust-libp2p）；slot-based 飽和掩護流量協定，抵抗觀察者攻擊、強化主權邊界。\n- M15+ 生態形態：多語言 SDK、跨網路聯邦、行動節點支援。\n\nRelay 輪換：每 1 小時 epoch 20% 機率輪換，需信譽前 30% + ≥3 vouch 才能擔任 relay。隧道：3 條並行 relay、MAX_CHUNK_SIZE 64 KiB、硬切換（不維護電路遷移）。自癒已於 4 節點星狀拓撲驗證——強制關閉中心節點後 90 秒內偵測並重新收斂。",
+      "team": "Havix 由「Havix Contributors」以 MIT 授權開發，GitHub 組織為 eneatlnc-cell。程式碼庫在其成熟度下文件異常完整：技術白皮書 v0.1.0-draft 列出 18 項明確設計決策與理由，M8/M9/M10 各有完整審計報告（含 P0/P1/P2 嚴重性分級），NEXT-STEPS.md 採六層遞迴結構（Layer 0–5）以確保決策可追溯。開發流程使用並行 AI 代理輔助審計（在 AUDIT-M9 與 AUDIT-M10 中明確說明）。註解與設計文件以中文為主、夾雜英文技術名詞。基金會預計於 M11 多 App 共存穩定後，公布具名維護者名單。"
     }
   },
   "proposalDetail": {
@@ -251,11 +261,21 @@
     "error": "發生錯誤，請再試一次。"
   },
   "footer": {
-    "tagline": "一家推進去中心化基礎設施與人工智慧研究的非營利基金會。",
-    "treasury": "金庫",
+    "tagline": "致力於去中心化基礎設施與人工智慧研究的非營利基金會。",
     "governance": "治理",
     "transparency": "透明度",
-    "languageNote": "請於上方導覽列切換語言。"
+    "programs": "計畫",
+    "proposals": "提案",
+    "council": "理事會",
+    "foundation": "基金會",
+    "audit": "審計報告",
+    "tokenless": "無代幣 · 非營利",
+    "mission": "三院一帳、零代幣——以應有的方式建造公共財基礎設施。",
+    "org": "Aether Foundation",
+    "chain": "部署於 Arbitrum One",
+    "license": "MIT 授權",
+    "statusLive": "主網待上線",
+    "statusArbitrum": "Arbitrum L2"
   },
   "common": {
     "loading": "載入中...",

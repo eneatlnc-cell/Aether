@@ -92,11 +92,21 @@
     "seniorResearcher": "Investigador Senior",
     "ecosystemBuilder": "Constructor de Ecosistema",
     "members": {
-      "aria": { "focus": "Gestión de tesorería y gobernanza" },
-      "kenji": { "focus": "Protocolo de video intercontinental" },
-      "linnea": { "focus": "Framework de aplicaciones de AI" },
-      "diego": { "focus": "Investigación de red autoorganizada" },
-      "priya": { "focus": "Alianzas del ecosistema" }
+      "aria": {
+        "focus": "Gestión de tesorería y gobernanza"
+      },
+      "kenji": {
+        "focus": "Protocolo de video intercontinental"
+      },
+      "linnea": {
+        "focus": "Framework de aplicaciones de AI"
+      },
+      "diego": {
+        "focus": "Investigación de red autoorganizada"
+      },
+      "priya": {
+        "focus": "Alianzas del ecosistema"
+      }
     }
   },
   "donation": {
@@ -145,7 +155,7 @@
     "label": "Whitepaper Técnico",
     "tableOfContents": "Índice",
     "downloadPdf": "Descargar PDF",
-    "placeholderNote": "Esta es una plantilla genérica de whitepaper. El contenido final será proporcionado por el equipo del proyecto.",
+    "placeholderNote": "Whitepaper content is based on the source code of each flagship repository. Numbers and milestones reflect the latest public commit at the time of writing.",
     "sections": {
       "overview": "Descripción general",
       "architecture": "Arquitectura",
@@ -153,22 +163,22 @@
       "team": "Equipo"
     },
     "ai-framework": {
-      "overview": "El Framework de Aplicaciones de AI de Próxima Generación es un runtime modular y de código abierto para construir aplicaciones AI contextuales y multimodales a escala. (Contenido de marcador de posición)",
-      "architecture": "El framework consta de un motor de contexto, un enrutador multimodal y una capa de herramientas conectable. Los diagramas de arquitectura detallados se añadirán en la revisión final.",
-      "roadmap": "Q1 2026: beta del motor de contexto. Q2 2026: GA del enrutador multimodal. Q3 2026: lanzamiento de la vía de subvención del ecosistema.",
-      "team": "Los contribuyentes centrales incluyen investigadores afiliados a la Fundación y beneficiarios externos. La lista completa se publicará."
+      "overview": "The Next-Gen AI Application Framework is the Foundation's flagship AI initiative, implemented as an open-source project (codename Memento-X) that turns natural-language creative intent into a deterministic, locally-executed video production workflow. The defining principle is that AI is restricted to a single role — intent understanding — while every pixel-level operation is delegated to deterministic tools (FFmpeg, DaVinci Resolve, ComfyUI, BiRefNet, SAM2). This separation yields two properties that end-to-end generative pipelines cannot offer: reproducible output for the same input (modulo random seeds), and a per-job cost on the order of ¥0.01–0.05 because only the intent-understanding step invokes a paid LLM.\n\nIn its current MVP the framework targets professional video editors and VFX artists, but the underlying primitives — a typed workflow schema, a pluggable tool registry, a DAG scheduler, and a self-correcting intent engine — are domain-agnostic and form the substrate for future general-purpose AI application composition.",
+      "architecture": "Four-layer architecture, split across cloud and local:\n\n- Cloud (FastAPI): intent engine, account/quota system, task dispatcher, WebSocket push service. Cloud stores no media files — only text, JSON, and status.\n- Local (Electron + React): UI for input, preview, and result display; local REST API; WebSocket manager.\n- Scheduler (local): DAG builder with cycle detection, topological sort, parallel-group planning, executor with per-step fallback.\n- Tool registry (local): Tool abstract base class + auto-discovery of tools under local/tools/; aliases map workflow actions (e.g. scene_edit → birefnet, color_grade → davinci).\n\nIntent engine uses Qwen-VL-Pro via DashScope with temperature 0.1 and max 2 self-correction retries: AI output is parsed as JSON, validated against a JSON Schema Draft-07 workflow definition (10 actions × typed params), and any schema violation is fed back to the model with the error list. The workflow schema enforces: 1–50 steps, version pinned to \"1.0\", depends_on must reference existing step IDs, additionalProperties=false.",
+      "roadmap": "Current status: v0.2.0 — core scheduling closed-loop complete, intent engine with schema validation and self-correction in production, account/quota system with free 10/day and Pro 200/day tiers deployed on Alibaba Cloud ECS.\n\nNext milestones:\n\n- Q1 2026: complete the tool-chain hardening — replace ComfyUI placeholder workflow templates with full API integration, ship BiRefNet/SAM2 self-contained runners, fill missing SHA256 manifests for the tool downloader.\n- Q2 2026: persistent task storage (PostgreSQL replacing in-memory dict in DispatchService and local routes), FCM push notifications, dataset management API.\n- Q3 2026: extract the workflow schema, tool registry, and DAG scheduler into a standalone SDK package to make the framework genuinely domain-agnostic; publish a grant track for non-video use cases.\n- 2027: explore on-chain attestation of generated artifacts (tying output provenance to Aether DAO's transparency ledger).",
+      "team": "The project is developed under the Foundation's AI research track with the codename Memento-X. The team follows an internal code-review process (commits carry change-tags such as C-4, H-9, M-10) and ships documentation in both Chinese and English. Specific contributor names are not disclosed; the maintainer label in the public Dockerfile is \"Memento-X Team\" and the GitHub organization is eneatlnc-cell. The Foundation expects to publish a named roster once the framework SDK is extracted in Q3 2026."
     },
     "video-protocol": {
-      "overview": "El Protocolo de Reproductor de Video Intercontinental de Baja Latencia es un protocolo de medios P2P diseñado para streaming intercontinental sub-segundo. (Contenido de marcador de posición)",
-      "architecture": "El protocolo superpone una malla de relés sobre WebRTC, con negociación de bitrate adaptativa y selección de peers ponderada por reputación.",
-      "roadmap": "Q1 2026: expansión de relés intercontinentales. Q2 2026: especificación del protocolo v1. Q3 2026: pruebas de interoperabilidad de terceros.",
-      "team": "Liderado por investigadores senior de la Fundación con experiencia interdisciplinaria en streaming, redes y criptografía."
+      "overview": "The Video Player Protocol is the Foundation's flagship media-access initiative, implemented as an open-source Android client (codename Memento) that combines sing-box TUN-based cross-continent network access, yt-dlp search and direct-link resolution, and ExoPlayer playback into a single signed APK. It targets users in network regions where direct access to global video sources (YouTube, Vimeo, Dailymotion, Bilibili) is unreliable, and pairs a one-device-one-code offline license model with JWT-based session management.\n\nThe MVP is a working end-to-end client — not yet a formally specified protocol — and the Foundation is transparent that the word \"protocol\" in the current name refers to the architectural intent of extracting the client's transport and resolution layers into a publishable specification once the field deployment proves which optimizations are worth standardizing.",
+      "architecture": "Three-tier separation, strict by design:\n\n- Android client (Kotlin, JVM 17, minSdk 23, targetSdk 34): ActivationActivity (device-bound license) → MainActivity (search) → PlayerActivity (landscape ExoPlayer). MyApp handles process-level init for Chaquopy (embedded Python 3.11 running yt-dlp), sing-box libbox (v1.13.14), Room, Retrofit, EncryptedSharedPreferences.\n- Cloud VPS (Python FastAPI, stateless): POST /activate verifies HMAC activation codes with constant-time comparison and issues HS256 JWT (7-day TTL, jti recorded for per-token revocation); GET /resolve runs yt-dlp server-side and returns a direct media URL; GET /health for liveness. SQLite WAL stores activated_devices and issued_jtis. Rate-limited at 5/min and 30/min respectively.\n- Local license tool (pure Python stdlib): generates XXXX-XXXX-XXXX-XXXX activation codes from HMAC-SHA256(SECRET, device_lock), no network access; SECRET is shared only between VPS env and the operator's machine, never bundled in the APK.\n\nDevice lock = SHA-256(ANDROID_ID + \"|\" + UUID), persisted in EncryptedSharedPreferences. SQLite (Room) is wrapped by SQLCipher 4.5.4 with a 32-byte random key stored in the Android Keystore. The sing-box TUN runs at MTU 9000 with auto_route and strict_route, VLESS+uTLS(chrome) outbound.",
+      "roadmap": "Current status: versionCode 1, versionName 1.0 — MVP fully functional across activation, search, playback, download, and VPN. Tested through Android 14 with FOREGROUND_SERVICE_TYPE_SPECIAL_USE handling.\n\nNext milestones:\n\n- Q1 2026: protocol specification v0.1 — formally document the activation flow, JWT jti revocation semantics, and the /resolve response shape so third-party clients can interoperate.\n- Q2 2026: add adaptive bitrate (HLS/DASH) handling in PlayerActivity to reduce first-frame latency and recover from direct-link expiry without a full re-resolve round trip.\n- Q3 2026: edge resolver deployment in three regions (US/EU/SG) with shared JWT issuer, eliminating the current single-point VPS bottleneck for cross-continent resolution latency.\n- 2027: extract the sing-box + libbox integration as a reusable Foundation SDK so that other Foundation media initiatives can adopt the same transport layer without re-implementing it.",
+      "team": "Developed under the Foundation's media research track with the codename Memento. The codebase shows evidence of an internal review process (commits carry tags such as C-4/C-5/C-6/H-1/H-9/H-10/M-10/M-14) and evolved from an earlier internal project codenamed Lumine (SingBoxManager.kt still carries migration notes). DEPLOYMENT.md and USER_GUIDE.md total ~900 lines and are written in Chinese with English technical terms. The maintainer labels itself simply as \"memento.app\" (applicationId); specific contributor names are not yet published. The Foundation will release a named roster alongside the Q1 2026 protocol specification."
     },
     "self-organizing-net": {
-      "overview": "La Red Autoorganizada Descentralizada es una capa de enrutamiento mesh autónoma capaz de auto-repararse y reconfigurarse sin coordinación central. (Contenido de marcador de posición)",
-      "architecture": "Los nodos descubren pares vía gossip, calculan rutas vía una variante modificada de AODV y señalan salud vía atestaciones on-chain.",
-      "roadmap": "Q1 2026: despliegue de banco de pruebas en 3 regiones. Q2 2026: informe de hito de revisión por pares. Q3 2026: testnet público.",
-      "team": "Liderado en investigación por investigadores senior de la Fundación en sistemas distribuidos, con colaboradores académicos externos."
+      "overview": "The Decentralized Self-Organizing Network is the Foundation's flagship P2P overlay initiative, implemented as the open-source Havix protocol — a Haven of Affinity for high-cognition individuals. Havix is built to validate a sociological hypothesis: that a stratified, self-organizing network can sustain a parallel coordination space without relying on either centralized platforms or pure-anonymity overlays like Tor. Its three defining primitives are decentralized transport (libp2p + IPFS, no central servers), gated admission (4-context DID derivation + weighted vouch), and reputation-anchored economics (Reputation/Credit dual-ledger with frozen-credit Faucet).\n\nThe current milestone (M10) has the validation form complete: 1021 MVP tests + 213 Embas translation-market tests = 1234/1234 passing, with 5 P0 + 15 P1 audit findings all fixed. The network is in private internal beta pending M11 multi-app coexistence and weighted-transition rollout.",
+      "architecture": "Four-layer protocol stack, with a critical dual-plane isolation that distinguishes Havix from naive \"encrypt everything\" designs:\n\n- Application layer (parasitic): Wiki SPA, Market SPA, private-message tunnels, CLI — all loaded as signed apps through the M9 AppManager with manifest-based permission whitelisting (28 permissions across 8 categories).\n- Identity layer: a single master DID derives 4 context sub-identities (A=public, B=market, C=tunnel, D=wiki) via HKDF-SHA256; sub-identities are cryptographically unlinkable.\n- Protocol layer (public + private): Vouch, Wiki, Market, Offer·Credit, Arbitration — split across a public plane (gossipsub mesh + KadDHT for Wiki CIDs only + Rendezvous) and a private plane (private gossipsub topics whose names are SHA-256 of invite tokens, message bodies AES-256-GCM re-encrypted with HKDF-derived keys).\n- Economic layer: Reputation (cumulative, non-transferable) ↔ Credit (consumable, transferable) dual ledger; high-reputation nodes can issue Credit only by freezing an equal amount of their own Reputation, anchoring Credit value to the issuer's reputation.\n\nThe S-Node class is the local node instance: libp2p (TCP + noise + yamux/mplex + gossipsub + mDNS + KadDHT) + helia IPFS + 8 local ledgers (reputation, credit, vouch, wiki, arbitration, treasury, market, credit-nonces). Cross-node consistency is achieved via gossipsub message convergence.",
+      "roadmap": "Current milestone: M10 — translation market (Embas) end-to-end working, full-stack security hardening (M9.6 + AUDIT-M10) complete. Embas uses context-B only (deliberately avoiding context-A to preserve unlinkability) with minReputation=30 and trustWeight=0.8; the complete publish→accept→deliver→approve→dispute→arbitrate flow runs with 5-node ad-hoc arbitration panels (≥3 verdict majority) and slash distribution of 50% to victim + 50% to treasury.\n\nStage plan (four phases total):\n\n- M1–M10 Validation form: ✅ complete (1234/1234 tests passing).\n- M11–M12 Complete form: multi-app coexistence (teaching market + wiki app), FW-01 weighted-transition algorithm v0 (trustWeight = real-flow ratio × counterparty diversity × minReputation coefficient, with collusion detection via Herfindahl index), 6 node-level attack defenses (rate limiting, eclipse detection, collusion statistics, exit penalty, commit-reveal front-running defense, reverse audit).\n- M13–M14 Network form: Rust reimplementation of credit/arbitration/identity/market/wiki (with lmdb/sled storage + rust-libp2p); slot-based saturated cover-traffic protocol for sovereign-boundary defense against observer attacks.\n- M15+ Ecosystem form: multi-language SDK, cross-network federation, mobile node support.\n\nRelay rotation: 20% probability per 1-hour epoch, top 30% reputation + ≥3 vouches required to serve as relay. Tunnel: 3 parallel relays, MAX_CHUNK_SIZE 64 KiB, hard-cut switching (no circuit migration). Self-healing verified in 4-node star topology — 90-second detection and re-convergence after forced center-node shutdown.",
+      "team": "Havix is developed by \"Havix Contributors\" under the MIT license, with the GitHub organization eneatlnc-cell. The codebase is unusually well-documented for its maturity: the Technical Whitepaper v0.1.0-draft lists 18 explicit design decisions with rationale, M8/M9/M10 each have full audit reports with P0/P1/P2 severity classifications, and the NEXT-STEPS.md runs to a six-layer recursive structure (Layer 0–5) for traceable decision-making. The development workflow uses parallel AI-agent-assisted audits (explicitly acknowledged in AUDIT-M9 and AUDIT-M10). Comments and design docs are predominantly in Chinese with English technical identifiers. The Foundation expects the named maintainer roster to be published once M11 multi-app coexistence stabilizes."
     }
   },
   "proposalDetail": {
@@ -251,11 +261,21 @@
     "error": "Algo salió mal. Por favor, inténtelo de nuevo."
   },
   "footer": {
-    "tagline": "Una fundación sin fines de lucro que promueve la infraestructura descentralizada y la investigación en inteligencia artificial.",
-    "treasury": "Tesorería",
-    "governance": "Gobernanza",
-    "transparency": "Transparencia",
-    "languageNote": "Cambie el idioma en la navegación superior."
+    "tagline": "A non-profit foundation advancing decentralized infrastructure and artificial intelligence research.",
+    "governance": "Governance",
+    "transparency": "Transparency",
+    "programs": "Programs",
+    "proposals": "Proposals",
+    "council": "Council",
+    "foundation": "Foundation",
+    "audit": "Audit Reports",
+    "tokenless": "Tokenless · Non-profit",
+    "mission": "Three chambers, one ledger, zero tokens — building public-good infrastructure the way it should be.",
+    "org": "Aether Foundation",
+    "chain": "Deployed on Arbitrum One",
+    "license": "MIT License",
+    "statusLive": "Mainnet pending",
+    "statusArbitrum": "Arbitrum L2"
   },
   "common": {
     "loading": "Cargando...",

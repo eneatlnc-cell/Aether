@@ -38,11 +38,20 @@ export function LanguageSwitcher() {
     <div ref={ref} className="relative">
       <button
         onClick={() => setOpen(!open)}
-        className="w-7 h-7 flex items-center justify-center rounded-full hover:scale-110 transition-transform duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+        className="w-7 h-7 flex items-center justify-center rounded-full hover:scale-110 transition-transform duration-300 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg overflow-hidden"
         aria-label={`Switch language, current: ${current.label}`}
         aria-expanded={open}
       >
-        <span className="text-xl leading-none">{current.flag}</span>
+        {/* 使用图片国旗，避免 Windows 不渲染国旗 emoji */}
+        <img
+          src={`https://flagcdn.com/h24/${current.countryCode}.png`}
+          srcSet={`https://flagcdn.com/h40/${current.countryCode}.png 2x`}
+          width={20}
+          height={14}
+          alt={current.label}
+          className="rounded-[2px] object-cover"
+          style={{ width: 20, height: 14 }}
+        />
       </button>
       {open && (
         <div className="absolute right-0 mt-2 bg-card border border-border rounded-[8px] shadow-[0_4px_12px_rgba(0,0,0,0.04)] p-1 z-50 min-w-[44px]">
@@ -56,7 +65,15 @@ export function LanguageSwitcher() {
               title={info.label}
               aria-label={info.label}
             >
-              <span className="text-lg">{info.flag}</span>
+              <img
+                src={`https://flagcdn.com/h24/${info.countryCode}.png`}
+                srcSet={`https://flagcdn.com/h40/${info.countryCode}.png 2x`}
+                width={20}
+                height={14}
+                alt={info.label}
+                className="rounded-[2px] object-cover"
+                style={{ width: 20, height: 14 }}
+              />
             </button>
           ))}
         </div>

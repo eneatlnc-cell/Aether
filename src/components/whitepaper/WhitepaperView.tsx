@@ -88,19 +88,42 @@ export function WhitepaperView({ projectId }: WhitepaperViewProps) {
 
           {/* 章节内容 */}
           <div className="space-y-12">
-            {sections.map((s) => (
-              <section key={s.id} id={s.id}>
-                <h2 className="text-2xl font-bold text-ink mb-4">{s.title}</h2>
-                <Card>
-                  <p className="text-base text-ink leading-relaxed">
-                    {t(`${s.key}` as never)}
-                  </p>
-                </Card>
-              </section>
-            ))}
+            {sections.map((s) => {
+              // 支持 \n\n 分段；以 "- " 开头的段落渲染为要点列表
+              const raw = t(`${s.key}` as never) as string;
+              const paragraphs = raw.split("\n\n");
+              return (
+                <section key={s.id} id={s.id}>
+                  <h2 className="text-2xl font-bold text-ink mb-4">{s.title}</h2>
+                  <Card>
+                    <div className="space-y-3">
+                      {paragraphs.map((p, idx) =>
+                        p.startsWith("- ") ? (
+                          <ul
+                            key={idx}
+                            className="list-disc pl-5 text-base text-ink leading-relaxed space-y-1.5 marker:text-accent"
+                          >
+                            {p.split("\n").map((item, j) => (
+                              <li key={j}>{item.replace(/^- /, "")}</li>
+                            ))}
+                          </ul>
+                        ) : (
+                          <p
+                            key={idx}
+                            className="text-base text-ink leading-relaxed whitespace-pre-line"
+                          >
+                            {p}
+                          </p>
+                        )
+                      )}
+                    </div>
+                  </Card>
+                </section>
+              );
+            })}
           </div>
 
-          {/* 占位说明 */}
+          {/* 数据来源声明 */}
           <p className="mt-12 text-xs text-muted text-center italic">
             {t("placeholderNote")}
           </p>

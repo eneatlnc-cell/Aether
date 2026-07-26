@@ -1,6 +1,6 @@
 "use client";
 
-import { createConfig, createConnector, http, WagmiProvider as WagmiProviderBase } from "wagmi";
+import { createConfig, http, WagmiProvider as WagmiProviderBase } from "wagmi";
 import { arbitrum, arbitrumSepolia, mainnet } from "wagmi/chains";
 import { walletConnect, injected, coinbaseWallet } from "@wagmi/connectors";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
@@ -15,10 +15,12 @@ const config = createConfig({
     [arbitrumSepolia.id]: http(),
     [mainnet.id]: http(),
   },
+  // injected 在前：PC 端装了 MetaMask 等扩展时优先直连，避免无谓弹 QR
+  // walletConnect 兜底：移动端 / 无扩展时弹出 QR 让用户手机扫
   connectors: [
-    createConnector(walletConnect({ projectId: WALLETCONNECT_PROJECT_ID, showQrModal: true })),
-    createConnector(injected({ shimDisconnect: true })),
-    createConnector(coinbaseWallet({ appName: "Aether DAO" })),
+    injected({ shimDisconnect: true }),
+    walletConnect({ projectId: WALLETCONNECT_PROJECT_ID, showQrModal: true }),
+    coinbaseWallet({ appName: "Aether DAO" }),
   ],
   ssr: true,
 });
