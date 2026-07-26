@@ -193,9 +193,9 @@ contract AetherRing is ERC721, AccessControl, IAetherRing {
 
         _checkSeatLimit(tier);
 
+        // C-1 重入防护：CEI 模式 — 状态写入先于 _safeMint 外部调用
+        // 防止恶意 recipient 在 onERC721Received 回调中重入绕过"一人一环"
         uint256 tokenId = _nextTokenId++;
-        _safeMint(recipient, tokenId);
-
         walletToRingId[recipient] = tokenId;
 
         uint64 mintedAt = uint64(block.timestamp);
@@ -218,6 +218,8 @@ contract AetherRing is ERC721, AccessControl, IAetherRing {
 
         _tierCount[uint8(tier)] += 1;
 
+        _safeMint(recipient, tokenId);
+
         emit RingMinted(recipient, tokenId, tier, covenantHash);
         return tokenId;
     }
@@ -239,6 +241,11 @@ contract AetherRing is ERC721, AccessControl, IAetherRing {
         if (newTier == RingTier.ELDER) revert InvalidTier(); // ELDER 只能通过 appointElder / retireToEmeritus
 
         RingInfo storage info = ringInfo[tokenId];
+        // H-2: 拒绝对已到期道环操作（除非 resetTerm=true 重置任期）
+        if (!resetTerm && (info.isExpired || block.timestamp >= info.termEndAt)) {
+            revert RingExpiredCannotVote(tokenId, info.termEndAt);
+        }
+
         RingTier oldTier = info.tier;
         if (oldTier == newTier) return;
 
@@ -251,6 +258,12 @@ contract AetherRing is ERC721, AccessControl, IAetherRing {
         }
         if (newTier != RingTier.ELDER) {
             _tierCount[uint8(newTier)] += 1;
+        }
+
+        // H-1: 休眠公民升级时，清除休眠标志并递减休眠计数
+        if (oldTier == RingTier.CITIZEN && info.isDormant) {
+            info.isDormant = false;
+            _dormantCitizenCount -= 1;
         }
 
         info.tier = newTier;
@@ -407,9 +420,9 @@ contract AetherRing is ERC721, AccessControl, IAetherRing {
 
         uint256 ringId = walletToRingId[candidate];
         if (ringId == 0) {
-            // 新铸道环
+            // C-2 重入防护：CEI 模式 — 状态写入先于 _safeMint 外部调用
+            // 防止恶意 candidate 在 onERC721Received 中重入突破 9 人上限
             ringId = _nextTokenId++;
-            _safeMint(candidate, ringId);
             walletToRingId[candidate] = ringId;
 
             uint64 mintedAt = uint64(block.timestamp);
@@ -428,10 +441,17 @@ contract AetherRing is ERC721, AccessControl, IAetherRing {
                 isAppointedElder: true
             });
             // ELDER 不计入 _tierCount（无上限）
+            _appointedElderCount += 1;
+
+            _safeMint(candidate, ringId);
         } else {
             // 已有道环，升级为任命元老
             RingInfo storage info = ringInfo[ringId];
             if (info.isAppointedElder) revert AlreadyAppointedElder(ringId);
+            // H-5: 拒绝将已到期道环提升为元老（绕过任期限制）
+            if (info.isExpired || block.timestamp >= info.termEndAt) {
+                revert RingExpiredCannotVote(ringId, info.termEndAt);
+            }
 
             RingTier oldTier = info.tier;
             if (oldTier != RingTier.ELDER) {
@@ -447,9 +467,9 @@ contract AetherRing is ERC721, AccessControl, IAetherRing {
             info.isAppointedElder = true;
             info.isActive = true; // 任命元老有治理权
             info.termEndAt = ELDER_TERM;
+            _appointedElderCount += 1;
         }
 
-        _appointedElderCount += 1;
         emit ElderAppointed(ringId, candidate);
     }
 
@@ -669,6 +689,8 @@ contract AetherRing is ERC721, AccessControl, IAetherRing {
 
     function setSafeWallet(address _safe) external onlyRole(ADMIN_ROLE) {
         if (_safe == address(0)) revert InvalidRecipient();
+        // H-4: 验证目标地址已部署合约代码（防止设为任意 EOA）
+        if (_safe.code.length == 0) revert InvalidRecipient();
         address old = address(safeWallet);
         safeWallet = ISafe(_safe);
         emit SafeWalletUpdated(old, _safe);

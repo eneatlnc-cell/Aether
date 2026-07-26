@@ -144,6 +144,8 @@ contract AetherDonation is ERC721, AccessControl, IAetherDonation {
     {
         // ── 1. 四重校验 ──
         if (amount < MIN_DONATION_USD) revert DonationTooSmall(amount, MIN_DONATION_USD);
+        // Medium: PayPal TxId 非空检查（防止空字符串占用防重放映射）
+        if (bytes(paypalTxId).length == 0) revert DuplicatePayPalTx(paypalTxId);
         if (usedPaypalTxIds[paypalTxId]) revert DuplicatePayPalTx(paypalTxId);
         // V8 防女巫：一个 PayPal 账户只能绑定一个钱包（同一钱包可多次捐款）
         address linkedWallet = paypalAccountToWallet[paypalAccountHash];

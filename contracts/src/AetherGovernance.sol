@@ -403,6 +403,11 @@ contract AetherGovernance is AccessControl {
     function startFirstVote(uint256 proposalId) external {
         Proposal storage p = proposals[proposalId];
         if (p.status != ProposalStatus.PendingFirstVote) revert NotPendingFirstVote();
+        // H-6: 限制为提案者或理事会主席，防止恶意提前启动投票窗口
+        if (msg.sender != p.proposer
+            && ringContract.getTier(msg.sender) != uint8(IAetherRing.RingTier.COUNCIL_CHAIR)) {
+            revert NotProposer();
+        }
 
         p.status = ProposalStatus.FirstVoteActive;
         p.firstVoteStartAt = block.timestamp;
@@ -647,6 +652,9 @@ contract AetherGovernance is AccessControl {
 
     function approveEmergencyTreasury(uint256 proposalId) external {
         Proposal storage p = proposals[proposalId];
+        // H-7: 必须在 Queued（Timelock 排队）状态才能紧急审批
+        // 防止对未通过投票或已执行的提案滥用紧急审批
+        if (p.status != ProposalStatus.Queued) revert NotQueued();
         if (p.urgency != TreasuryUrgency.Emergency) revert NotEmergency();
         if (!ringContract.isElderActive(msg.sender)) revert NotAppointedElder();
         if (p.hasEmergencyApproved[msg.sender]) revert AlreadyApproved();
@@ -735,6 +743,11 @@ contract AetherGovernance is AccessControl {
             uint256 ringId = ringContract.getRingId(p.impeachedTarget);
             if (ringId != 0) {
                 ringContract.revokeRing(ringId);
+            }
+            // H-9: 清除被弹劾者在治理合约中的其他权限
+            // revokeRing 只撤销道环，不影响已授予的 PROPOSER_ROLE 等
+            if (hasRole(PROPOSER_ROLE, p.impeachedTarget)) {
+                _revokeRole(PROPOSER_ROLE, p.impeachedTarget);
             }
             p.status = ProposalStatus.Executed;
             p.isExecuted = true;
@@ -976,9 +989,15 @@ contract AetherGovernance is AccessControl {
 
     function cancelProposal(uint256 proposalId) external onlyRole(ADMIN_ROLE) {
         Proposal storage p = proposals[proposalId];
-        // M3: 终态保护，禁止对已 Executed/Defeated/Canceled 的提案重复取消
+        // M3 + H-8: 终态保护 + 公投阶段保护
+        // 禁止对已 Executed/Defeated/Canceled 的提案重复取消
         if (p.status == ProposalStatus.Executed || p.status == ProposalStatus.Defeated
             || p.status == ProposalStatus.Canceled) {
+            revert AlreadyInTerminalState();
+        }
+        // H-8: 公投进行中和元老否决窗口期间禁止取消（防中心化滥用）
+        if (p.status == ProposalStatus.PublicVoteActive || p.status == ProposalStatus.PendingVeto
+            || p.status == ProposalStatus.Queued) {
             revert AlreadyInTerminalState();
         }
         p.status = ProposalStatus.Canceled;

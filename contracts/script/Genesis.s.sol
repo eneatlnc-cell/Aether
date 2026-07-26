@@ -217,11 +217,17 @@ contract Genesis is Script {
         console2.log("3. Update frontend src/lib/contracts/config.ts with deployed addresses");
     }
 
-    /// @dev 生成 CITIZEN_<i> 环境变量名
+    /// @dev 生成 CITIZEN_<i> 环境变量名（H-10: 修复 i=10 时生成 "CITIZEN_:" 的 bug）
     function _citizenEnvKey(uint256 i) internal pure returns (string memory) {
-        // i ∈ [1, 10]，单字符即可
-        bytes1 digit = bytes1(uint8(0x30 + i));
-        return string(abi.encodePacked("CITIZEN_", digit));
+        // i ∈ [1, 10]，支持多位数
+        if (i < 10) {
+            bytes1 digit = bytes1(uint8(0x30 + i));
+            return string(abi.encodePacked("CITIZEN_", digit));
+        }
+        // i >= 10: 拆分十位和个位
+        bytes1 tens = bytes1(uint8(0x30 + i / 10));
+        bytes1 ones = bytes1(uint8(0x30 + i % 10));
+        return string(abi.encodePacked("CITIZEN_", tens, ones));
     }
 
     /// @dev 读取地址并授予 PROPOSER_ROLE（仅当环境变量已设置且 ≠ deployer）

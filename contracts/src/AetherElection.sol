@@ -287,7 +287,7 @@ contract AetherElection is AccessControl, IAetherElection {
      *         - 必须注册期结束
      *         - 必须至少有 1 个候选人
      */
-    function advanceToCouncilReview(uint256 electionId) external validElection(electionId) {
+    function advanceToCouncilReview(uint256 electionId) external validElection(electionId) onlyRole(ELECTION_MANAGER_ROLE) {
         Election storage e = elections[electionId];
         if (e.status != ElectionStatus.Pending) revert ElectionNotPending();
         if (block.timestamp < e.registrationEndAt) revert RegistrationNotEnded();
@@ -341,7 +341,7 @@ contract AetherElection is AccessControl, IAetherElection {
     /**
      * @notice 推进至议会审批阶段
      */
-    function advanceToParliamentApproval(uint256 electionId) external validElection(electionId) {
+    function advanceToParliamentApproval(uint256 electionId) external validElection(electionId) onlyRole(ELECTION_MANAGER_ROLE) {
         Election storage e = elections[electionId];
         if (e.status != ElectionStatus.CouncilReview) revert ElectionNotCouncilReview();
         if (block.timestamp < e.councilReviewEndAt) revert CouncilReviewNotEnded();
@@ -627,6 +627,8 @@ contract AetherElection is AccessControl, IAetherElection {
     }
 
     function setRingContract(address _ring) external onlyRole(ADMIN_ROLE) {
+        // C-3: 零地址检查 — 防止误操作导致选举合约永久失效
+        if (_ring == address(0)) revert ZeroAddress();
         address old = address(ringContract);
         ringContract = IAetherRing(_ring);
         emit RingContractUpdated(old, _ring);

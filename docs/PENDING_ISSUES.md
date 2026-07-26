@@ -1,13 +1,45 @@
 # Aether DAO v3.0 待处理问题清单
 
-> **版本**：v3.2 — 全部 Critical/High/Medium/Low 修复完成
-> **日期**：2026-07-24
+> **版本**：v3.4 — 外部审计 Critical/High 全部修复
+> **日期**：2026-07-26
 > **关联文档**：[V3_AUDIT_REPORT.md](./V3_AUDIT_REPORT.md)（详细审计报告）
 > **优先级**：🔴 阻断主网 / 🟠 部署前修复 / 🟡 主网前建议 / 🟢 长期优化
 
 ---
 
-## 〇、v3.2 修复总览（已完成）
+## 〇、v3.4 外部审计修复总览（2026-07-26）
+
+基于 2026-07-26 外部审计报告（3 Critical / 10 High / 14 Medium / 13 Low），完成全部 Critical + High 修复，并处理关键 Medium。
+
+### v3.4 已修复清单（14 项）
+
+| 类别 | ID | 文件 | 修复内容 |
+|---|---|---|---|
+| 🔴 C | C-1 | AetherRing.sol | mintRing CEI：walletToRingId/ringInfo/_tierCount 写入移到 _safeMint 前（防重入绕过一人一环） |
+| 🔴 C | C-2 | AetherRing.sol | appointElder CEI：状态写入（含 _appointedElderCount）移到 _safeMint 前（防重入突破 9 人上限） |
+| 🔴 C | C-3 | AetherElection.sol | setRingContract 加零地址检查（防误操作致合约永久失效） |
+| 🔴 H | H-1 | AetherRing.sol | updateTier 休眠公民升级时清除 isDormant + 递减 _dormantCitizenCount |
+| 🔴 H | H-2 | AetherRing.sol | updateTier 拒绝已到期道环操作（除非 resetTerm=true） |
+| 🔴 H | H-4 | AetherRing.sol | setSafeWallet 验证目标 code.length > 0（防设为任意 EOA） |
+| 🔴 H | H-5 | AetherRing.sol | appointElder 拒绝将已到期道环提升为元老 |
+| 🔴 H | H-6 | AetherGovernance.sol | startFirstVote 限制为 proposer 或 COUNCIL_CHAIR（防恶意提前启动投票） |
+| 🔴 H | H-7 | AetherGovernance.sol | approveEmergencyTreasury 加 status==Queued 校验 |
+| 🔴 H | H-8 | AetherGovernance.sol | cancelProposal 禁止在 PublicVoteActive/PendingVeto/Queued 阶段取消（防中心化滥用） |
+| 🔴 H | H-9 | AetherGovernance.sol | 弹劾通过后 revoke 被弹劾者的 PROPOSER_ROLE（revokeRing 不自动清权限） |
+| 🔴 H | H-10 | Genesis.s.sol | _citizenEnvKey(10) 修复：支持两位数（原 0x30+10=0x3A=':' 致第 10 公民永远跳过） |
+| 🟠 M | — | AetherElection.sol | advanceToCouncilReview/advanceToParliamentApproval 加 ELECTION_MANAGER_ROLE 权限 |
+| 🟠 M | — | AetherDonation.sol | mintDonation 加 PayPal TxId 非空检查 |
+
+### v3.4 设计决策（不改代码）
+
+| 审计项 | 原因 |
+|---|---|
+| H-3 双角色体系（DEFAULT_ADMIN + ADMIN） | OpenZeppelin 标准模式：DEFAULT_ADMIN 管角色 admin，ADMIN 管业务。v3.2 H8 已把 DEFAULT_ADMIN 转给 Safe，风险已缓解 |
+| Medium 弹劾忽略三院计票 | 设计决策：弹劾是公民对治理者的直接制衡（30% quorum + 70% 支持），白皮书明确"公民主权"，三院不参与弹劾 |
+
+---
+
+## 一、v3.2 修复总览（已完成）
 
 本次迭代（v3.2）已完成所有 Critical / High / Medium / Low 级别 bug 修复，覆盖合约逻辑、部署脚本、创世脚本、接口架构与集成测试。以下问题均已修复，可在现实环境测试前不再阻塞。
 
