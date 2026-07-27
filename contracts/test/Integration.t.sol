@@ -8,6 +8,7 @@ import {AetherGovernance} from "../src/AetherGovernance.sol";
 import {AetherElection, IAetherElection} from "../src/AetherElection.sol";
 import {AetherDonation} from "../src/AetherDonation.sol";
 import {ISafe} from "../src/interfaces/ISafe.sol";
+import {MockUSDC} from "./AetherDonation.t.sol";
 
 /**
  * @title Integration Test — 跨合约端到端流程
@@ -17,7 +18,7 @@ import {ISafe} from "../src/interfaces/ISafe.sol";
  *   T5.1  完整提案流程：草案→一审→合规→公投→否决窗口→执行
  *   T5.2  完整弹劾流程：元老发起→3联署→公投→撤销道环
  *   T5.3  完整选举流程：创建→注册→理事会→议会审批→投票→finalize→晋升
- *   T5.4  完整捐款流程：mintDonation→铸公民道环→settle→3担保激活快速通道
+ *   T5.4  完整捐款流程：donateAndMint（approve+USDC转账）→铸公民道环→3担保激活快速通道
  *   T5.5  跨合约角色权限校验
  */
 contract IntegrationTest is Test {
@@ -26,6 +27,7 @@ contract IntegrationTest is Test {
     AetherElection election;
     AetherDonation donation;
     MockSafe safe;
+    MockUSDC usdc;
 
     // ── 身份地址 ──
     address admin = address(this);
@@ -45,7 +47,6 @@ contract IntegrationTest is Test {
     address citizen4 = address(0xC1D4);
     address citizen5 = address(0xC1D5);
     address newDonor = address(0xD0A1); // 新捐款人
-    address paypalServer = address(0xBAD1); // PayPal webhook 服务端
 
     // ── 常量 ──
     uint256 constant DONATION_AMOUNT = 10 * 10 ** 6; // $10 USDC (6 decimals)
@@ -55,10 +56,11 @@ contract IntegrationTest is Test {
         ring = new AetherRing();
         safe = new MockSafe();
         ring.setSafeWallet(address(safe));
+        usdc = new MockUSDC();
 
         gov = new AetherGovernance(address(ring));
         election = new AetherElection(address(ring));
-        donation = new AetherDonation(address(ring), admin, admin); // treasury=admin 占位
+        donation = new AetherDonation(address(ring), admin, address(usdc), admin); // treasury=admin 占位
 
         // ── 2. 交叉授权（与 Deploy.s.sol 一致） ──
         ring.grantRole(ring.ADMIN_ROLE(), address(gov));
@@ -95,9 +97,15 @@ contract IntegrationTest is Test {
         // ── 5. governance/election 角色配置 ──
         gov.grantRole(gov.PROPOSER_ROLE(), fedMember);
         election.grantCouncilChairRole(chair);
+    }
 
-        // ── 6. donation 授权 PayPal webhook 服务端 ──
-        donation.grantRole(donation.MINTER_ROLE(), paypalServer);
+    /// @dev 辅助：以 donor 身份完成 approve + donateAndMint
+    function _donate(address donor, uint256 amount) internal returns (uint256 tokenId) {
+        usdc.mint(donor, amount);
+        vm.startPrank(donor);
+        usdc.approve(address(donation), amount);
+        tokenId = donation.donateAndMint(amount);
+        vm.stopPrank();
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -279,26 +287,24 @@ contract IntegrationTest is Test {
     }
 
     // ═══════════════════════════════════════════════════════════
-    //  T5.4 完整捐款流程：mintDonation→铸公民道环→settle→3担保激活快速通道
+    //  T5.4 完整捐款流程：donateAndMint（approve+USDC转账）→铸公民道环→3担保激活快速通道
     // ═══════════════════════════════════════════════════════════
 
     function test_DonationFlow_FirstDonation() public {
         // 验证初始状态：newDonor 无道环
         assertEq(ring.getRingId(newDonor), 0);
 
-        // 1. PayPal 服务端铸造捐款凭证（newDonor 首次捐款）
-        bytes32 paypalHash = keccak256("paypal-payer-id-001");
-        vm.prank(paypalServer);
-        uint256 tokenId = donation.mintDonation(newDonor, DONATION_AMOUNT, "PP-TX-001", paypalHash);
+        // 1. newDonor approve USDC 并捐款（纯链上：approve + donateAndMint 一笔完成身份发放）
+        uint256 treasuryBefore = usdc.balanceOf(admin);
+        uint256 tokenId = _donate(newDonor, DONATION_AMOUNT);
 
-        // 2. 验证：newDonor 自动获得公民道环
+        // 2. 验证：newDonor 自动获得公民道环，USDC 已转入 treasury（admin 占位）
         assertEq(uint8(ring.getTier(newDonor)), uint8(IAetherRing.RingTier.CITIZEN));
         assertTrue(ring.getRingId(newDonor) != 0);
+        assertEq(usdc.balanceOf(newDonor), 0);
+        assertEq(usdc.balanceOf(admin), treasuryBefore + DONATION_AMOUNT);
 
-        // 3. 多签结算（admin 占位）
-        donation.settleDonation(tokenId, DONATION_AMOUNT);
-
-        // 4. 3 个公民担保激活快速通道（此处验证担保流程，fastTrack 主要用于审计）
+        // 3. 3 个公民担保激活快速通道（此处验证担保流程，fastTrack 主要用于审计）
         vm.prank(citizen1);
         donation.sponsorDonation(tokenId);
         vm.prank(citizen2);
@@ -306,11 +312,11 @@ contract IntegrationTest is Test {
         vm.prank(citizen3);
         donation.sponsorDonation(tokenId);
 
-        // 5. 验证：快速通道已激活
+        // 4. 验证：快速通道已激活
         AetherDonation.Donation memory d = donation.getDonation(tokenId);
         assertTrue(d.fastTrackActivated);
         assertEq(d.sponsorCount, 3);
-        assertTrue(d.isSettled);
+        assertEq(d.amount, DONATION_AMOUNT);
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -374,10 +380,8 @@ contract IntegrationTest is Test {
         assertEq(uint8(ring.getTier(newDonor)), 0);
         assertFalse(ring.isBearer(newDonor));
 
-        // 1.2 PayPal 服务端铸造捐款凭证（newDonor 首次捐款）
-        bytes32 paypalHash = keccak256("paypal-payer-id-chain-h10");
-        vm.prank(paypalServer);
-        uint256 donationTokenId = donation.mintDonation(newDonor, DONATION_AMOUNT, "PP-TX-H10-001", paypalHash);
+        // 1.2 newDonor approve USDC 并捐款（纯链上：approve + donateAndMint）
+        uint256 donationTokenId = _donate(newDonor, DONATION_AMOUNT);
 
         // 1.3 验证：newDonor 自动获得公民道环（tier 14）
         assertTrue(ring.getRingId(newDonor) != 0);
@@ -386,9 +390,6 @@ contract IntegrationTest is Test {
 
         // 1.4 验证活跃公民数已增加（5 → 6，newDonor 已加入）
         assertEq(ring.getActiveCitizens(), 6);
-
-        // 1.5 多签结算（admin 占位）
-        donation.settleDonation(donationTokenId, DONATION_AMOUNT);
 
         // ──────────── 阶段 2：公民参与治理提案公投 ────────────
         // 2.1 联邦委员创建 SIGNAL 提案

@@ -13,10 +13,11 @@ import {AetherDonation} from "../src/AetherDonation.sol";
  * 功能：
  *   1. 部署 Ring + Donation，交叉授权
  *   2. 铸造创世高层道环（通过环境变量配置地址）
- *   3. deployer 持有 MINTER_ROLE，可手动调 mintDonation 接纳 PayPal 捐款
+ *   3. deployer 持有 ADMIN_ROLE，donateAndMint 为 public 无需 MINTER_ROLE
  *
  * 必需环境变量：
  *   PRIVATE_KEY  部署私钥
+ *   USDC         USDC 合约地址（donateAndMint 链上转账用）
  *
  * 可选环境变量：
  *   TREASURY         国库地址，默认 = deployer
@@ -44,6 +45,9 @@ contract DeployMinimal is Script {
 
         // TREASURY 可选，默认用 deployer
         address treasury = vm.envOr("TREASURY", deployer);
+        // USDC 必需：donateAndMint 链上转账用，构造函数校验非零
+        address usdc = vm.envOr("USDC", address(0));
+        require(usdc != address(0), "DeployMinimal: USDC env required");
 
         vm.startBroadcast(deployerPrivateKey);
 
@@ -52,7 +56,7 @@ contract DeployMinimal is Script {
         ringAddress = address(ring);
 
         // ── 2. 部署 AetherDonation ──
-        AetherDonation donation = new AetherDonation(ringAddress, treasury, deployer);
+        AetherDonation donation = new AetherDonation(ringAddress, treasury, usdc, deployer);
         donationAddress = address(donation);
 
         // ── 3. 交叉授权 ──
@@ -76,12 +80,12 @@ contract DeployMinimal is Script {
         console2.log("");
         console2.log("Roles:");
         console2.log("  ring.MINTER_ROLE    -> donation + deployer");
-        console2.log("  donation.MINTER_ROLE -> deployer (manual mintDonation)");
+        console2.log("  donation.ADMIN_ROLE -> deployer (setTreasury / setUsdcToken)");
+        console2.log("  (donateAndMint is public, no MINTER_ROLE needed)");
         console2.log("");
         console2.log("Next steps:");
-        console2.log("  1. call donation.mintDonation() to accept PayPal donations");
-        console2.log("  2. Later: deploy PayPal webhook server + grant MINTER_ROLE");
-        console2.log("  3. Later: deploy Governance + Election for full governance");
+        console2.log("  1. Users approve USDC + call donation.donateAndMint() to donate on-chain");
+        console2.log("  2. Later: deploy Governance + Election for full governance");
     }
 
     /// @dev 读取 FOUNDER_N / FOUNDER_TIER_N 环境变量，铸造道环

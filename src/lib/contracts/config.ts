@@ -94,3 +94,41 @@ export function getIpfsGateway(): string {
   }
   return "https://gateway.pinata.cloud/ipfs/";
 }
+
+// ──────────── USDC 合约地址 ────────────
+// Arbitrum One 主网原生 USDC（Circle 官方）: 0xaf88d065e77c8cC2239327C5EDb3A432268e5831
+// 通过 NEXT_PUBLIC_USDC_ADDRESS 覆盖（多链场景用 NEXT_PUBLIC_USDC_<CHAINID>_ADDRESS）
+export function getUsdcAddress(chainId: number): `0x${string}` | null {
+  if (typeof process !== "undefined" && process.env) {
+    const chainSpecific = process.env[`NEXT_PUBLIC_USDC_${chainId}_ADDRESS`];
+    if (chainSpecific && /^0x[a-fA-F0-9]{40}$/.test(chainSpecific)) {
+      return chainSpecific as `0x${string}`;
+    }
+    const general = process.env["NEXT_PUBLIC_USDC_ADDRESS"];
+    if (general && /^0x[a-fA-F0-9]{40}$/.test(general)) {
+      return general as `0x${string}`;
+    }
+  }
+  // 默认 Arbitrum One 主网原生 USDC
+  if (chainId === 42161) {
+    return "0xaf88d065e77c8cC2239327C5EDb3A432268e5831" as `0x${string}`;
+  }
+  return null;
+}
+
+// ──────────── 金库地址（前期 EOA，后期 Safe 多签） ────────────
+// 预启动阶段：基金会 EOA 接收捐款；正式启动后切换为 Safe 多签
+// 通过 NEXT_PUBLIC_TREASURY_ADDRESS 注入
+export function getTreasuryAddress(chainId: number): `0x${string}` | null {
+  if (typeof process !== "undefined" && process.env) {
+    const chainSpecific = process.env[`NEXT_PUBLIC_TREASURY_${chainId}_ADDRESS`];
+    if (chainSpecific && /^0x[a-fA-F0-9]{40}$/.test(chainSpecific)) {
+      return chainSpecific as `0x${string}`;
+    }
+    const general = process.env["NEXT_PUBLIC_TREASURY_ADDRESS"];
+    if (general && /^0x[a-fA-F0-9]{40}$/.test(general)) {
+      return general as `0x${string}`;
+    }
+  }
+  return null;
+}

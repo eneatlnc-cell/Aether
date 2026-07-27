@@ -79,9 +79,11 @@ export function useDonationReceipt() {
 
     /* ---------- 字段表 ---------- */
     const purposeLabel = tPurpose(result.purpose as never);
-    const amountStr = `${result.amount.toLocaleString("en-US", {
-      maximumFractionDigits: result.asset === "ETH" ? 4 : 2,
-    })} ${result.asset}`;
+    // 预启动阶段只支持 USDC（6 decimals），amount 是原始 bigint
+    const usdcAmount = Number(result.amount) / 10 ** 6;
+    const amountStr = `${usdcAmount.toLocaleString("en-US", {
+      maximumFractionDigits: 2,
+    })} USDC`;
 
     const date = new Date(result.timestamp);
     const dateStr = format.dateTime(date, {

@@ -120,6 +120,11 @@
     "connectFirst": "Por favor conecte su wallet para continuar.",
     "signing": "Esperando firma en la wallet...",
     "submitting": "Enviando transacción...",
+    "approving": "Aprobando gasto USDC...",
+    "approvePending": "Esperando confirmación de aprobación...",
+    "treasuryPending": "Configurando dirección de tesorería",
+    "errorMinAmount": "Donación mínima $10 USDC",
+    "errorConfig": "Donación aún no configurada, intente más tarde",
     "success": "Donación confirmada en cadena.",
     "downloadReceipt": "Descargar Recibo PDF",
     "closeWindow": "Cerrar",
@@ -256,9 +261,9 @@
     "walletConnected": "Wallet conectada exitosamente.",
     "walletDisconnected": "Wallet desconectada.",
     "voteSuccess": "Voto enviado para agregación fuera de cadena.",
-    "donationSuccess": "Donación confirmada en cadena.",
+    "donationSuccess": "¡Donación exitosa! Ahora eres ciudadano.",
     "copied": "Copiado al portapapeles.",
-    "error": "Algo salió mal. Por favor, inténtelo de nuevo."
+    "error": "Algo salió mal, intente de nuevo"
   },
   "footer": {
     "tagline": "A non-profit foundation advancing decentralized infrastructure and artificial intelligence research.",

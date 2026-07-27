@@ -1,3 +1,5 @@
+import { getTreasuryAddress as _getTreasuryAddress } from "@/lib/contracts/config";
+
 export type AssetCode = "USDC" | "USDT" | "ETH";
 
 export type DonationPurpose =
@@ -49,12 +51,18 @@ export interface FundFlowSnapshot {
 }
 
 /**
- * 基金会金库多签地址占位
- * 真实接入时由 useFundFlow/useDonation 内部读取链上合约
+ * 基金会金库地址（前期 EOA，后期 Safe 多签）
+ * 从环境变量 NEXT_PUBLIC_TREASURY_ADDRESS 读取
+ * 未配置时返回 null，前端应显示"配置中"
  */
+export function getTreasuryAddress(chainId: number): `0x${string}` | null {
+  return _getTreasuryAddress(chainId);
+}
+
+// 保留旧常量名兼容（内部用），但改为 null 占位，强制走 getTreasuryAddress
 export const TREASURY_ADDRESSES: Record<"arbitrum" | "ethereum", string> = {
-  arbitrum: "0x000000000000000000000000000000000000AeTh",
-  ethereum: "0x000000000000000000000000000000000000AeTh",
+  arbitrum: "",
+  ethereum: "",
 };
 
 export const PREFERRED_ASSET: AssetCode = "USDC";

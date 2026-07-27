@@ -120,6 +120,11 @@
     "connectFirst": "請先連接您的錢包以繼續。",
     "signing": "等待錢包簽名中...",
     "submitting": "交易提交中...",
+    "approving": "授權 USDC 支出中...",
+    "approvePending": "等待授權確認...",
+    "treasuryPending": "金庫地址設定中",
+    "errorMinAmount": "最低捐款為 $10 USDC",
+    "errorConfig": "捐款功能尚未設定完成，請稍後再試",
     "success": "捐贈已在鏈上確認。",
     "downloadReceipt": "下載 PDF 收據",
     "closeWindow": "關閉",
@@ -256,9 +261,9 @@
     "walletConnected": "錢包連接成功。",
     "walletDisconnected": "錢包已斷開。",
     "voteSuccess": "投票已提交至鏈下聚合。",
-    "donationSuccess": "捐贈已在鏈上確認。",
+    "donationSuccess": "捐贈成功！您已成為公民。",
     "copied": "已複製至剪貼簿。",
-    "error": "發生錯誤，請再試一次。"
+    "error": "發生錯誤，請再試一次"
   },
   "footer": {
     "tagline": "致力於去中心化基礎設施與人工智慧研究的非營利基金會。",

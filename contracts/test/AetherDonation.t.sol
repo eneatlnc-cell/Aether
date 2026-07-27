@@ -9,25 +9,27 @@ import {IAetherDonation} from "../src/interfaces/IAetherDonation.sol";
 
 /**
  * @title AetherDonation Test
- * @dev 覆盖 13 个测试用例（对应 V3_DEV_STEPS.md 步骤 2.9）
+ * @dev 纯链上 USDC 捐款测试（覆盖 donateAndMint 全部分支）
  *
- *   T2.1  首次捐款铸公民道环
- *   T2.2  二次捐款不重复铸公民道环
- *   T2.3  金额 < $10 revert
- *   T2.4  paypalTxId 防重放
- *   T2.5  paypalAccountHash 去重
- *   T2.6  放弃冷却期内 revert
- *   T2.7  settleDonation 非 admin revert
- *   T2.8  settleDonation 重复 settle revert
- *   T2.9  3 公民担保激活快速通道
- *   T2.10 非公民担保 revert
- *   T2.11 SBT 不可转让
- *   T2.12 多笔捐款查询
- *   T2.13 未 settle 列表
+ *   T2.1  首次捐款：approve + donateAndMint → 铸公民道环 + USDC 转账 + 凭证 NFT
+ *   T2.2  二次捐款：不重复铸公民道环，但铸新凭证 NFT
+ *   T2.3  金额 < $10 revert DonationTooSmall
+ *   T2.4  放弃冷却期内 revert RenounceCooldownActive
+ *   T2.5  休眠公民重新激活（emit DormantCitizenReactivated）
+ *   T2.6  USDC transferFrom 返回 false → revert UsdcTransferFailed
+ *   T2.7  3 公民担保激活快速通道
+ *   T2.8  非公民担保 revert
+ *   T2.9  SBT 不可转让
+ *   T2.10 多笔捐款查询
+ *   T2.11 构造函数零地址校验（ring / treasury / usdc）
+ *   T2.12 重复担保 revert
+ *   T2.13 setUsdcToken 管理函数
  */
 contract AetherDonationTest is Test {
     AetherRing ring;
     AetherDonation donation;
+    MockUSDC usdc;
+    BadUSDC badUsdc;
 
     address admin = address(this);
     address alice = address(0xA11CE);
@@ -38,48 +40,35 @@ contract AetherDonationTest is Test {
 
     // ── 常量 ──
     uint256 constant MIN_DONATION = 10 * 10 ** 6; // $10
-    bytes32 constant PAYPAL_HASH_BASE = keccak256("paypal_account_base");
+    // AetherRing 公民休眠期（2 年），测试中用于构造休眠状态
+    uint256 constant DORMANCY_PERIOD = 2 * 365 days;
 
     function setUp() public {
         ring = new AetherRing();
-        donation = new AetherDonation(address(ring), treasury, admin);
+        usdc = new MockUSDC();
+        donation = new AetherDonation(address(ring), treasury, address(usdc), admin);
 
         // AetherDonation 需要 AetherRing.MINTER_ROLE 才能铸公民道环 / 重新激活休眠公民
         // 注：Solidity 0.8.26 不支持 ContractName.ConstantName 跨合约访问，用实例 getter
         ring.grantRole(ring.MINTER_ROLE(), address(donation));
     }
 
-    // ── 辅助：生成唯一 PayPal 凭证 ──
-    function _paypalTxId(uint256 seq) internal pure returns (string memory) {
-        return string(abi.encodePacked("PAYPAL-TX-", _uintToStr(seq)));
-    }
-
-    function _paypalHash(address donor) internal pure returns (bytes32) {
-        return keccak256(abi.encodePacked(donor));
-    }
-
-    function _uintToStr(uint256 value) internal pure returns (string memory) {
-        if (value == 0) return "0";
-        uint256 temp = value;
-        uint256 digits;
-        while (temp != 0) {
-            digits++;
-            temp /= 10;
-        }
-        bytes memory buffer = new bytes(digits);
-        while (value != 0) {
-            digits -= 1;
-            buffer[digits] = bytes1(uint8(48 + uint256(value % 10)));
-            value /= 10;
-        }
-        return string(buffer);
+    // ── 辅助：以 donor 身份完成 approve + donateAndMint ──
+    function _donate(address donor, uint256 amount) internal returns (uint256 tokenId) {
+        usdc.mint(donor, amount);
+        vm.startPrank(donor);
+        usdc.approve(address(donation), amount);
+        tokenId = donation.donateAndMint(amount);
+        vm.stopPrank();
     }
 
     // ═══════════════════════════════════════════════════════════
-    //  T2.1  首次捐款铸公民道环
+    //  T2.1  首次捐款：approve + donateAndMint → 铸公民道环 + USDC 转账 + 凭证 NFT
     // ═══════════════════════════════════════════════════════════
-    function test_MintDonation_FirstTime_MintsCitizenRing() public {
-        uint256 tokenId = donation.mintDonation(alice, MIN_DONATION, _paypalTxId(1), _paypalHash(alice));
+    function test_DonateAndMint_FirstTime_MintsCitizenRing() public {
+        uint256 treasuryBefore = usdc.balanceOf(treasury);
+
+        uint256 tokenId = _donate(alice, MIN_DONATION);
 
         // 捐款凭证已铸
         assertEq(tokenId, 1);
@@ -90,30 +79,30 @@ contract AetherDonationTest is Test {
         assertEq(ring.getTier(alice), uint8(IAetherRing.RingTier.CITIZEN));
         assertEq(ring.getRingId(alice), 1); // ring tokenId 从 1 开始
 
+        // USDC 已从 alice 转到 treasury
+        assertEq(usdc.balanceOf(alice), 0);
+        assertEq(usdc.balanceOf(treasury), treasuryBefore + MIN_DONATION);
+
         // Donation 数据正确
         IAetherDonation.Donation memory d = donation.getDonation(tokenId);
         assertEq(d.donor, alice);
         assertEq(d.amount, MIN_DONATION);
-        assertEq(d.usdcAmount, 0);
-        assertFalse(d.isSettled);
+        assertEq(d.timestamp, block.timestamp);
         assertFalse(d.fastTrackActivated);
         assertEq(d.sponsorCount, 0);
     }
 
     // ═══════════════════════════════════════════════════════════
-    //  T2.2  二次捐款不重复铸公民道环
+    //  T2.2  二次捐款：不重复铸公民道环，但铸新凭证 NFT
     // ═══════════════════════════════════════════════════════════
-    function test_MintDonation_SecondTime_NoCitizenRing() public {
+    function test_DonateAndMint_SecondTime_NoDuplicateCitizenRing() public {
         // 第一次捐款
-        donation.mintDonation(alice, MIN_DONATION, _paypalTxId(1), _paypalHash(alice));
+        _donate(alice, MIN_DONATION);
         uint256 ringIdAfterFirst = ring.getRingId(alice);
         assertTrue(ringIdAfterFirst != 0);
 
-        // 第二次捐款（不同 PayPal 账户 + TxId）
-        // 注：同一 donor 用不同 PayPal 账户是不允许的（paypalAccountHash 去重），
-        //     但同一 PayPal 账户可以多笔捐款 → 用同一 hash + 不同 txId
-        //     实际场景：服务端确保一个钱包对应一个 PayPal 账户
-        uint256 tokenId2 = donation.mintDonation(alice, MIN_DONATION * 2, _paypalTxId(2), _paypalHash(alice));
+        // 第二次捐款（更大金额）
+        uint256 tokenId2 = _donate(alice, MIN_DONATION * 2);
 
         // 第二笔捐款凭证已铸
         assertEq(tokenId2, 2);
@@ -121,48 +110,34 @@ contract AetherDonationTest is Test {
 
         // 公民道环未重复铸造（ringId 不变）
         assertEq(ring.getRingId(alice), ringIdAfterFirst);
+
+        // 第二笔 Donation 金额正确
+        IAetherDonation.Donation memory d = donation.getDonation(tokenId2);
+        assertEq(d.amount, MIN_DONATION * 2);
     }
 
     // ═══════════════════════════════════════════════════════════
-    //  T2.3  金额 < $10 revert
+    //  T2.3  金额 < $10 revert DonationTooSmall
     // ═══════════════════════════════════════════════════════════
-    function test_MintDonation_AmountLessThan10_Revert() public {
+    function test_DonateAndMint_AmountLessThan10_Revert() public {
+        uint256 small = 5 * 10 ** 6;
+        usdc.mint(alice, small);
+        vm.startPrank(alice);
+        usdc.approve(address(donation), small);
+
         vm.expectRevert(
-            abi.encodeWithSelector(AetherDonation.DonationTooSmall.selector, 5 * 10 ** 6, MIN_DONATION)
+            abi.encodeWithSelector(AetherDonation.DonationTooSmall.selector, small, MIN_DONATION)
         );
-        donation.mintDonation(alice, 5 * 10 ** 6, _paypalTxId(1), _paypalHash(alice));
+        donation.donateAndMint(small);
+        vm.stopPrank();
     }
 
     // ═══════════════════════════════════════════════════════════
-    //  T2.4  paypalTxId 防重放
+    //  T2.4  放弃冷却期内 revert RenounceCooldownActive
     // ═══════════════════════════════════════════════════════════
-    function test_MintDonation_DuplicatePayPalTx_Revert() public {
-        string memory txId = _paypalTxId(1);
-        donation.mintDonation(alice, MIN_DONATION, txId, _paypalHash(alice));
-
-        // 同一 txId 给不同 donor → revert
-        vm.expectRevert(abi.encodeWithSelector(AetherDonation.DuplicatePayPalTx.selector, txId));
-        donation.mintDonation(bob, MIN_DONATION, txId, _paypalHash(bob));
-    }
-
-    // ═══════════════════════════════════════════════════════════
-    //  T2.5  paypalAccountHash 去重
-    // ═══════════════════════════════════════════════════════════
-    function test_MintDonation_DuplicatePayPalAccount_Revert() public {
-        bytes32 acctHash = _paypalHash(alice);
-        donation.mintDonation(alice, MIN_DONATION, _paypalTxId(1), acctHash);
-
-        // 同一 PayPal 账户给不同 donor → revert
-        vm.expectRevert(abi.encodeWithSelector(AetherDonation.DuplicatePayPalAccount.selector, acctHash));
-        donation.mintDonation(bob, MIN_DONATION, _paypalTxId(2), acctHash);
-    }
-
-    // ═══════════════════════════════════════════════════════════
-    //  T2.6  放弃冷却期内 revert
-    // ═══════════════════════════════════════════════════════════
-    function test_MintDonation_InCooldown_Revert() public {
+    function test_DonateAndMint_InCooldown_Revert() public {
         // 1. 首次捐款 → alice 成为公民
-        donation.mintDonation(alice, MIN_DONATION, _paypalTxId(1), _paypalHash(alice));
+        _donate(alice, MIN_DONATION);
         assertTrue(ring.isBearer(alice));
 
         // 2. alice 放弃公民身份（触发 30 天冷却）
@@ -171,54 +146,87 @@ contract AetherDonationTest is Test {
         assertFalse(ring.isBearer(alice));
 
         // 3. 冷却期内再次捐款 → revert
+        usdc.mint(alice, MIN_DONATION);
+        vm.startPrank(alice);
+        usdc.approve(address(donation), MIN_DONATION);
         vm.expectRevert(abi.encodeWithSelector(AetherDonation.RenounceCooldownActive.selector, alice));
-        donation.mintDonation(alice, MIN_DONATION, _paypalTxId(2), _paypalHash(alice));
+        donation.donateAndMint(MIN_DONATION);
+        vm.stopPrank();
 
         // 4. 30 天后可以重新捐款
         vm.warp(block.timestamp + 30 days + 1);
-        uint256 tokenId = donation.mintDonation(alice, MIN_DONATION, _paypalTxId(2), _paypalHash(alice));
+        uint256 tokenId = _donate(alice, MIN_DONATION);
         assertEq(tokenId, 2);
         assertTrue(ring.isBearer(alice));
     }
 
     // ═══════════════════════════════════════════════════════════
-    //  T2.7  settleDonation 非 admin revert
+    //  T2.5  休眠公民重新激活
     // ═══════════════════════════════════════════════════════════
-    function test_SettleDonation_OnlyAdmin() public {
-        uint256 tokenId = donation.mintDonation(alice, MIN_DONATION, _paypalTxId(1), _paypalHash(alice));
+    function test_DonateAndMint_DormantCitizen_Reactivated() public {
+        // 1. alice 首次捐款成为公民
+        _donate(alice, MIN_DONATION);
+        uint256 ringId = ring.getRingId(alice);
+        assertTrue(ringId != 0);
+        assertFalse(ring.isDormant(alice));
 
-        // 非 admin 调用 → revert（AccessControl.AccessControlUnauthorizedAccount）
-        vm.prank(bob);
-        vm.expectRevert();
-        donation.settleDonation(tokenId, MIN_DONATION);
+        // 2. 推进时间超过休眠期（2 年），标记休眠
+        vm.warp(block.timestamp + DORMANCY_PERIOD + 1);
+        ring.markDormantIfDue(ringId);
+        assertTrue(ring.isDormant(alice));
+
+        // 3. alice 再次捐款 → 应触发重新激活
+        uint256 treasuryBefore = usdc.balanceOf(treasury);
+        usdc.mint(alice, MIN_DONATION * 3);
+        vm.startPrank(alice);
+        usdc.approve(address(donation), MIN_DONATION * 3);
+
+        vm.expectEmit(true, false, false, false);
+        emit AetherDonation.DormantCitizenReactivated(alice);
+
+        uint256 tokenId2 = donation.donateAndMint(MIN_DONATION * 3);
+        vm.stopPrank();
+
+        // 4. 验证：新捐款凭证已铸，公民已重新激活，USDC 已转账
+        assertEq(tokenId2, 2);
+        assertFalse(ring.isDormant(alice));
+        assertTrue(ring.isBearer(alice));
+        assertEq(usdc.balanceOf(treasury), treasuryBefore + MIN_DONATION * 3);
     }
 
     // ═══════════════════════════════════════════════════════════
-    //  T2.8  settleDonation 重复 settle revert
+    //  T2.6  USDC transferFrom 返回 false → revert UsdcTransferFailed
     // ═══════════════════════════════════════════════════════════
-    function test_SettleDonation_AlreadySettled_Revert() public {
-        uint256 tokenId = donation.mintDonation(alice, MIN_DONATION, _paypalTxId(1), _paypalHash(alice));
+    function test_DonateAndMint_UsdcTransferFails_Revert() public {
+        // 切换 USDC 为返回 false 的 BadUSDC
+        badUsdc = new BadUSDC();
+        donation.setUsdcToken(address(badUsdc));
 
-        // 第一次 settle
-        donation.settleDonation(tokenId, MIN_DONATION);
-        assertTrue(donation.getDonation(tokenId).isSettled);
+        // BadUSDC.transferFrom 恒返回 false
+        badUsdc.mint(alice, MIN_DONATION);
+        vm.startPrank(alice);
+        badUsdc.approve(address(donation), MIN_DONATION);
 
-        // 重复 settle → revert
-        vm.expectRevert(abi.encodeWithSelector(AetherDonation.AlreadySettled.selector, tokenId));
-        donation.settleDonation(tokenId, MIN_DONATION);
+        vm.expectRevert(AetherDonation.UsdcTransferFailed.selector);
+        donation.donateAndMint(MIN_DONATION);
+        vm.stopPrank();
+
+        // 验证：未铸任何凭证 NFT，alice 仍是 0 道环
+        assertEq(donation.getTotalDonations(), 0);
+        assertEq(ring.getRingId(alice), 0);
     }
 
     // ═══════════════════════════════════════════════════════════
-    //  T2.9  3 公民担保激活快速通道
+    //  T2.7  3 公民担保激活快速通道
     // ═══════════════════════════════════════════════════════════
     function test_SponsorDonation_3Sponsors_ActivatesFastTrack() public {
         // alice, bob, carol 捐款成为公民
-        donation.mintDonation(alice, MIN_DONATION, _paypalTxId(1), _paypalHash(alice));
-        donation.mintDonation(bob, MIN_DONATION, _paypalTxId(2), _paypalHash(bob));
-        donation.mintDonation(carol, MIN_DONATION, _paypalTxId(3), _paypalHash(carol));
+        _donate(alice, MIN_DONATION);
+        _donate(bob, MIN_DONATION);
+        _donate(carol, MIN_DONATION);
 
         // dave 捐款（成为公民 + 获得捐款凭证）
-        uint256 daveTokenId = donation.mintDonation(dave, MIN_DONATION, _paypalTxId(4), _paypalHash(dave));
+        uint256 daveTokenId = _donate(dave, MIN_DONATION);
         assertFalse(donation.isFastTrackActivated(daveTokenId));
 
         // alice 担保
@@ -243,11 +251,11 @@ contract AetherDonationTest is Test {
     }
 
     // ═══════════════════════════════════════════════════════════
-    //  T2.10 非公民担保 revert
+    //  T2.8  非公民担保 revert
     // ═══════════════════════════════════════════════════════════
     function test_SponsorDonation_NonCitizen_Revert() public {
         // alice 捐款
-        uint256 tokenId = donation.mintDonation(alice, MIN_DONATION, _paypalTxId(1), _paypalHash(alice));
+        uint256 tokenId = _donate(alice, MIN_DONATION);
 
         // bob 无道环 → 担保 revert
         vm.prank(bob);
@@ -256,10 +264,10 @@ contract AetherDonationTest is Test {
     }
 
     // ═══════════════════════════════════════════════════════════
-    //  T2.11 SBT 不可转让
+    //  T2.9  SBT 不可转让
     // ═══════════════════════════════════════════════════════════
     function test_Transfer_Revert() public {
-        uint256 tokenId = donation.mintDonation(alice, MIN_DONATION, _paypalTxId(1), _paypalHash(alice));
+        uint256 tokenId = _donate(alice, MIN_DONATION);
 
         // transferFrom revert
         vm.prank(alice);
@@ -283,16 +291,16 @@ contract AetherDonationTest is Test {
     }
 
     // ═══════════════════════════════════════════════════════════
-    //  T2.12 多笔捐款查询
+    //  T2.10 多笔捐款查询
     // ═══════════════════════════════════════════════════════════
     function test_GetDonationsByDonor_ReturnsAllTokens() public {
         // alice 捐款 3 次
-        donation.mintDonation(alice, MIN_DONATION, _paypalTxId(1), _paypalHash(alice));
-        donation.mintDonation(alice, MIN_DONATION * 2, _paypalTxId(2), _paypalHash(alice));
-        donation.mintDonation(alice, MIN_DONATION * 3, _paypalTxId(3), _paypalHash(alice));
+        _donate(alice, MIN_DONATION);
+        _donate(alice, MIN_DONATION * 2);
+        _donate(alice, MIN_DONATION * 3);
 
         // bob 捐款 1 次
-        donation.mintDonation(bob, MIN_DONATION, _paypalTxId(4), _paypalHash(bob));
+        _donate(bob, MIN_DONATION);
 
         // 查询 alice 的捐款凭证
         uint256[] memory aliceTokens = donation.getDonationsByDonor(alice);
@@ -311,45 +319,27 @@ contract AetherDonationTest is Test {
     }
 
     // ═══════════════════════════════════════════════════════════
-    //  T2.13 未 settle 列表（审计用）
-    // ═══════════════════════════════════════════════════════════
-    function test_GetUnsettledDonations_AuditList() public {
-        // 铸 4 笔捐款
-        donation.mintDonation(alice, MIN_DONATION, _paypalTxId(1), _paypalHash(alice));
-        donation.mintDonation(bob, MIN_DONATION, _paypalTxId(2), _paypalHash(bob));
-        donation.mintDonation(carol, MIN_DONATION, _paypalTxId(3), _paypalHash(carol));
-        donation.mintDonation(dave, MIN_DONATION, _paypalTxId(4), _paypalHash(dave));
-
-        // settle 第 1 和第 3 笔
-        donation.settleDonation(1, MIN_DONATION);
-        donation.settleDonation(3, MIN_DONATION);
-
-        // 未 settle 列表 = [2, 4]
-        uint256[] memory unsettled = donation.getUnsettledDonations();
-        assertEq(unsettled.length, 2);
-        assertEq(unsettled[0], 2);
-        assertEq(unsettled[1], 4);
-    }
-
-    // ═══════════════════════════════════════════════════════════
-    //  补充：构造函数零地址校验
+    //  T2.11 构造函数零地址校验（ring / treasury / usdc）
     // ═══════════════════════════════════════════════════════════
     function test_Constructor_ZeroAddress_Revert() public {
         vm.expectRevert(AetherDonation.InvalidRingContract.selector);
-        new AetherDonation(address(0), treasury, admin);
+        new AetherDonation(address(0), treasury, address(usdc), admin);
 
         vm.expectRevert(AetherDonation.InvalidTreasury.selector);
-        new AetherDonation(address(ring), address(0), admin);
+        new AetherDonation(address(ring), address(0), address(usdc), admin);
+
+        vm.expectRevert(AetherDonation.InvalidUsdcToken.selector);
+        new AetherDonation(address(ring), treasury, address(0), admin);
     }
 
     // ═══════════════════════════════════════════════════════════
-    //  补充：重复担保 revert
+    //  T2.12 重复担保 revert
     // ═══════════════════════════════════════════════════════════
     function test_SponsorDonation_Duplicate_Revert() public {
-        donation.mintDonation(alice, MIN_DONATION, _paypalTxId(1), _paypalHash(alice));
-        donation.mintDonation(bob, MIN_DONATION, _paypalTxId(2), _paypalHash(bob));
+        _donate(alice, MIN_DONATION);
+        _donate(bob, MIN_DONATION);
 
-        // alice 担保 bob
+        // alice 担保 bob 的捐款凭证（tokenId=2）
         vm.prank(alice);
         donation.sponsorDonation(2);
 
@@ -357,5 +347,107 @@ contract AetherDonationTest is Test {
         vm.prank(alice);
         vm.expectRevert(abi.encodeWithSelector(AetherDonation.AlreadySponsored.selector, 2, alice));
         donation.sponsorDonation(2);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  T2.13 setUsdcToken 管理函数
+    // ═══════════════════════════════════════════════════════════
+    function test_SetUsdcToken_AdminOnly() public {
+        MockUSDC newUsdc = new MockUSDC();
+
+        // 非 admin revert
+        vm.prank(bob);
+        vm.expectRevert();
+        donation.setUsdcToken(address(newUsdc));
+
+        // 零地址 revert
+        vm.expectRevert(AetherDonation.InvalidUsdcToken.selector);
+        donation.setUsdcToken(address(0));
+
+        // admin 切换成功 + 事件
+        vm.expectEmit(true, true, false, false);
+        emit AetherDonation.UsdcTokenUpdated(address(usdc), address(newUsdc));
+        donation.setUsdcToken(address(newUsdc));
+        assertEq(donation.usdc(), address(newUsdc));
+    }
+}
+
+/**
+ * @title MockUSDC — 标准 ERC20 mock（6 decimals，支持 approve/transferFrom）
+ * @dev 仅用于测试：public mint 任意地址可调，transferFrom 返回 true
+ */
+contract MockUSDC {
+    string public name = "USD Coin";
+    string public symbol = "USDC";
+    uint8 public decimals = 6;
+
+    mapping(address => uint256) public balanceOf;
+    mapping(address => mapping(address => uint256)) public allowance;
+
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+
+    function mint(address to, uint256 amount) external {
+        balanceOf[to] += amount;
+        emit Transfer(address(0), to, amount);
+    }
+
+    function approve(address spender, uint256 amount) external returns (bool) {
+        allowance[msg.sender][spender] = amount;
+        emit Approval(msg.sender, spender, amount);
+        return true;
+    }
+
+    function transfer(address to, uint256 amount) external returns (bool) {
+        _transfer(msg.sender, to, amount);
+        return true;
+    }
+
+    function transferFrom(address from, address to, uint256 amount) external returns (bool) {
+        uint256 allowed = allowance[from][msg.sender];
+        if (allowed != type(uint256).max) {
+            require(allowed >= amount, "USDC: insufficient allowance");
+            allowance[from][msg.sender] = allowed - amount;
+        }
+        _transfer(from, to, amount);
+        return true;
+    }
+
+    function _transfer(address from, address to, uint256 amount) internal {
+        require(balanceOf[from] >= amount, "USDC: insufficient balance");
+        balanceOf[from] -= amount;
+        balanceOf[to] += amount;
+        emit Transfer(from, to, amount);
+    }
+}
+
+/**
+ * @title BadUSDC — transferFrom 恒返回 false 的 mock
+ * @dev 用于测试 AetherDonation.donateAndMint 的返回值检查（UsdcTransferFailed）
+ */
+contract BadUSDC {
+    string public name = "Bad USD Coin";
+    string public symbol = "BUSDC";
+    uint8 public decimals = 6;
+
+    mapping(address => uint256) public balanceOf;
+    mapping(address => mapping(address => uint256)) public allowance;
+
+    function mint(address to, uint256 amount) external {
+        balanceOf[to] += amount;
+    }
+
+    function approve(address spender, uint256 amount) external returns (bool) {
+        allowance[msg.sender][spender] = amount;
+        return true;
+    }
+
+    function transfer(address to, uint256 amount) external returns (bool) {
+        return false;
+    }
+
+    // 关键：transferFrom 恒返回 false（不 revert），模拟某些 USDC 实现的失败行为
+    function transferFrom(address, address, uint256) external returns (bool) {
+        return false;
     }
 }

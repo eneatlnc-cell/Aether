@@ -120,6 +120,11 @@
     "connectFirst": "続行するには Wallet を接続してください。",
     "signing": "Wallet での署名を待機しています...",
     "submitting": "取引を送信しています...",
+    "approving": "USDC 支出を承認中...",
+    "approvePending": "承認確認待ち...",
+    "treasuryPending": "金庫アドレス設定中",
+    "errorMinAmount": "最低寄付額は $10 USDC です",
+    "errorConfig": "寄付機能の設定が未完了です。後でもう一度お試しください",
     "success": "寄付がオンチェーンで確定しました。",
     "downloadReceipt": "PDF 領収書をダウンロード",
     "closeWindow": "閉じる",
@@ -256,9 +261,9 @@
     "walletConnected": "Wallet が正常に接続されました。",
     "walletDisconnected": "Wallet が切断されました。",
     "voteSuccess": "投票がオフチェーン集計に送信されました。",
-    "donationSuccess": "寄付がオンチェーンで確定しました。",
+    "donationSuccess": "寄付成功！市民になりました。",
     "copied": "クリップボードにコピーしました。",
-    "error": "エラーが発生しました。再度お試しください。"
+    "error": "エラーが発生しました。もう一度お試しください"
   },
   "footer": {
     "tagline": "A non-profit foundation advancing decentralized infrastructure and artificial intelligence research.",

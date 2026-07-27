@@ -120,6 +120,11 @@
     "connectFirst": "Bitte verbinden Sie Ihre Wallet, um fortzufahren.",
     "signing": "Warte auf Signatur in Wallet...",
     "submitting": "Transaktion wird übermittelt...",
+    "approving": "USDC-Ausgabe wird genehmigt...",
+    "approvePending": "Warte auf Genehmigungsbestätigung...",
+    "treasuryPending": "Treasury-Adresse wird konfiguriert",
+    "errorMinAmount": "Mindestspende beträgt $10 USDC",
+    "errorConfig": "Spende noch nicht konfiguriert, bitte später erneut versuchen",
     "success": "Spende On-Chain bestätigt.",
     "downloadReceipt": "PDF-Quittung herunterladen",
     "closeWindow": "Schließen",
@@ -256,9 +261,9 @@
     "walletConnected": "Wallet erfolgreich verbunden.",
     "walletDisconnected": "Wallet getrennt.",
     "voteSuccess": "Stimme zur Off-Chain-Aggregation übermittelt.",
-    "donationSuccess": "Spende On-Chain bestätigt.",
+    "donationSuccess": "Spende erfolgreich! Sie sind jetzt Bürger.",
     "copied": "In die Zwischenablage kopiert.",
-    "error": "Ein Fehler ist aufgetreten. Bitte versuchen Sie es erneut."
+    "error": "Etwas ist schiefgegangen, bitte erneut versuchen"
   },
   "footer": {
     "tagline": "A non-profit foundation advancing decentralized infrastructure and artificial intelligence research.",

@@ -9,10 +9,6 @@ import {
   useDonation,
   type DonationStep,
 } from "@/hooks/useDonation";
-import {
-  type AssetCode,
-  type DonationPurpose,
-} from "@/lib/fundFlowData";
 import { CheckCircle2, Download, Loader2, Wallet } from "lucide-react";
 
 interface DonationModalProps {
@@ -22,23 +18,15 @@ interface DonationModalProps {
   onDownloadReceipt?: (result: NonNullable<ReturnType<typeof useDonation>["result"]>) => void;
 }
 
-const ASSETS: AssetCode[] = ["USDC", "USDT", "ETH"];
-
-const PURPOSES: DonationPurpose[] = [
-  "ai-framework",
-  "video-protocol",
-  "self-organizing-net",
-  "unrestricted",
-];
+/** USDC 6 decimals：1 USDC = 1_000_000 最小单位 */
+const USDC_DECIMALS = 6;
 
 export function DonationModal({ open, onClose, onDownloadReceipt }: DonationModalProps) {
   const t = useTranslations("donation");
-  const { step, result, isConnected, preferredAsset, treasuryAddress, submit, reset } =
+  const { step, result, isConnected, treasuryAddress, submit, reset } =
     useDonation();
 
-  const [asset, setAsset] = useState<AssetCode>(preferredAsset);
   const [amount, setAmount] = useState<string>("");
-  const [purpose, setPurpose] = useState<DonationPurpose>("ai-framework");
 
   // 弹窗关闭时重置状态
   useEffect(() => {
@@ -48,15 +36,24 @@ export function DonationModal({ open, onClose, onDownloadReceipt }: DonationModa
     }
   }, [open, reset]);
 
+  // 交易进行中不允许关闭
+  const busy =
+    step === "approving" ||
+    step === "approve-pending" ||
+    step === "donating" ||
+    step === "donate-pending";
+
   const handleClose = () => {
-    if (step === "awaiting-signature" || step === "submitting") return;
+    if (busy) return;
     onClose();
   };
 
   const handleSubmit = () => {
     const numericAmount = parseFloat(amount);
     if (Number.isNaN(numericAmount) || numericAmount <= 0) return;
-    submit({ asset, amount: numericAmount, purpose });
+    // 转 bigint（USDC 6 decimals）
+    const amountBigInt = BigInt(Math.round(numericAmount * 10 ** USDC_DECIMALS));
+    submit({ amount: amountBigInt, purpose: "unrestricted" });
   };
 
   return (
@@ -66,7 +63,11 @@ export function DonationModal({ open, onClose, onDownloadReceipt }: DonationModa
       {/* 金库地址 */}
       <div className="mb-6 p-3 bg-bg border border-border rounded-[8px]">
         <p className="text-xs text-muted mb-1.5">{t("treasuryAddress")}</p>
-        <AddressCopy address={treasuryAddress} label={t("copied")} />
+        {treasuryAddress ? (
+          <AddressCopy address={treasuryAddress} label={t("copied")} />
+        ) : (
+          <p className="text-xs text-muted italic">{t("treasuryPending")}</p>
+        )}
         <p className="text-xs text-muted mt-2">{t("preferredAsset")}</p>
       </div>
 
@@ -79,12 +80,8 @@ export function DonationModal({ open, onClose, onDownloadReceipt }: DonationModa
         />
       ) : (
         <FormView
-          asset={asset}
-          setAsset={setAsset}
           amount={amount}
           setAmount={setAmount}
-          purpose={purpose}
-          setPurpose={setPurpose}
           step={step}
           isConnected={isConnected}
           onSubmit={handleSubmit}
@@ -96,51 +93,43 @@ export function DonationModal({ open, onClose, onDownloadReceipt }: DonationModa
 
 /* ---------- 表单态 ---------- */
 function FormView({
-  asset,
-  setAsset,
   amount,
   setAmount,
-  purpose,
-  setPurpose,
   step,
   isConnected,
   onSubmit,
 }: {
-  asset: AssetCode;
-  setAsset: (a: AssetCode) => void;
   amount: string;
   setAmount: (v: string) => void;
-  purpose: DonationPurpose;
-  setPurpose: (p: DonationPurpose) => void;
   step: DonationStep;
   isConnected: boolean;
   onSubmit: () => void;
 }) {
   const t = useTranslations("donation");
 
-  const busy = step === "awaiting-signature" || step === "submitting";
-  const statusText =
-    step === "awaiting-signature" ? t("signing") : step === "submitting" ? t("submitting") : null;
+  const busy =
+    step === "approving" ||
+    step === "approve-pending" ||
+    step === "donating" ||
+    step === "donate-pending";
+
+  // 根据 step 显示不同状态文案
+  const statusText = (() => {
+    if (step === "approving") return t("approving");
+    if (step === "approve-pending") return t("approvePending");
+    if (step === "donating") return t("signing");
+    if (step === "donate-pending") return t("submitting");
+    return null;
+  })();
 
   return (
     <div className="space-y-5">
-      {/* 资产选择 */}
+      {/* 资产固定为 USDC（预启动阶段只支持 USDC） */}
       <Field label={t("selectAsset")}>
-        <div className="grid grid-cols-3 gap-2">
-          {ASSETS.map((a) => (
-            <button
-              key={a}
-              type="button"
-              onClick={() => setAsset(a)}
-              className={`px-3 py-2 rounded-[8px] text-sm font-medium border transition-colors ${
-                asset === a
-                  ? "bg-accent text-white border-accent"
-                  : "bg-card text-ink border-border hover:border-accent"
-              }`}
-            >
-              {a}
-            </button>
-          ))}
+        <div className="grid grid-cols-1 gap-2">
+          <div className="px-3 py-2 rounded-[8px] text-sm font-medium border bg-accent text-white border-accent">
+            USDC
+          </div>
         </div>
       </Field>
 

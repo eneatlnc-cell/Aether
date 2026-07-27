@@ -5,9 +5,9 @@ import { AetherRingABI } from "./AetherRing.abi";
 import { AetherGovernanceABI } from "./AetherGovernance.abi";
 import { AetherElectionABI } from "./AetherElection.abi";
 import { AetherDonationABI } from "./AetherDonation.abi";
-import { getContracts, getSafeWalletAddress, getIpfsGateway } from "./config";
+import { getContracts, getSafeWalletAddress, getIpfsGateway, getUsdcAddress, getTreasuryAddress } from "./config";
 
-export { getSafeWalletAddress, getIpfsGateway };
+export { getSafeWalletAddress, getIpfsGateway, getUsdcAddress, getTreasuryAddress };
 
 // ──────────── 道环权级枚举（与合约 RingTier 对齐，v3 14 级） ────────────
 export enum RingTier {
