@@ -12,7 +12,7 @@ import { Wallet, LogOut } from "lucide-react";
 export function Navbar() {
   const t = useTranslations("nav");
   const locale = useLocale();
-  const { isConnected, address, connect, disconnect, connecting } = useWallet();
+  const { isConnected, address, connect, disconnect, connecting, mounted } = useWallet();
   const [donationOpen, setDonationOpen] = useState(false);
   const generateReceipt = useDonationReceipt();
 
@@ -48,7 +48,7 @@ export function Navbar() {
             >
               {t("donate")}
             </button>
-            {isConnected ? (
+            {mounted && isConnected ? (
               <button
                 onClick={disconnect}
                 aria-label={t("disconnect")}
@@ -63,7 +63,7 @@ export function Navbar() {
             ) : (
               <button
                 onClick={connect}
-                disabled={connecting}
+                disabled={connecting || !mounted}
                 aria-label={t("connectWallet")}
                 className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 border border-accent text-accent rounded-[8px] text-sm hover:bg-accent/5 transition-colors disabled:opacity-60 focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
               >

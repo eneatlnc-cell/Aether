@@ -165,7 +165,7 @@ function VoteControls({
 }) {
   const t = useTranslations("proposalDetail");
   const tToast = useTranslations("toast");
-  const { isConnected } = useWallet();
+  const { isConnected, mounted } = useWallet();
   const router = useRouter();
   const [voting, setVoting] = useState(false);
   const [remaining, setRemaining] = useState(() => deadline - Date.now());
@@ -196,7 +196,7 @@ function VoteControls({
     );
   }
 
-  if (!isConnected) {
+  if (!mounted || !isConnected) {
     return (
       <p className="text-sm text-muted">{t("connectToVote")}</p>
     );
