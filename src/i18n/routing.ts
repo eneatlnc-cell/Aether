@@ -19,12 +19,12 @@ export const routing = defineRouting({
   localeDetection: true,
 });
 
-export const localeLabels: Record<Locale, { flag: string; countryCode: string; label: string }> = {
-  en: { flag: "🇬🇧", countryCode: "gb", label: "English" },
-  "zh-Hant": { flag: "🇭🇰", countryCode: "hk", label: "繁體中文" },
-  ko: { flag: "🇰🇷", countryCode: "kr", label: "한국어" },
-  ja: { flag: "🇯🇵", countryCode: "jp", label: "日本語" },
-  de: { flag: "🇩🇪", countryCode: "de", label: "Deutsch" },
-  es: { flag: "🇪🇸", countryCode: "es", label: "Español" },
-  fr: { flag: "🇫🇷", countryCode: "fr", label: "Français" },
+export const localeLabels: Record<Locale, { flag: string; label: string }> = {
+  en: { flag: "🇬🇧", label: "English" },
+  "zh-Hant": { flag: "🇭🇰", label: "繁體中文" },
+  ko: { flag: "🇰🇷", label: "한국어" },
+  ja: { flag: "🇯🇵", label: "日本語" },
+  de: { flag: "🇩🇪", label: "Deutsch" },
+  es: { flag: "🇪🇸", label: "Español" },
+  fr: { flag: "🇫🇷", label: "Français" },
 };
