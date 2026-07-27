@@ -2,10 +2,10 @@
 
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { Hexagon, Waves, Share2, Heart, Code } from "lucide-react";
+import { Landmark, Waves, Share2, Heart, Code } from "lucide-react";
 
 const PROGRAM_ICONS = {
-  "ai-framework": Hexagon,
+  "ai-framework": Landmark,
   "video-protocol": Waves,
   "self-organizing-net": Share2,
 } as const;
