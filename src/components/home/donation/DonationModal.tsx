@@ -65,7 +65,7 @@ export function DonationModal({ open, onClose, onDownloadReceipt }: DonationModa
         {treasuryAddress ? (
           <AddressCopy address={treasuryAddress} label={t("copied")} />
         ) : (
-          <p className="text-xs text-muted italic">{t("treasuryPending")}</p>
+          <p className="text-sm font-mono text-muted">0x****…****</p>
         )}
         <p className="text-xs text-muted mt-2">{t("preferredAsset")}</p>
       </div>
