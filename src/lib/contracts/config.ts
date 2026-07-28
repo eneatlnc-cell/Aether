@@ -117,8 +117,12 @@ export function getUsdcAddress(chainId: number): `0x${string}` | null {
 }
 
 // ──────────── 金库地址（前期 EOA，后期 Safe 多签） ────────────
-// 预启动阶段：基金会 EOA 接收捐款；正式启动后切换为 Safe 多签
-// 通过 NEXT_PUBLIC_TREASURY_ADDRESS 注入
+// 预启动阶段：基金会临时 EOA 接收捐款；正式启动后切换为 Safe 多签
+// 通过 NEXT_PUBLIC_TREASURY_ADDRESS 环境变量覆盖
+// 未配置环境变量时，Arbitrum One 主网 (42161) 使用下方硬编码的临时金库 EOA
+const TREASURY_EOA_ARBITRUM_MAINNET =
+  "0x973B213023bdAfa8cD4a895e4dE748d2503E7137" as `0x${string}`;
+
 export function getTreasuryAddress(chainId: number): `0x${string}` | null {
   if (typeof process !== "undefined" && process.env) {
     const chainSpecific = process.env[`NEXT_PUBLIC_TREASURY_${chainId}_ADDRESS`];
@@ -129,6 +133,10 @@ export function getTreasuryAddress(chainId: number): `0x${string}` | null {
     if (general && /^0x[a-fA-F0-9]{40}$/.test(general)) {
       return general as `0x${string}`;
     }
+  }
+  // 默认：Arbitrum One 主网临时金库 EOA（预启动阶段）
+  if (chainId === 42161) {
+    return TREASURY_EOA_ARBITRUM_MAINNET;
   }
   return null;
 }
