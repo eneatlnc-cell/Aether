@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 import { useTranslations } from "next-intl";
 
 export function Hero() {

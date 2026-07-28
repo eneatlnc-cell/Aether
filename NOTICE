@@ -1,0 +1,69 @@
+Aether
+Copyright 2024-2026 Aether Foundation
+
+This product includes software developed by the Aether Foundation
+governance team (https://github.com/eneatlnc-cell/Aether) as part of
+the Aether on-chain governance kernel project.
+
+The Aether governance kernel is co-developed with the Havix network
+layer under the same GitHub organization (eneatlnc-cell). Aether
+provides the on-chain governance kernel on Arbitrum (three-chamber
+councils, soulbound-identity ranks, Safe multisig treasury); Havix
+provides the off-chain P2P coordination plane.
+
+Licensed under the Apache License, Version 2.0 (the "License");
+you may not use this file except in compliance with the License.
+You may obtain a copy of the License at
+
+    http://www.apache.org/licenses/LICENSE-2.0
+
+Unless required by applicable law or agreed to in writing, software
+distributed under the License is distributed on an "AS IS" BASIS,
+WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+See the License for the specific language governing permissions and
+limitations under the License.
+
+========================================================================
+Third-party notices
+========================================================================
+
+This product includes software developed by third parties. The
+following third-party components are used under their respective
+licenses:
+
+- Next.js — MIT License
+  https://nextjs.org/
+
+- React — MIT License
+  https://react.dev/
+
+- wagmi — MIT License
+  https://wagmi.sh/
+
+- viem — MIT License
+  https://viem.sh/
+
+- OpenZeppelin Contracts (Solidity) — MIT License
+  https://github.com/OpenZeppelin/openzeppelin-contracts
+  (included as a git submodule at contracts/lib/openzeppelin-contracts;
+   retains its own MIT LICENSE and is NOT covered by the Apache-2.0
+   license of this repository's own source files)
+
+- Foundry (forge-std) — MIT/Apache-2.0 License
+  https://github.com/foundry-rs/foundry
+
+- Tailwind CSS — MIT License
+  https://tailwindcss.com/
+
+- lucide-react — ISC License
+  https://lucide.dev/
+
+- next-intl — MIT License
+  https://next-intl-docs.vercel.app/
+
+- @vercel/postgres — Apache-2.0 License
+  https://vercel.com/docs/storage/vercel-postgres
+
+- All other dependencies declared in package.json are distributed under
+  their respective licenses (MIT, ISC, Apache-2.0, BSD-2-Clause, etc.).
+  Refer to each package's LICENSE file in node_modules for details.

@@ -1,4 +1,5 @@
 "use client";
+// SPDX-License-Identifier: Apache-2.0
 
 import { useState, useRef, useEffect } from "react";
 import { useLocale } from "next-intl";

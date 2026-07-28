@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 interface ProgressBarProps {
   /** 0 - 100 */
   value: number;

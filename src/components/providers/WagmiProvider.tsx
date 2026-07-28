@@ -1,4 +1,5 @@
 "use client";
+// SPDX-License-Identifier: Apache-2.0
 
 import { createConfig, http, WagmiProvider as WagmiProviderBase } from "wagmi";
 import { arbitrum, arbitrumSepolia, mainnet } from "wagmi/chains";

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 import { defineRouting } from "next-intl/routing";
 
 export const locales = [

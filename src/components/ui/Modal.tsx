@@ -1,4 +1,5 @@
 "use client";
+// SPDX-License-Identifier: Apache-2.0
 
 import { type ReactNode, useEffect } from "react";
 import { X } from "lucide-react";

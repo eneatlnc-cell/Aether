@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 import { notFound } from "next/navigation";
 import { projects, type ProjectId } from "@/lib/data";
 import { WhitepaperView } from "@/components/whitepaper/WhitepaperView";

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // AUTO-GENERATED from contracts/src/AetherDonation.sol — DO NOT EDIT
 // Manually synced 2026-07-27: contract rewrite removed PayPal flow and added
 // pure on-chain donateAndMint(uint256) + usdc public storage + setUsdcToken.

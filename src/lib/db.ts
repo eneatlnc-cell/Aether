@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Aether DAO — 预启动阶段数据库层
 // 使用 @vercel/postgres 的 `sql` 模板字符串；DATABASE_URL 由 Vercel 自动注入。
 // 每次 API 调用应先 await ensureSchema()（幂等）。

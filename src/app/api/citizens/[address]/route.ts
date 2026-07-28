@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // GET /api/citizens/[address]
 // 查询某地址的公民身份与全部捐款记录。
 

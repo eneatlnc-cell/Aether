@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Aether DAO — 链上捐款 tx 验证
 // 用 viem 直接读取 Arbitrum One 主网，验证用户提交的 txHash 真实性。防作弊核心。
 

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 export interface FundAllocation {
   projectId: "ai-framework" | "video-protocol" | "self-organizing-net" | "unrestricted";
   percentage: number;

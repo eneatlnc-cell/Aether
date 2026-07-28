@@ -1,4 +1,5 @@
 "use client";
+// SPDX-License-Identifier: Apache-2.0
 
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";

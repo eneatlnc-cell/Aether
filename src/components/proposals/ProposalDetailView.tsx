@@ -1,4 +1,5 @@
 "use client";
+// SPDX-License-Identifier: Apache-2.0
 
 import { useTranslations, useFormatter } from "next-intl";
 import { Navbar } from "@/components/home/Navbar";

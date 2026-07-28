@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // POST /api/donations/record
 // 记录一笔链上已确认的 USDC 捐款，并（首次捐款时）生成模拟道环 ID。
 

@@ -1,4 +1,5 @@
 "use client";
+// SPDX-License-Identifier: Apache-2.0
 
 import { treasuryTransactions, type TreasuryTransaction } from "@/lib/fundFlowData";
 

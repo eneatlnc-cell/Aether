@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 import { getTreasuryAddress as _getTreasuryAddress } from "@/lib/contracts/config";
 
 export type AssetCode = "USDC" | "USDT" | "ETH";

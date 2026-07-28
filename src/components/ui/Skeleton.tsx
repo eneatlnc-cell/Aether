@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 interface SkeletonProps {
   className?: string;
   width?: string | number;

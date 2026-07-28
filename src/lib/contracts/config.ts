@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Aether DAO 合约配置
 // 部署后通过 NEXT_PUBLIC_* 环境变量注入地址（Vercel / .env.local）
 // 硬编码值作为 fallback，未设置环境变量时使用

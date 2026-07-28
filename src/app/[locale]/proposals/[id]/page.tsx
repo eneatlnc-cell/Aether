@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 import { notFound } from "next/navigation";
 import { proposals } from "@/lib/data";
 

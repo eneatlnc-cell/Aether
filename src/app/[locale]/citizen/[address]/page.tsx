@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 import { setRequestLocale } from "next-intl/server";
 import { CitizenView } from "@/components/citizen/CitizenView";
 

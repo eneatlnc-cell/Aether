@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: Apache-2.0
 // Aether DAO 合约地址索引
 // 部署后自动更新此处（或用环境变量）
 

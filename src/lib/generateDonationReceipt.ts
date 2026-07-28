@@ -1,4 +1,5 @@
 "use client";
+// SPDX-License-Identifier: Apache-2.0
 
 import { jsPDF } from "jspdf";
 import { useTranslations, useLocale, useFormatter } from "next-intl";

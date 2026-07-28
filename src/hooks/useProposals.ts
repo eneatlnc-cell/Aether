@@ -1,4 +1,5 @@
 "use client";
+// SPDX-License-Identifier: Apache-2.0
 
 import { useTranslations } from "next-intl";
 import { proposals as mockProposals } from "@/lib/data";
