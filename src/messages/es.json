@@ -5,7 +5,8 @@
     "donate": "Donar",
     "connectWallet": "Conectar Wallet",
     "disconnect": "Desconectar",
-    "walletConnected": "Wallet conectada"
+    "walletConnected": "Wallet conectada",
+    "citizenIdentity": "Ver identidad de ciudadano"
   },
   "hero": {
     "title": "AETHER",
@@ -122,10 +123,13 @@
     "submitting": "Enviando transacción...",
     "approving": "Aprobando gasto USDC...",
     "approvePending": "Esperando confirmación de aprobación...",
+    "recording": "Registrando donación y generando identidad de ciudadano...",
     "treasuryPending": "Configurando dirección de tesorería",
     "errorMinAmount": "Donación mínima $10 USDC",
     "errorConfig": "Donación aún no configurada, intente más tarde",
     "success": "Donación confirmada en cadena.",
+    "ringIdLabel": "ID del Anillo Éter",
+    "firstDonationBadge": "¡Ahora eres ciudadano!",
     "downloadReceipt": "Descargar Recibo PDF",
     "closeWindow": "Cerrar",
     "copyAddress": "Copiar dirección",
@@ -154,6 +158,24 @@
       "declaration": "Este recibo sirve como comprobante de una donación en cadena a la Aether Foundation, una organización sin fines de lucro dedicada a la infraestructura descentralizada y la investigación en inteligencia artificial. La Fundación no emite tokens. Conserve este documento para sus registros financieros y fiscales.",
       "footer": "Aether Foundation · Sin Fines de Lucro · Arbitrum"
     }
+  },
+  "citizen": {
+    "citizenTitle": "Ciudadano de Éter",
+    "ringSimulated": "Anillo simulado (fase pre-lanzamiento)",
+    "address": "Dirección",
+    "ringTier": "Nivel del Anillo",
+    "totalDonated": "Total donado",
+    "firstDonation": "Primera donación",
+    "ringId": "ID del Anillo Éter",
+    "donationHistory": "Historial de donaciones",
+    "donationCount": "{count} donaciones",
+    "noDonations": "Aún no hay donaciones registradas.",
+    "notCitizenTitle": "Aún no es ciudadano",
+    "notCitizenDesc": "Haga su primera donación para convertirse en ciudadano de Éter.",
+    "donateToJoin": "Donar para unirse",
+    "errorTitle": "Error al cargar",
+    "copied": "Dirección copiada",
+    "preLaunchNote": "Durante la fase de pre-lanzamiento, la identidad de ciudadano y el Anillo Éter se simulan en el frontend. Todos los registros de donaciones se almacenan de forma segura y se migrarán a los contratos de mainnet en el lanzamiento oficial."
   },
   "whitepaper": {
     "back": "Atrás",

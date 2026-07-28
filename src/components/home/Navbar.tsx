@@ -7,7 +7,7 @@ import { LanguageSwitcher } from "@/components/LanguageSwitcher";
 import { DonationModal } from "@/components/home/donation/DonationModal";
 import { useDonationReceipt } from "@/lib/generateDonationReceipt";
 import type { DonationResult } from "@/hooks/useDonation";
-import { Wallet, LogOut } from "lucide-react";
+import { Wallet, LogOut, ShieldCheck } from "lucide-react";
 
 export function Navbar() {
   const t = useTranslations("nav");
@@ -49,17 +49,27 @@ export function Navbar() {
               {t("donate")}
             </button>
             {mounted && isConnected ? (
-              <button
-                onClick={disconnect}
-                aria-label={t("disconnect")}
-                className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 border border-accent text-accent rounded-[8px] text-sm hover:bg-accent/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
-              >
-                <span className="font-mono text-xs hidden sm:inline">
-                  {address?.slice(0, 6)}…{address?.slice(-4)}
-                </span>
-                <span className="font-mono text-xs sm:hidden">●</span>
-                <LogOut size={14} />
-              </button>
+              <>
+                <a
+                  href={`/${locale}/citizen/${address?.toLowerCase()}`}
+                  aria-label={t("citizenIdentity")}
+                  className="inline-flex items-center justify-center w-9 sm:w-10 h-9 sm:h-10 border border-border text-accent rounded-[8px] text-sm hover:bg-accent/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+                  title={t("citizenIdentity")}
+                >
+                  <ShieldCheck size={16} />
+                </a>
+                <button
+                  onClick={disconnect}
+                  aria-label={t("disconnect")}
+                  className="inline-flex items-center gap-1.5 sm:gap-2 px-3 sm:px-4 py-2 border border-accent text-accent rounded-[8px] text-sm hover:bg-accent/5 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg"
+                >
+                  <span className="font-mono text-xs hidden sm:inline">
+                    {address?.slice(0, 6)}…{address?.slice(-4)}
+                  </span>
+                  <span className="font-mono text-xs sm:hidden">●</span>
+                  <LogOut size={14} />
+                </button>
+              </>
             ) : (
               <button
                 onClick={connect}

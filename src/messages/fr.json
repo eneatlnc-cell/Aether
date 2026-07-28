@@ -5,7 +5,8 @@
     "donate": "Faire un don",
     "connectWallet": "Connecter le Wallet",
     "disconnect": "Déconnecter",
-    "walletConnected": "Wallet connecté"
+    "walletConnected": "Wallet connecté",
+    "citizenIdentity": "Voir l'identité de citoyen"
   },
   "hero": {
     "title": "AETHER",
@@ -122,10 +123,13 @@
     "submitting": "Soumission de la transaction...",
     "approving": "Approbation de la dépense USDC...",
     "approvePending": "En attente de confirmation d'approbation...",
+    "recording": "Enregistrement du don et génération de l'identité de citoyen...",
     "treasuryPending": "Configuration de l'adresse du trésor",
     "errorMinAmount": "Don minimum 10 $ USDC",
     "errorConfig": "Don non encore configuré, réessayez plus tard",
     "success": "Don confirmé on-chain.",
+    "ringIdLabel": "ID de l'Anneau d'Éther",
+    "firstDonationBadge": "Vous êtes maintenant citoyen !",
     "downloadReceipt": "Télécharger le Reçu PDF",
     "closeWindow": "Fermer",
     "copyAddress": "Copier l'adresse",
@@ -154,6 +158,24 @@
       "declaration": "Ce reçu sert de preuve d'un don on-chain à la Aether Foundation, une organisation à but non lucratif dédiée aux infrastructures décentralisées et à la recherche en intelligence artificielle. La Fondation n'émet pas de jetons. Veuillez conserver ce document pour vos registres financiers et fiscaux.",
       "footer": "Aether Foundation · À but non lucratif · Arbitrum"
     }
+  },
+  "citizen": {
+    "citizenTitle": "Citoyen d'Éther",
+    "ringSimulated": "Anneau simulé (phase pré-lancement)",
+    "address": "Adresse",
+    "ringTier": "Niveau de l'Anneau",
+    "totalDonated": "Total donné",
+    "firstDonation": "Premier don",
+    "ringId": "ID de l'Anneau d'Éther",
+    "donationHistory": "Historique des dons",
+    "donationCount": "{count} dons",
+    "noDonations": "Aucun don enregistré pour le moment.",
+    "notCitizenTitle": "Pas encore citoyen",
+    "notCitizenDesc": "Faites votre premier don pour devenir citoyen d'Éther.",
+    "donateToJoin": "Donner pour rejoindre",
+    "errorTitle": "Échec du chargement",
+    "copied": "Adresse copiée",
+    "preLaunchNote": "Pendant la phase de pré-lancement, l'identité de citoyen et l'Anneau d'Éther sont simulés sur le frontend. Tous les enregistrements de dons sont stockés en toute sécurité et seront migrés vers les contrats mainnet lors du lancement officiel."
   },
   "whitepaper": {
     "back": "Retour",

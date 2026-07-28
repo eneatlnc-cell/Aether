@@ -5,7 +5,8 @@
     "donate": "Spenden",
     "connectWallet": "Wallet verbinden",
     "disconnect": "Trennen",
-    "walletConnected": "Wallet verbunden"
+    "walletConnected": "Wallet verbunden",
+    "citizenIdentity": "Bürgeridentität anzeigen"
   },
   "hero": {
     "title": "AETHER",
@@ -122,10 +123,13 @@
     "submitting": "Transaktion wird übermittelt...",
     "approving": "USDC-Ausgabe wird genehmigt...",
     "approvePending": "Warte auf Genehmigungsbestätigung...",
+    "recording": "Spende wird aufgezeichnet und Bürgeridentität wird erstellt...",
     "treasuryPending": "Treasury-Adresse wird konfiguriert",
     "errorMinAmount": "Mindestspende beträgt $10 USDC",
     "errorConfig": "Spende noch nicht konfiguriert, bitte später erneut versuchen",
     "success": "Spende On-Chain bestätigt.",
+    "ringIdLabel": "Äther-Ring-ID",
+    "firstDonationBadge": "Sie sind jetzt Bürger!",
     "downloadReceipt": "PDF-Quittung herunterladen",
     "closeWindow": "Schließen",
     "copyAddress": "Adresse kopieren",
@@ -154,6 +158,24 @@
       "declaration": "Diese Quittung dient als Nachweis einer On-Chain-Spende an die Aether Foundation, einer Non-Profit-Organisation, die sich der dezentralen Infrastruktur und der Erforschung künstlicher Intelligenz widmet. Die Stiftung gibt keine Token aus. Bitte bewahren Sie dieses Dokument für Ihre Finanz- und Steuerunterlagen auf.",
       "footer": "Aether Foundation · Non-Profit · Arbitrum"
     }
+  },
+  "citizen": {
+    "citizenTitle": "Äther-Bürger",
+    "ringSimulated": "Simulierter Ring (Pre-Launch-Phase)",
+    "address": "Adresse",
+    "ringTier": "Ring-Stufe",
+    "totalDonated": "Gesamt gespendet",
+    "firstDonation": "Erste Spende",
+    "ringId": "Äther-Ring-ID",
+    "donationHistory": "Spendenverlauf",
+    "donationCount": "{count} Spenden",
+    "noDonations": "Noch keine Spenden erfasst.",
+    "notCitizenTitle": "Noch kein Bürger",
+    "notCitizenDesc": "Leisten Sie Ihre erste Spende, um ein Äther-Bürger zu werden.",
+    "donateToJoin": "Spenden und beitreten",
+    "errorTitle": "Laden fehlgeschlagen",
+    "copied": "Adresse kopiert",
+    "preLaunchNote": "In der Pre-Launch-Phase werden Bürgeridentität und der Äther-Ring im Frontend simuliert. Alle Spendenaufzeichnungen werden sicher gespeichert und beim offiziellen Launch zu Mainnet-Verträgen migriert."
   },
   "whitepaper": {
     "back": "Zurück",

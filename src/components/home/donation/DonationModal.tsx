@@ -38,10 +38,9 @@ export function DonationModal({ open, onClose, onDownloadReceipt }: DonationModa
 
   // 交易进行中不允许关闭
   const busy =
-    step === "approving" ||
-    step === "approve-pending" ||
-    step === "donating" ||
-    step === "donate-pending";
+    step === "transferring" ||
+    step === "transfer-pending" ||
+    step === "recording";
 
   const handleClose = () => {
     if (busy) return;
@@ -108,17 +107,15 @@ function FormView({
   const t = useTranslations("donation");
 
   const busy =
-    step === "approving" ||
-    step === "approve-pending" ||
-    step === "donating" ||
-    step === "donate-pending";
+    step === "transferring" ||
+    step === "transfer-pending" ||
+    step === "recording";
 
   // 根据 step 显示不同状态文案
   const statusText = (() => {
-    if (step === "approving") return t("approving");
-    if (step === "approve-pending") return t("approvePending");
-    if (step === "donating") return t("signing");
-    if (step === "donate-pending") return t("submitting");
+    if (step === "transferring") return t("signing");
+    if (step === "transfer-pending") return t("submitting");
+    if (step === "recording") return t("recording");
     return null;
   })();
 
@@ -200,6 +197,17 @@ function SuccessView({
       <p className="text-xs text-muted font-mono break-all px-4">
         {result.txHash.slice(0, 32)}…
       </p>
+
+      {/* 模拟道环 ID（后端生成，预启动阶段身份标识） */}
+      {result.ringId && (
+        <div className="mt-4 p-3 bg-accent/5 border border-accent/20 rounded-[8px] text-left">
+          <p className="text-xs text-muted mb-1">{t("ringIdLabel")}</p>
+          <p className="text-xs text-ink font-mono break-all">{result.ringId}</p>
+          {result.isFirstDonation && (
+            <p className="text-xs text-accent mt-2">{t("firstDonationBadge")}</p>
+          )}
+        </div>
+      )}
 
       <div className="mt-6 space-y-2">
         <Button onClick={onDownload} variant="accent" className="w-full">

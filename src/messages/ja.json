@@ -5,7 +5,8 @@
     "donate": "寄付する",
     "connectWallet": "Wallet を接続",
     "disconnect": "切断する",
-    "walletConnected": "Wallet が接続されました"
+    "walletConnected": "Wallet が接続されました",
+    "citizenIdentity": "市民アイデンティティを表示"
   },
   "hero": {
     "title": "AETHER",
@@ -122,10 +123,13 @@
     "submitting": "取引を送信しています...",
     "approving": "USDC 支出を承認中...",
     "approvePending": "承認確認待ち...",
+    "recording": "寄付を記録し市民アイデンティティを生成中...",
     "treasuryPending": "金庫アドレス設定中",
     "errorMinAmount": "最低寄付額は $10 USDC です",
     "errorConfig": "寄付機能の設定が未完了です。後でもう一度お試しください",
     "success": "寄付がオンチェーンで確定しました。",
+    "ringIdLabel": "エーテルリング ID",
+    "firstDonationBadge": "あなたは市民になりました！",
     "downloadReceipt": "PDF 領収書をダウンロード",
     "closeWindow": "閉じる",
     "copyAddress": "アドレスをコピー",
@@ -154,6 +158,24 @@
       "declaration": "本領収書は、分散型インフラおよび人工知能研究に専念する非営利団体である Aether Foundation へのオンチェーン寄付の証明となります。財団はトークンを発行いたしません。財務および税務記録として本書類を保管してください。",
       "footer": "Aether Foundation · 非営利 · Arbitrum"
     }
+  },
+  "citizen": {
+    "citizenTitle": "エーテル市民",
+    "ringSimulated": "シミュレーションリング（プレローンチ段階）",
+    "address": "アドレス",
+    "ringTier": "リング階級",
+    "totalDonated": "累計寄付額",
+    "firstDonation": "初回寄付",
+    "ringId": "エーテルリング ID",
+    "donationHistory": "寄付履歴",
+    "donationCount": "{count}件の寄付",
+    "noDonations": "寄付記録はまだありません。",
+    "notCitizenTitle": "まだ市民ではありません",
+    "notCitizenDesc": "最初の寄付をしてエーテル市民になりましょう。",
+    "donateToJoin": "寄付して参加",
+    "errorTitle": "読み込みに失敗",
+    "copied": "アドレスをコピーしました",
+    "preLaunchNote": "プレローンチ段階では、市民アイデンティティとエーテルリングはフロントエンドでシミュレートされています。すべての寄付記録は安全に保存され、正式ローンチ時にメインネットコントラクトへ移行されます。"
   },
   "whitepaper": {
     "back": "戻る",

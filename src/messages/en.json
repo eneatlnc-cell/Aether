@@ -5,7 +5,8 @@
     "donate": "Donate",
     "connectWallet": "Connect Wallet",
     "disconnect": "Disconnect",
-    "walletConnected": "Wallet connected"
+    "walletConnected": "Wallet connected",
+    "citizenIdentity": "View Citizen Identity"
   },
   "hero": {
     "title": "AETHER",
@@ -122,10 +123,13 @@
     "submitting": "Submitting transaction...",
     "approving": "Approving USDC spend...",
     "approvePending": "Waiting for approval confirmation...",
+    "recording": "Recording donation and generating citizen identity...",
     "treasuryPending": "Treasury address being configured",
     "errorMinAmount": "Minimum donation is $10 USDC",
     "errorConfig": "Donation not configured yet, please try again later",
     "success": "Donation confirmed on-chain.",
+    "ringIdLabel": "Aether Ring ID",
+    "firstDonationBadge": "You are now a citizen!",
     "downloadReceipt": "Download PDF Receipt",
     "closeWindow": "Close",
     "copyAddress": "Copy address",
@@ -154,6 +158,24 @@
       "declaration": "This receipt serves as proof of an on-chain donation to the Aether Foundation, a non-profit organization dedicated to decentralized infrastructure and artificial intelligence research. The Foundation does not issue tokens. Please retain this document for your financial and tax records.",
       "footer": "Aether Foundation · Non-Profit · Arbitrum"
     }
+  },
+  "citizen": {
+    "citizenTitle": "Aether Citizen",
+    "ringSimulated": "Simulated ring (pre-launch phase)",
+    "address": "Address",
+    "ringTier": "Ring Tier",
+    "totalDonated": "Total Donated",
+    "firstDonation": "First Donation",
+    "ringId": "Aether Ring ID",
+    "donationHistory": "Donation History",
+    "donationCount": "{count} donations",
+    "noDonations": "No donations recorded yet.",
+    "notCitizenTitle": "Not a Citizen Yet",
+    "notCitizenDesc": "Make your first donation to become an Aether citizen.",
+    "donateToJoin": "Donate to Join",
+    "errorTitle": "Failed to Load",
+    "copied": "Address copied",
+    "preLaunchNote": "During the pre-launch phase, citizen identity and the Aether Ring are simulated on the frontend. All donation records are stored securely and will be migrated to mainnet contracts upon official launch."
   },
   "whitepaper": {
     "back": "Back",

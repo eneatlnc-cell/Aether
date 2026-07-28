@@ -5,7 +5,8 @@
     "donate": "기부하기",
     "connectWallet": "지갑 연결",
     "disconnect": "연결 해제",
-    "walletConnected": "지갑이 연결되었습니다"
+    "walletConnected": "지갑이 연결되었습니다",
+    "citizenIdentity": "시민 신원 보기"
   },
   "hero": {
     "title": "AETHER",
@@ -122,10 +123,13 @@
     "submitting": "트랜잭션 제출 중...",
     "approving": "USDC 지출 승인 중...",
     "approvePending": "승인 확인 대기 중...",
+    "recording": "기부를 기록하고 시민 신원을 생성하는 중...",
     "treasuryPending": "금고 주소 설정 중",
     "errorMinAmount": "최소 기부금은 $10 USDC입니다",
     "errorConfig": "기부 기능이 아직 설정되지 않았습니다. 나중에 다시 시도해주세요",
     "success": "기부가 온체인에서 확정되었습니다.",
+    "ringIdLabel": "에테르 링 ID",
+    "firstDonationBadge": "이제 시민이 되었습니다!",
     "downloadReceipt": "PDF 영수증 다운로드",
     "closeWindow": "닫기",
     "copyAddress": "주소 복사",
@@ -154,6 +158,24 @@
       "declaration": "본 영수증은 탈중앙화 인프라 및 인공지능 연구에 헌신하는 비영리 단체인 Aether Foundation에 대한 온체인 기부의 증빙입니다. 재단은 토큰을 발행하지 않습니다. 재무 및 세무 기록을 위해 본 문서를 보관해 주십시오.",
       "footer": "Aether Foundation · 비영리 · Arbitrum"
     }
+  },
+  "citizen": {
+    "citizenTitle": "에테르 시민",
+    "ringSimulated": "시뮬레이션 링 (사전 출시 단계)",
+    "address": "주소",
+    "ringTier": "링 등급",
+    "totalDonated": "총 기부액",
+    "firstDonation": "첫 기부",
+    "ringId": "에테르 링 ID",
+    "donationHistory": "기부 내역",
+    "donationCount": "{count}건의 기부",
+    "noDonations": "아직 기록된 기부가 없습니다.",
+    "notCitizenTitle": "아직 시민이 아닙니다",
+    "notCitizenDesc": "첫 기부를 통해 에테르 시민이 되세요.",
+    "donateToJoin": "기부하여 가입",
+    "errorTitle": "로드 실패",
+    "copied": "주소가 복사되었습니다",
+    "preLaunchNote": "사전 출시 단계에서 시민 신원과 에테르 링은 프론트엔드에서 시뮬레이션됩니다. 모든 기부 기록은 안전하게 저장되며 공식 출시 시 메인넷 컨트랙트로 마이그레이션됩니다."
   },
   "whitepaper": {
     "back": "뒤로",

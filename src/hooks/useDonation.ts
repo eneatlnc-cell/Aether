@@ -23,26 +23,16 @@ import {
   getTreasuryAddress,
 } from "@/lib/contracts";
 
-// ERC20 approve 用的最小 ABI（只用到 approve）
+// ERC20 最小 ABI（预启动阶段只需 transfer，直接转 USDC 到金库 EOA）
 const ERC20_ABI = [
   {
     inputs: [
-      { internalType: "address", name: "spender", type: "address" },
+      { internalType: "address", name: "to", type: "address" },
       { internalType: "uint256", name: "amount", type: "uint256" },
     ],
-    name: "approve",
+    name: "transfer",
     outputs: [{ internalType: "bool", name: "", type: "bool" }],
     stateMutability: "nonpayable",
-    type: "function",
-  },
-  {
-    inputs: [
-      { internalType: "address", name: "owner", type: "address" },
-      { internalType: "address", name: "spender", type: "address" },
-    ],
-    name: "allowance",
-    outputs: [{ internalType: "uint256", name: "", type: "uint256" }],
-    stateMutability: "view",
     type: "function",
   },
 ] as const;
@@ -74,34 +64,36 @@ export interface DonationInfo {
 }
 
 // ═══════════════════════════════════════════════════════════
-//  捐款流程：approve + donateAndMint 两步串行
+//  捐款流程（预启动阶段）：USDC.transfer + 后端记录
+//  真实 USDC 转账到金库 EOA；公民身份与道环由后端模拟生成
 // ═══════════════════════════════════════════════════════════
 
 export type DonationStep =
   | "idle"
   | "form"
-  | "approving" // 等待用户签 approve
-  | "approve-pending" // approve tx 等待确认
-  | "donating" // 等待用户签 donateAndMint
-  | "donate-pending" // donateAndMint tx 等待确认
+  | "transferring" // 等待用户签 USDC.transfer
+  | "transfer-pending" // transfer tx 等待上链确认
+  | "recording" // 调用后端 /api/donations/record 记录捐款 + 生成模拟道环
   | "success"
   | "error";
 
 export interface DonationResult {
-  /** donateAndMint 的 tx hash（铸环+转账+凭证 NFT 的最终交易） */
+  /** USDC.transfer 的 tx hash（链上真实转账） */
   txHash: string;
   /** 捐款金额（USDC，原始 6 decimals） */
   amount: bigint;
-  /** 捐款用途（仅前端展示用，合约不记录） */
+  /** 捐款用途（仅前端展示用，后端记录但不入合约） */
   purpose: DonationPurpose;
   /** 时间戳（ms） */
   timestamp: number;
   /** 捐款人地址 */
   donor: Address;
-  /** 金库地址（USDC 接收方） */
+  /** 金库地址（USDC 接收方，预启动阶段为 EOA） */
   treasury: Address;
-  /** 新铸的捐款凭证 NFT tokenId（如有） */
-  donationTokenId?: bigint;
+  /** 后端生成的模拟道环 ID（keccak256，0x + 64 hex） */
+  ringId?: string;
+  /** 是否为该地址的首次捐款（首次时生成公民身份） */
+  isFirstDonation?: boolean;
 }
 
 interface SubmitArgs {
@@ -110,15 +102,15 @@ interface SubmitArgs {
 }
 
 /**
- * 捐款 Hook —— approve + donateAndMint 两步串行
+ * 捐款 Hook（预启动阶段）—— USDC.transfer + 后端记录
  *
  * 流程：
- *   1. 检查 USDC allowance，若不足则先 approve
- *   2. 调 AetherDonation.donateAndMint(amount)
- *      合约内部：transferFrom USDC 到 treasury + 铸捐款凭证 NFT + 铸公民道环（首次）
- *   3. 等待 tx 确认，返回结果
+ *   1. USDC.transfer(treasury EOA, amount) —— 真实链上转账，无合约调用
+ *   2. 等待 tx 上链确认
+ *   3. POST /api/donations/record —— 后端验证 tx + 入库 + 生成模拟道环 ID
  *
- * 全部在 Arbitrum 主网执行。用户感知：点捐款 → 钱包弹 approve → 钱包弹 donateAndMint → 完成。
+ * 用户感知：点捐款 → 钱包弹 transfer 签名 → 等待确认 → 生成公民身份 → 完成。
+ * 公民身份与道环为前端模拟（后端 DB 持久化），正式启动后迁移至主网合约。
  */
 export function useDonation() {
   const t = useTranslations("donation");
@@ -142,8 +134,7 @@ export function useDonation() {
     setLastTxHash(null);
   }, []);
 
-  // ── 解析地址 ──
-  const donation = donationAddress(chainId ?? 0);
+  // ── 解析地址（预启动阶段不需要 donation 合约地址） ──
   const usdc = getUsdcAddress(chainId ?? 0);
   const treasury = getTreasuryAddress(chainId ?? 0);
 
@@ -157,52 +148,61 @@ export function useDonation() {
         push(t("errorMinAmount"), "info");
         return;
       }
-      if (!donation || !usdc || !treasury) {
+      if (!usdc || !treasury) {
         push(t("errorConfig"), "info");
         return;
       }
 
+      let transferTx: `0x${string}` | null = null;
       try {
-        // ── 步骤 1：approve USDC（精确金额，覆盖旧额度） ──
-        setStep("approving");
-        const approveTx = await writeContractAsync({
+        // ── 步骤 1：USDC.transfer 直接转给金库 EOA ──
+        setStep("transferring");
+        transferTx = await writeContractAsync({
           address: usdc,
           abi: ERC20_ABI,
-          functionName: "approve",
-          args: [donation, amount],
+          functionName: "transfer",
+          args: [treasury, amount],
           chainId: chainId,
         });
-        setStep("approve-pending");
-        // 正确等待 approve tx 上链确认（@wagmi/core action，非响应式 hook）
+        setLastTxHash(transferTx);
+        setStep("transfer-pending");
+        // 等待 transfer tx 上链确认
         await waitForTransactionReceipt(wagmiConfig, {
-          hash: approveTx,
+          hash: transferTx,
           confirmations: 1,
         });
 
-        // ── 步骤 2：调 donateAndMint（合约内部 transferFrom + 铸 NFT + 铸道环） ──
-        setStep("donating");
-        const donateTx = await writeContractAsync({
-          address: donation,
-          abi: AetherDonationABI,
-          functionName: "donateAndMint",
-          args: [amount],
-          chainId: chainId,
+        // ── 步骤 2：调用后端记录捐款 + 生成模拟道环 ──
+        setStep("recording");
+        const apiRes = await fetch("/api/donations/record", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            txHash: transferTx,
+            donorAddress: address,
+            purpose,
+          }),
         });
-        setLastTxHash(donateTx);
-        setStep("donate-pending");
-        // 等 donateAndMint tx 确认
-        await waitForTransactionReceipt(wagmiConfig, {
-          hash: donateTx,
-          confirmations: 1,
-        });
+
+        // 200 = 新记录；409 = 已记录（幂等，同样视为成功）
+        if (apiRes.status !== 200 && apiRes.status !== 409) {
+          const body = await apiRes.json().catch(() => ({}));
+          throw new Error(body.error ?? `Record failed (${apiRes.status})`);
+        }
+        const data = (await apiRes.json()) as {
+          ringId?: string;
+          isFirstDonation?: boolean;
+        };
 
         const donationResult: DonationResult = {
-          txHash: donateTx,
+          txHash: transferTx,
           amount,
           purpose,
           timestamp: Date.now(),
           donor: address,
           treasury,
+          ringId: data.ringId,
+          isFirstDonation: data.isFirstDonation,
         };
         setResult(donationResult);
         setStep("success");
@@ -215,7 +215,7 @@ export function useDonation() {
           /user rejected/i.test(msg) ||
           /rejected the request/i.test(msg)
         ) {
-          // 用户取消，回到表单
+          // 用户在钱包签名阶段取消，回到表单
           setStep("form");
         } else {
           console.error("[useDonation] submit failed:", err);
@@ -224,7 +224,7 @@ export function useDonation() {
         }
       }
     },
-    [address, isConnected, chainId, donation, usdc, treasury, writeContractAsync, wagmiConfig, push, t, tToast]
+    [address, isConnected, chainId, usdc, treasury, writeContractAsync, wagmiConfig, push, t, tToast]
   );
 
   return {
@@ -234,7 +234,6 @@ export function useDonation() {
     preferredAsset: PREFERRED_ASSET,
     treasuryAddress: treasury ?? "",
     usdcAddress: usdc,
-    donationAddress: donation,
     submit,
     reset,
     /** wagmi 写入状态 */

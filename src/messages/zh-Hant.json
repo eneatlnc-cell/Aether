@@ -5,7 +5,8 @@
     "donate": "捐贈",
     "connectWallet": "連接錢包",
     "disconnect": "斷開錢包",
-    "walletConnected": "錢包已連接"
+    "walletConnected": "錢包已連接",
+    "citizenIdentity": "查看公民身份"
   },
   "hero": {
     "title": "AETHER",
@@ -122,10 +123,13 @@
     "submitting": "交易提交中...",
     "approving": "授權 USDC 支出中...",
     "approvePending": "等待授權確認...",
+    "recording": "正在記錄捐款並生成公民身份...",
     "treasuryPending": "金庫地址設定中",
     "errorMinAmount": "最低捐款為 $10 USDC",
     "errorConfig": "捐款功能尚未設定完成，請稍後再試",
     "success": "捐贈已在鏈上確認。",
+    "ringIdLabel": "以太環 ID",
+    "firstDonationBadge": "您現在是公民了！",
     "downloadReceipt": "下載 PDF 收據",
     "closeWindow": "關閉",
     "copyAddress": "複製地址",
@@ -154,6 +158,24 @@
       "declaration": "本收據作為捐贈者向 Aether Foundation（一家致力於去中心化基礎設施與人工智慧研究的非營利組織）進行鏈上捐贈之證明。基金會不發行任何代幣。請妥善保存本文件作為您的財務與稅務紀錄。",
       "footer": "Aether Foundation · 非營利 · Arbitrum"
     }
+  },
+  "citizen": {
+    "citizenTitle": "以太公民",
+    "ringSimulated": "模擬道環（預啟動階段）",
+    "address": "地址",
+    "ringTier": "道環等級",
+    "totalDonated": "累計捐款",
+    "firstDonation": "首次捐款",
+    "ringId": "以太環 ID",
+    "donationHistory": "捐款記錄",
+    "donationCount": "{count} 筆捐款",
+    "noDonations": "尚無捐款記錄。",
+    "notCitizenTitle": "尚未成為公民",
+    "notCitizenDesc": "完成首次捐款即可成為以太公民。",
+    "donateToJoin": "捐款加入",
+    "errorTitle": "載入失敗",
+    "copied": "已複製地址",
+    "preLaunchNote": "預啟動階段，公民身份與道環為前端模擬顯示。所有捐款記錄已安全儲存，將在正式啟動時遷移至主網合約。"
   },
   "whitepaper": {
     "back": "返回",
