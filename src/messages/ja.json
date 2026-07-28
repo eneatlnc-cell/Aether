@@ -177,6 +177,16 @@
     "copied": "アドレスをコピーしました",
     "preLaunchNote": "プレローンチ段階では、市民アイデンティティとエーテルリングはフロントエンドでシミュレートされています。すべての寄付記録は安全に保存され、正式ローンチ時にメインネットコントラクトへ移行されます。"
   },
+  "citizenBanner": {
+    "citizenIdLabel": "市民アイデンティティ",
+    "ringSimulated": "シミュレーション",
+    "totalDonated": "{amount} USDC を寄付",
+    "donationCount": "{count}件の寄付",
+    "viewFullIdentity": "完全なアイデンティティを表示",
+    "loading": "市民アイデンティティを読み込み中...",
+    "notCitizenTitle": "まだ市民ではありません",
+    "notCitizenDesc": "最初の寄付をしてエーテル市民になりましょう。"
+  },
   "whitepaper": {
     "back": "戻る",
     "label": "技術白書",

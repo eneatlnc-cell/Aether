@@ -177,6 +177,16 @@
     "copied": "Dirección copiada",
     "preLaunchNote": "Durante la fase de pre-lanzamiento, la identidad de ciudadano y el Anillo Éter se simulan en el frontend. Todos los registros de donaciones se almacenan de forma segura y se migrarán a los contratos de mainnet en el lanzamiento oficial."
   },
+  "citizenBanner": {
+    "citizenIdLabel": "Identidad de ciudadano",
+    "ringSimulated": "Simulado",
+    "totalDonated": "{amount} USDC donados",
+    "donationCount": "{count} donaciones",
+    "viewFullIdentity": "Ver identidad completa",
+    "loading": "Cargando identidad de ciudadano...",
+    "notCitizenTitle": "Aún no es ciudadano",
+    "notCitizenDesc": "Haga su primera donación para convertirse en ciudadano de Éter."
+  },
   "whitepaper": {
     "back": "Atrás",
     "label": "Whitepaper Técnico",

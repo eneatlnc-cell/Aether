@@ -4,6 +4,7 @@ import { useTranslations, useFormatter } from "next-intl";
 import { Card } from "@/components/ui/Card";
 import { Navbar } from "@/components/home/Navbar";
 import { Footer } from "@/components/home/Footer";
+import { CitizenBanner } from "@/components/citizen/CitizenBanner";
 import { useToast } from "@/components/ui/Toast";
 import {
   fundAllocations,
@@ -30,6 +31,9 @@ export function ImpactView() {
       <Navbar />
       <main className="flex-1 py-16 sm:py-20 px-6 lg:px-8">
         <div className="max-w-[1280px] mx-auto">
+          {/* Citizen ID 横幅卡片（已连接钱包才显示，未连接返回 null） */}
+          <CitizenBanner />
+
           {/* 页面标题 */}
           <header className="mb-12 sm:mb-16">
             <h1 className="text-4xl sm:text-5xl font-extrabold text-ink tracking-tight">

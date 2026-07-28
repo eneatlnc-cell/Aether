@@ -177,6 +177,16 @@
     "copied": "已複製地址",
     "preLaunchNote": "預啟動階段，公民身份與道環為前端模擬顯示。所有捐款記錄已安全儲存，將在正式啟動時遷移至主網合約。"
   },
+  "citizenBanner": {
+    "citizenIdLabel": "公民身份",
+    "ringSimulated": "模擬",
+    "totalDonated": "已捐款 {amount} USDC",
+    "donationCount": "{count} 筆捐款",
+    "viewFullIdentity": "查看完整身份",
+    "loading": "正在載入公民身份...",
+    "notCitizenTitle": "尚未成為公民",
+    "notCitizenDesc": "完成首次捐款即可成為以太公民。"
+  },
   "whitepaper": {
     "back": "返回",
     "label": "技術白皮書",

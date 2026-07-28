@@ -177,6 +177,16 @@
     "copied": "Address copied",
     "preLaunchNote": "During the pre-launch phase, citizen identity and the Aether Ring are simulated on the frontend. All donation records are stored securely and will be migrated to mainnet contracts upon official launch."
   },
+  "citizenBanner": {
+    "citizenIdLabel": "Citizen ID",
+    "ringSimulated": "Simulated",
+    "totalDonated": "{amount} USDC donated",
+    "donationCount": "{count} donations",
+    "viewFullIdentity": "View Full Identity",
+    "loading": "Loading citizen identity...",
+    "notCitizenTitle": "Not a Citizen Yet",
+    "notCitizenDesc": "Make your first donation to become an Aether citizen."
+  },
   "whitepaper": {
     "back": "Back",
     "label": "Technical Whitepaper",

@@ -177,6 +177,16 @@
     "copied": "주소가 복사되었습니다",
     "preLaunchNote": "사전 출시 단계에서 시민 신원과 에테르 링은 프론트엔드에서 시뮬레이션됩니다. 모든 기부 기록은 안전하게 저장되며 공식 출시 시 메인넷 컨트랙트로 마이그레이션됩니다."
   },
+  "citizenBanner": {
+    "citizenIdLabel": "시민 신원",
+    "ringSimulated": "시뮬레이션",
+    "totalDonated": "{amount} USDC 기부",
+    "donationCount": "{count}건의 기부",
+    "viewFullIdentity": "전체 신원 보기",
+    "loading": "시민 신원을 불러오는 중...",
+    "notCitizenTitle": "아직 시민이 아닙니다",
+    "notCitizenDesc": "첫 기부를 통해 에테르 시민이 되세요."
+  },
   "whitepaper": {
     "back": "뒤로",
     "label": "기술 백서",

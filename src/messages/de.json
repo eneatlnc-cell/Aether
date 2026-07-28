@@ -177,6 +177,16 @@
     "copied": "Adresse kopiert",
     "preLaunchNote": "In der Pre-Launch-Phase werden Bürgeridentität und der Äther-Ring im Frontend simuliert. Alle Spendenaufzeichnungen werden sicher gespeichert und beim offiziellen Launch zu Mainnet-Verträgen migriert."
   },
+  "citizenBanner": {
+    "citizenIdLabel": "Bürgeridentität",
+    "ringSimulated": "Simuliert",
+    "totalDonated": "{amount} USDC gespendet",
+    "donationCount": "{count} Spenden",
+    "viewFullIdentity": "Vollständige Identität anzeigen",
+    "loading": "Bürgeridentität wird geladen...",
+    "notCitizenTitle": "Noch kein Bürger",
+    "notCitizenDesc": "Leisten Sie Ihre erste Spende, um ein Äther-Bürger zu werden."
+  },
   "whitepaper": {
     "back": "Zurück",
     "label": "Technisches Whitepaper",

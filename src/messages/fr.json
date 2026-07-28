@@ -177,6 +177,16 @@
     "copied": "Adresse copiée",
     "preLaunchNote": "Pendant la phase de pré-lancement, l'identité de citoyen et l'Anneau d'Éther sont simulés sur le frontend. Tous les enregistrements de dons sont stockés en toute sécurité et seront migrés vers les contrats mainnet lors du lancement officiel."
   },
+  "citizenBanner": {
+    "citizenIdLabel": "Identité de citoyen",
+    "ringSimulated": "Simulé",
+    "totalDonated": "{amount} USDC donnés",
+    "donationCount": "{count} dons",
+    "viewFullIdentity": "Voir l'identité complète",
+    "loading": "Chargement de l'identité de citoyen...",
+    "notCitizenTitle": "Pas encore citoyen",
+    "notCitizenDesc": "Faites votre premier don pour devenir citoyen d'Éther."
+  },
   "whitepaper": {
     "back": "Retour",
     "label": "Livre Blanc Technique",
