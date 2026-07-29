@@ -18,7 +18,6 @@ import { Download } from "lucide-react";
 
 const ALLOCATION_COLORS: Record<string, string> = {
   "ai-framework": "#1A1A1A",
-  "video-protocol": "#2B3A67",
   "self-organizing-net": "#64748B",
   unrestricted: "#C9A96E",
 };

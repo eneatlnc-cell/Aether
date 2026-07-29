@@ -7,7 +7,6 @@ import { Landmark, Waves, Share2, Heart, Code } from "lucide-react";
 
 const PROGRAM_ICONS = {
   "ai-framework": Landmark,
-  "video-protocol": Waves,
   "self-organizing-net": Share2,
 } as const;
 
@@ -56,7 +55,7 @@ export function Footer() {
               {t("programs")}
             </p>
             <ul className="space-y-2.5 text-sm">
-              {(["ai-framework", "video-protocol", "self-organizing-net"] as const).map(
+              {(["ai-framework", "self-organizing-net"] as const).map(
                 (id) => {
                   const Icon = PROGRAM_ICONS[id];
                   return (

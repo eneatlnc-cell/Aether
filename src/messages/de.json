@@ -12,22 +12,16 @@
     "title": "AETHER",
     "subtitle": "Fortschritt dezentraler Infrastruktur und Intelligenz",
     "tag1": "Governance-Framework für Unternehmen der nächsten Generation",
-    "tag2": "Interkontinentales Niedriglatenz-Video-Player-Protokoll",
+    "tag2": "Tokenlose On-Chain-Governance",
     "tag3": "Dezentrales selbstorganisierendes Netzwerk"
   },
   "projects": {
     "sectionTitle": "Leitprogramme",
-    "sectionSubtitle": "Drei unabhängige Initiativen unter der Trägerschaft der Stiftung, jede mit gleichem strategischem Gewicht.",
+    "sectionSubtitle": "Zwei unabhängige Initiativen unter der Trägerschaft der Stiftung, jede mit gleichem strategischem Gewicht.",
     "ai-framework": {
       "name": "Governance-Framework für Unternehmen der nächsten Generation",
       "tagline": "Ein compliance-konformes On-Chain-Governance-Framework, das Verbraucher, Mitarbeiter, Management und Aktionäre in eine vier-Mächte-Gemeinschaft mit Checks and Balances verwandelt.",
       "status": "In Forschung",
-      "viewWhitepaper": "Whitepaper ansehen"
-    },
-    "video-protocol": {
-      "name": "Interkontinentales Niedriglatenz-Video-Player-Protokoll",
-      "tagline": "Ein Peer-to-Peer-Medienprotokoll, entwickelt für subsekundenübergreifendes kontinentales Streaming.",
-      "status": "Testnet Live",
       "viewWhitepaper": "Whitepaper ansehen"
     },
     "self-organizing-net": {
@@ -55,7 +49,6 @@
     "viewOnExplorer": "Im Explorer ansehen",
     "purposeLabels": {
       "ai-framework": "Unternehmens-Governance",
-      "video-protocol": "Videoprotokoll",
       "self-organizing-net": "Selbstorganisierendes Netz",
       "unrestricted": "Betrieb"
     }
@@ -72,10 +65,6 @@
     "statusPassed": "Angenommen",
     "statusRejected": "Abgelehnt",
     "items": {
-      "q4Bandwidth": {
-        "title": "Antrag auf Q4-Forschungsmittel für kontinentübergreifende Bandbreite",
-        "summary": "Antrag auf Bereitstellung von Q4-Forschungsmitteln für die Relay-Infrastruktur des Low-Latency-Video-Protokolls."
-      },
       "aiEcosystem": {
         "title": "Open-Source-Ökosystemaufbau für das KI-Anwendungsmodul",
         "summary": "Einrichtung eines Förderprogramms für externe Mitwirkende, die Module für das Next-Gen-KI-Anwendungsframework entwickeln."
@@ -97,7 +86,7 @@
         "focus": "Finanzverwaltung & Governance"
       },
       "kenji": {
-        "focus": "Kontinentübergreifendes Videoprotokoll"
+        "focus": "Off-Chain-Koordination"
       },
       "linnea": {
         "focus": "KI-Anwendungsframework"
@@ -136,7 +125,6 @@
     "copied": "Adresse kopiert",
     "purposes": {
       "ai-framework": "Governance-Framework für Unternehmen",
-      "video-protocol": "Video-Player-Protokoll",
       "self-organizing-net": "Selbstorganisierendes Netzwerk",
       "unrestricted": "Zweckungebunden (Betrieb)"
     },
@@ -205,12 +193,6 @@
       "roadmap": "Current status: the Aether governance kernel v3.0 contracts have completed audit remediation (5 P0 + 15 P1 findings closed); the Havix network layer M10 validation form is complete with 1234/1234 tests passing (1021 MVP + 213 Embas translation-market). Both primitives are integration-ready.\n\nFour-phase plan:\n\n- Phase 1 (2026 H1): launch the first 100-enterprise free pilot cohort. Each pilot deploys privately inside the enterprise perimeter; the Aether on-chain contracts are deployed for governance-attestation purposes only. The bridge service is stood up and its mainland operating entity registered. No enterprise is charged during this phase.\n- Phase 2 (2026 H2): ship the dynamic-weighting algorithm — consumption contribution 40% + activity 30% + credit 30% — paired with an anti-cheat behavior-graph detector that flags coordinated vote farming. A co-governance incentive pool is introduced to reward sustained participation, and an employee-load early-warning threshold is added so that governance fatigue is surfaced before it distorts quorum.\n- Phase 3 (2027 H1): ZKP privacy upgrade — only aggregate governance results are stored on-chain, individual ballots remain off-chain and provable. The proxy-contract upgradeable architecture is rolled out, governed by a 3/5 multisig across five roles: development side, enterprise side, independent audit, legal counsel and a user representative. Liability isolation is formalized by spinning community operations into a subsidiary.\n- Phase 4 (2027 H2): deep integration with enterprise OA/ERP systems, cluster-level sub-DAO federation for multi-subsidiary groups, and the Havix M13 Rust rewrite of credit/arbitration/identity/market/wiki with slot-based saturated cover-traffic protocol — enabling sovereign-boundary defense against observer attacks at production traffic volumes.",
       "team": "The framework is jointly developed by the Aether Foundation governance team and Havix Contributors, operating under the same GitHub organization (eneatlnc-cell). The two teams contribute complementary halves: the governance kernel is authored by the Foundation's Solidity track, the network layer by the Havix P2P track, and the bridge service and enterprise access form are co-authored across both.\n\nThe development workflow follows an internal code-review process — commits carry change-tags such as C-4, H-9 and M-10 — and ships documentation in both Chinese and English, reflecting the cross-jurisdictional nature of the deployment: the on-chain kernel runs on Arbitrum, while the operating entity and the bridge service sit in mainland China. The codebase carries full audit reports per milestone, with P0/P1/P2 severity classifications, and a NEXT-STEPS.md maintains a multi-layer recursive structure for traceable decision-making. Parallel AI-agent-assisted audits are used as a second review channel and are explicitly acknowledged in the audit reports.\n\nThe commercial model is deliberately back-loaded. Phase 1 pilots are free; paid subscriptions and a transaction-share model are introduced only after two years and only after both year-on-year revenue uplift and pilot-completion metrics are demonstrated by the enterprise. OA/ERP integration and community-operations services are offered as optional add-ons rather than bundled into the base framework. This sequencing is enforced by the Foundation, not by the enterprise customer, to keep the framework's incentive structure aligned with long-term governance health rather than short-term onboarding volume.\n\nSpecific contributor names are not yet published. The Foundation will release a named roster once the Phase-1 100-enterprise pilot cohort is complete and the operating entity has cleared its compliance review — both conditions must be satisfied before individual contributors can be publicly associated with the framework."
     },
-    "video-protocol": {
-      "overview": "The Video Player Protocol is the Foundation's flagship media-access initiative, implemented as an open-source Android client (codename Memento) that combines sing-box TUN-based cross-continent network access, yt-dlp search and direct-link resolution, and ExoPlayer playback into a single signed APK. It targets users in network regions where direct access to global video sources (YouTube, Vimeo, Dailymotion, Bilibili) is unreliable, and pairs a one-device-one-code offline license model with JWT-based session management.\n\nThe MVP is a working end-to-end client — not yet a formally specified protocol — and the Foundation is transparent that the word \"protocol\" in the current name refers to the architectural intent of extracting the client's transport and resolution layers into a publishable specification once the field deployment proves which optimizations are worth standardizing.",
-      "architecture": "Three-tier separation, strict by design:\n\n- Android client (Kotlin, JVM 17, minSdk 23, targetSdk 34): ActivationActivity (device-bound license) → MainActivity (search) → PlayerActivity (landscape ExoPlayer). MyApp handles process-level init for Chaquopy (embedded Python 3.11 running yt-dlp), sing-box libbox (v1.13.14), Room, Retrofit, EncryptedSharedPreferences.\n- Cloud VPS (Python FastAPI, stateless): POST /activate verifies HMAC activation codes with constant-time comparison and issues HS256 JWT (7-day TTL, jti recorded for per-token revocation); GET /resolve runs yt-dlp server-side and returns a direct media URL; GET /health for liveness. SQLite WAL stores activated_devices and issued_jtis. Rate-limited at 5/min and 30/min respectively.\n- Local license tool (pure Python stdlib): generates XXXX-XXXX-XXXX-XXXX activation codes from HMAC-SHA256(SECRET, device_lock), no network access; SECRET is shared only between VPS env and the operator's machine, never bundled in the APK.\n\nDevice lock = SHA-256(ANDROID_ID + \"|\" + UUID), persisted in EncryptedSharedPreferences. SQLite (Room) is wrapped by SQLCipher 4.5.4 with a 32-byte random key stored in the Android Keystore. The sing-box TUN runs at MTU 9000 with auto_route and strict_route, VLESS+uTLS(chrome) outbound.",
-      "roadmap": "Current status: versionCode 1, versionName 1.0 — MVP fully functional across activation, search, playback, download, and VPN. Tested through Android 14 with FOREGROUND_SERVICE_TYPE_SPECIAL_USE handling.\n\nNext milestones:\n\n- Q1 2026: protocol specification v0.1 — formally document the activation flow, JWT jti revocation semantics, and the /resolve response shape so third-party clients can interoperate.\n- Q2 2026: add adaptive bitrate (HLS/DASH) handling in PlayerActivity to reduce first-frame latency and recover from direct-link expiry without a full re-resolve round trip.\n- Q3 2026: edge resolver deployment in three regions (US/EU/SG) with shared JWT issuer, eliminating the current single-point VPS bottleneck for cross-continent resolution latency.\n- 2027: extract the sing-box + libbox integration as a reusable Foundation SDK so that other Foundation media initiatives can adopt the same transport layer without re-implementing it.",
-      "team": "Developed under the Foundation's media research track with the codename Memento. The codebase shows evidence of an internal review process (commits carry tags such as C-4/C-5/C-6/H-1/H-9/H-10/M-10/M-14) and evolved from an earlier internal project codenamed Lumine (SingBoxManager.kt still carries migration notes). DEPLOYMENT.md and USER_GUIDE.md total ~900 lines and are written in Chinese with English technical terms. The maintainer labels itself simply as \"memento.app\" (applicationId); specific contributor names are not yet published. The Foundation will release a named roster alongside the Q1 2026 protocol specification."
-    },
     "self-organizing-net": {
       "overview": "The Decentralized Self-Organizing Network is the Foundation's flagship P2P overlay initiative, implemented as the open-source Havix protocol — a Haven of Affinity for high-cognition individuals. Havix is built to validate a sociological hypothesis: that a stratified, self-organizing network can sustain a parallel coordination space without relying on either centralized platforms or pure-anonymity overlays like Tor. Its three defining primitives are decentralized transport (libp2p + IPFS, no central servers), gated admission (4-context DID derivation + weighted vouch), and reputation-anchored economics (Reputation/Credit dual-ledger with frozen-credit Faucet).\n\nThe current milestone (M10) has the validation form complete: 1021 MVP tests + 213 Embas translation-market tests = 1234/1234 passing, with 5 P0 + 15 P1 audit findings all fixed. The network is in private internal beta pending M11 multi-app coexistence and weighted-transition rollout.",
       "architecture": "Four-layer protocol stack, with a critical dual-plane isolation that distinguishes Havix from naive \"encrypt everything\" designs:\n\n- Application layer (parasitic): Wiki SPA, Market SPA, private-message tunnels, CLI — all loaded as signed apps through the M9 AppManager with manifest-based permission whitelisting (28 permissions across 8 categories).\n- Identity layer: a single master DID derives 4 context sub-identities (A=public, B=market, C=tunnel, D=wiki) via HKDF-SHA256; sub-identities are cryptographically unlinkable.\n- Protocol layer (public + private): Vouch, Wiki, Market, Offer·Credit, Arbitration — split across a public plane (gossipsub mesh + KadDHT for Wiki CIDs only + Rendezvous) and a private plane (private gossipsub topics whose names are SHA-256 of invite tokens, message bodies AES-256-GCM re-encrypted with HKDF-derived keys).\n- Economic layer: Reputation (cumulative, non-transferable) ↔ Credit (consumable, transferable) dual ledger; high-reputation nodes can issue Credit only by freezing an equal amount of their own Reputation, anchoring Credit value to the issuer's reputation.\n\nThe S-Node class is the local node instance: libp2p (TCP + noise + yamux/mplex + gossipsub + mDNS + KadDHT) + helia IPFS + 8 local ledgers (reputation, credit, vouch, wiki, arbitration, treasury, market, credit-nonces). Cross-node consistency is achieved via gossipsub message convergence.",
@@ -246,10 +228,6 @@
       "ai-framework": {
         "label": "Governance-Framework für Unternehmen",
         "desc": "Forschung, Compliance-Recherche und Pilotbereitstellung für das Next-Gen-Unternehmens-Governance-Framework."
-      },
-      "video-protocol": {
-        "label": "Videoplayer-Protokoll",
-        "desc": "Relay-Infrastruktur, kontinentübergreifende Tests und Protokollspezifikation."
       },
       "self-organizing-net": {
         "label": "Selbstorganisierendes Netzwerk",

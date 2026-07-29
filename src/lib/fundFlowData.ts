@@ -5,7 +5,6 @@ export type AssetCode = "USDC" | "USDT" | "ETH";
 
 export type DonationPurpose =
   | "ai-framework"
-  | "video-protocol"
   | "self-organizing-net"
   | "unrestricted";
 
@@ -17,7 +16,7 @@ export interface AssetHolding {
 }
 
 export interface ProjectFund {
-  projectId: "ai-framework" | "video-protocol" | "self-organizing-net";
+  projectId: "ai-framework" | "self-organizing-net";
   allocatedUsd: number;
   spentUsd: number;
   /** 预算上限 USD */
@@ -82,12 +81,6 @@ export const fundFlow: FundFlowSnapshot = {
       budgetUsd: 300_000,
     },
     {
-      projectId: "video-protocol",
-      allocatedUsd: 240_000,
-      spentUsd: 162_300,
-      budgetUsd: 300_000,
-    },
-    {
       projectId: "self-organizing-net",
       allocatedUsd: 180_000,
       spentUsd: 91_200,
@@ -124,17 +117,6 @@ export const treasuryTransactions: TreasuryTransaction[] = [
     purpose: "ai-framework",
     counterparty: "0x7a3F…b29C",
     txHash: "0xab12cd34ef56ab12cd34ef56ab12cd34ef56ab12cd34ef56ab12cd34ef56",
-  },
-  {
-    id: "tx-002",
-    timestamp: "2026-07-15T14:11:00Z",
-    direction: "out",
-    asset: "USDC",
-    amount: 18_400,
-    usdValue: 18_400,
-    purpose: "video-protocol",
-    counterparty: "0x4d2A…91fE",
-    txHash: "0xcd34ef56ab12cd34ef56ab12cd34ef56ab12cd34ef56ab12cd34ef56ab12",
   },
   {
     id: "tx-003",

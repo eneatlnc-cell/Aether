@@ -182,7 +182,6 @@ function TreasuryBalanceCard({
 function projectIdLabel(id: string): string {
   const map: Record<string, string> = {
     "ai-framework": "GOV",
-    "video-protocol": "Video",
     "self-organizing-net": "Mesh",
   };
   return map[id] ?? id;

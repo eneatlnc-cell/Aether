@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 export interface FundAllocation {
-  projectId: "ai-framework" | "video-protocol" | "self-organizing-net" | "unrestricted";
+  projectId: "ai-framework" | "self-organizing-net" | "unrestricted";
   percentage: number;
   descriptionKey: string;
 }
@@ -34,11 +34,6 @@ export const fundAllocations: FundAllocation[] = [
     projectId: "ai-framework",
     percentage: 30,
     descriptionKey: "impact.allocations.ai-framework.desc",
-  },
-  {
-    projectId: "video-protocol",
-    percentage: 30,
-    descriptionKey: "impact.allocations.video-protocol.desc",
   },
   {
     projectId: "self-organizing-net",

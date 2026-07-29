@@ -12,22 +12,16 @@
     "title": "AETHER",
     "subtitle": "推進去中心化基礎設施與智慧研究",
     "tag1": "新世代企業治理框架",
-    "tag2": "跨洲際低延遲視訊播放器協定",
+    "tag2": "無代幣鏈上治理",
     "tag3": "去中心化自組織網路"
   },
   "projects": {
     "sectionTitle": "旗艦計畫",
-    "sectionSubtitle": "基金會旗下三個獨立營運的計畫，各自承擔同等的戰略權重。",
+    "sectionSubtitle": "基金會旗下兩個獨立營運的計畫，各自承擔同等的戰略權重。",
     "ai-framework": {
       "name": "新世代企業治理框架",
       "tagline": "一套合規的鏈上治理框架，將消費者、員工、管理層與股東轉化為四股勢力制衡的共同體。",
       "status": "研發中",
-      "viewWhitepaper": "查看技術白皮書"
-    },
-    "video-protocol": {
-      "name": "跨洲際低延遲視訊播放器協定",
-      "tagline": "一個點對點媒體協定，專為跨洲際次秒級串流而設計。",
-      "status": "測試網運行中",
       "viewWhitepaper": "查看技術白皮書"
     },
     "self-organizing-net": {
@@ -55,7 +49,6 @@
     "viewOnExplorer": "於區塊瀏覽器檢視",
     "purposeLabels": {
       "ai-framework": "企業治理",
-      "video-protocol": "視訊協定",
       "self-organizing-net": "自組織網路",
       "unrestricted": "行政經費"
     }
@@ -72,10 +65,6 @@
     "statusPassed": "已通過",
     "statusRejected": "已否決",
     "items": {
-      "q4Bandwidth": {
-        "title": "Q4 跨洲際頻寬加速研發經費撥付動議",
-        "summary": "動議撥付 Q4 研究經費，用於低延遲視訊協定的跨洲際中繼基礎設施。"
-      },
       "aiEcosystem": {
         "title": "AI 應用模組開源生態建設方案",
         "summary": "為在外部貢獻者打造下一代 AI 應用框架模組建立一筆資助軌道。"
@@ -97,7 +86,7 @@
         "focus": "金庫管理與治理"
       },
       "kenji": {
-        "focus": "跨洲際視訊協定"
+        "focus": "鏈下協調"
       },
       "linnea": {
         "focus": "AI 應用框架"
@@ -136,7 +125,6 @@
     "copied": "地址已複製",
     "purposes": {
       "ai-framework": "企業治理框架",
-      "video-protocol": "視訊播放器協定",
       "self-organizing-net": "自組織網路",
       "unrestricted": "無定向（行政經費）"
     },
@@ -205,12 +193,6 @@
       "roadmap": "目前狀態：Aether 治理內核 v3.0 合約已完成審計修復（5 項 P0 + 15 項 P1 發現全數閉合）；Havix 網路層 M10 驗證形態完成，1234/1234 測試通過（1021 項 MVP + 213 項 Embas 翻譯市場測試）。兩個原語皆已具備整合條件。\n\n四階段計畫：\n\n- 第一階段（2026 上半年）：啟動首批 100 家企業免費試點。每家試點於企業內網私有化部署；Aether 鏈上合約僅作治理存證用途部署。橋接服務就位，內地營運主體完成註冊。本期對企業不收費。\n- 第二階段（2026 下半年）：上線動態加權演算法——消費貢獻 40% + 活躍度 30% + 信用 30%，搭配反作弊行為圖譜偵測器，標記協同刷票。引入共治激勵池獎勵持續參與，並加入員工負荷預警門檻，使治理疲乏在扭曲法定門檻前即可被發現。\n- 第三階段（2027 上半年）：ZKP 隱私升級——鏈上僅存聚合治理結果，個人選票保留於鏈下並可驗證。代理合約可升級架構上線，由 3/5 多簽治理，五個角色為：開發方、企業方、獨立審計、法律顧問、用戶代表。將社群營運剝離至子公司以正式化責任隔離。\n- 第四階段（2027 下半年）：與企業 OA/ERP 系統深度整合、為多子公司集團提供叢集級子 DAO 聯邦，以及 Havix M13 完成 credit/arbitration/identity/market/wiki 的 Rust 重新實作與 slot-based 飽和掩護流量協定——使主權邊界在生產級流量下仍能抵抗觀察者攻擊。",
       "team": "本框架由 Aether Foundation 治理團隊與 Havix Contributors 共同開發，運作於同一 GitHub 組織（eneatlnc-cell）。兩個團隊貢獻互補的兩半：治理內核由基金會的 Solidity 軸線撰寫，網路層由 Havix P2P 軸線撰寫，橋接服務與企業接入形態則由兩軸線共撰。\n\n開發流程遵循內部程式碼審查流程——commit 帶有 C-4、H-9、M-10 等變更標籤——並同時以中文與英文交付文件，反映部署的跨法域性質：鏈上內核運行於 Arbitrum，而營運主體與橋接服務位於中國內地。程式碼庫每個里程碑皆有完整審計報告（含 P0/P1/P2 嚴重性分級），NEXT-STEPS.md 維持多層遞迴結構以確保決策可追溯。並行 AI 代理輔助審計作為第二審查管道，並於審計報告中明確說明。\n\n商業模式刻意後置收費。第一階段試點免費；付費訂閱與流水抽成模式僅於兩年後、且僅在企業達成營收年增與試點完成兩項指標後才引入。OA/ERP 整合與社群代營運作為選用附加項，不綁入基礎框架。此一時序由基金會而非企業客戶執行，以確保框架的激勵結構對齊長期治理健康，而非短期上線量。\n\n具體貢獻者姓名尚未公布。基金會將於第一階段 100 家企業試點完成、且營運主體通過合規審查後，公布具名名單——兩項條件必須同時滿足，個別貢獻者才能被公開關聯至本框架。"
     },
-    "video-protocol": {
-      "overview": "視訊播放器協定是基金會的旗艦媒體存取計畫，以開源 Android 用戶端形式實作（代號 Memento），將 sing-box TUN 跨洲網路存取、yt-dlp 搜尋與直鏈解析、ExoPlayer 播放整合進單一簽署 APK。目標使用者為直接存取全球視訊來源（YouTube、Vimeo、Dailymotion、Bilibili）不穩定的網路區域使用者，並以一機一碼的離線授權模型搭配 JWT 工作階段管理。\n\nMVP 已是端到端可運作的用戶端——尚未成為正式規格化的協定——基金會對目前名稱中的「協定」一詞保持透明：這是指未來在實地部署驗證哪些優化值得標準化後，將用戶端的傳輸層與解析層抽取為可公開發布規格的架構意圖。",
-      "architecture": "三層分離，設計嚴格：\n\n- Android 用戶端（Kotlin, JVM 17, minSdk 23, targetSdk 34）：ActivationActivity（裝置綁定授權）→ MainActivity（搜尋）→ PlayerActivity（橫向 ExoPlayer）。MyApp 負責 Chaquopy（嵌入式 Python 3.11 跑 yt-dlp）、sing-box libbox（v1.13.14）、Room、Retrofit、EncryptedSharedPreferences 的程序級初始化。\n- 雲端 VPS（Python FastAPI, 無狀態）：POST /activate 以常數時間比較驗證 HMAC 啟動碼並簽發 HS256 JWT（7 日 TTL，jti 記錄以支援單 token 撤銷）；GET /resolve 在伺服器端跑 yt-dlp 並回傳媒體直鏈；GET /health 健康檢查。SQLite WAL 儲存 activated_devices 與 issued_jtis。分別限流 5/min 與 30/min。\n- 本地授權工具（純 Python 標準庫）：以 HMAC-SHA256(SECRET, device_lock) 產生 XXXX-XXXX-XXXX-XXXX 啟動碼，不聯網；SECRET 僅在 VPS 環境變數與營運者機器間共用，絕不打包進 APK。\n\n裝置鎖 = SHA-256(ANDROID_ID + \"|\" + UUID)，以 EncryptedSharedPreferences 持久化。SQLite（Room）以 SQLCipher 4.5.4 包覆，使用 32 位元組隨機金鑰存於 Android Keystore。sing-box TUN 以 MTU 9000、auto_route、strict_route 運作，VLESS+uTLS(chrome) 出站。",
-      "roadmap": "目前狀態：versionCode 1, versionName 1.0——啟動、搜尋、播放、下載與 VPN 全功能 MVP。已通過 Android 14 FOREGROUND_SERVICE_TYPE_SPECIAL_USE 處理測試。\n\n下一階段里程碑：\n\n- 2026 Q1：協定規格 v0.1——正式記錄啟動流程、JWT jti 撤銷語意與 /resolve 回應結構，使第三方用戶端可互通。\n- 2026 Q2：在 PlayerActivity 加入自適應位元率（HLS/DASH）處理，降低首幀延遲，並在直鏈過期時免完整重新解析即可恢復。\n- 2026 Q3：在美／歐／新加坡三區部署邊緣解析器，共用 JWT 簽發者，消除目前單點 VPS 對跨洲解析延遲的瓶頸。\n- 2027：將 sing-box + libbox 整合抽取為可重用的基金會 SDK，讓其他基金會媒體計畫可直接採用相同傳輸層而無需重新實作。",
-      "team": "本計畫於基金會媒體研究軸線下開發，代號 Memento。程式碼庫顯示有內部審查流程（commit 帶有 C-4/C-5/C-6/H-1/H-9/H-10/M-10/M-14 標籤），並從早期內部專案代號 Lumine 演化而來（SingBoxManager.kt 仍保留遷移註記）。DEPLOYMENT.md 與 USER_GUIDE.md 合計約 900 行，以中文撰寫、夾雜英文技術名詞。維護者標籤僅標示為「memento.app」（applicationId）；具體貢獻者姓名尚未公布。基金會將於 2026 Q1 協定規格發布時，一併公布具名維護者名單。"
-    },
     "self-organizing-net": {
       "overview": "去中心化自組織網路是基金會的旗艦 P2P 覆蓋網路計畫，以開源 Havix 協定形式實作——為高認知個體打造的「Haven of Affinity（親和之港）」。Havix 旨在驗證一項社會學假設：分層自組織網路能夠在不依賴中心化平台或 Tor 這類純匿名覆蓋的情況下，維持一個平行的協調空間。三個定義性原語為：去中心化傳輸（libp2p + IPFS，無中央伺服器）、準入制空間（4-context DID 派生 + 加權 vouch）、信譽錨定經濟（Reputation/Credit 雙軌帳本，含凍結信用 Faucet）。\n\n目前里程碑（M10）已完成驗證形態：1021 個 MVP 測試 + 213 個 Embas 翻譯市場測試 = 1234/1234 通過，5 項 P0 + 15 項 P1 審計發現全數修復。網路處於私有內測階段，等待 M11 多 App 共存與加權轉換機制上線。",
       "architecture": "四層協定堆疊，含一個關鍵的雙平面隔離，使 Havix 有別於「全部加密」的單純設計：\n\n- 應用層（寄生）：Wiki SPA、Market SPA、私訊隧道、CLI——皆以簽署 App 形式透過 M9 AppManager 載入，含 manifest 驅動的權限白名單（8 大類 28 項權限）。\n- 身分層：單一主 DID 透過 HKDF-SHA256 派生 4 個 context 子身分（A=公開、B=市場、C=隧道、D=wiki）；子身分在密碼學上不可關聯。\n- 協定層（公共 + 私域）：Vouch、Wiki、Market、Offer·Credit、Arbitration——分為公共平面（gossipsub mesh + KadDHT 僅用於 Wiki CID 尋址 + Rendezvous）與私域平面（私有 gossipsub topic，topic 名 = 邀請令牌的 SHA-256，訊息內容再以 HKDF 派生金鑰做 AES-256-GCM 加密）。\n- 經濟層：Reputation（累積、不可轉讓）↔ Credit（可消耗、可轉讓）雙軌帳本；高信譽節點發行 Credit 時必須凍結等額自身 Reputation，使 Credit 價值錨定於發行者的信譽。\n\nS-Node 類別是本地節點實例：libp2p（TCP + noise + yamux/mplex + gossipsub + mDNS + KadDHT）+ helia IPFS + 8 個本地帳本（reputation、credit、vouch、wiki、arbitration、treasury、market、credit-nonces）。跨節點一致性透過 gossipsub 訊息收斂達成。",
@@ -246,10 +228,6 @@
       "ai-framework": {
         "label": "企業治理框架",
         "desc": "新世代企業治理框架的研發、合規研究與試點部署。"
-      },
-      "video-protocol": {
-        "label": "視訊播放器協定",
-        "desc": "中繼基礎設施、跨洲測試與協定規格工作。"
       },
       "self-organizing-net": {
         "label": "自組織網路",

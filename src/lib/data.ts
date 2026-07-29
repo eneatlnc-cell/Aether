@@ -1,7 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 export type ProjectId =
   | "ai-framework"
-  | "video-protocol"
   | "self-organizing-net";
 
 export type ProposalStatus = "active" | "passed" | "rejected";
@@ -42,22 +41,10 @@ export interface CouncilMember {
 
 export const projects: ProjectMeta[] = [
   { id: "ai-framework", icon: "hex", status: "research" },
-  { id: "video-protocol", icon: "wave", status: "testnet" },
   { id: "self-organizing-net", icon: "mesh", status: "research" },
 ];
 
 export const proposals: Proposal[] = [
-  {
-    id: "Q4-2025-bandwidth",
-    titleKey: "proposals.items.q4Bandwidth.title",
-    summaryKey: "proposals.items.q4Bandwidth.summary",
-    status: "active",
-    forVotes: 7,
-    againstVotes: 2,
-    abstainVotes: 1,
-    deadline: Date.now() + 1000 * 60 * 60 * 24 * 9,
-    progress: 62,
-  },
   {
     id: "ai-opensource-ecosystem",
     titleKey: "proposals.items.aiEcosystem.title",
