@@ -4,6 +4,7 @@
 import { jsPDF } from "jspdf";
 import { useTranslations, useLocale, useFormatter } from "next-intl";
 import type { DonationResult } from "@/hooks/useDonation";
+import { getNetworkLabel } from "@/lib/contracts";
 
 const LOCALE_TO_PDF_FONT: Record<string, string> = {
   en: "helvetica",
@@ -51,7 +52,9 @@ export function useDonationReceipt() {
     doc.setTextColor(100, 116, 139); // #64748B
     doc.setFont(font, "normal");
     doc.text("AETHER FOUNDATION", marginX, y);
-    doc.text(`Arbitrum · ${locale.toUpperCase()}`, pageWidth - marginX, y, {
+    // v3.5：网络标签按交易所在链动态显示（BSC 56 / 97）
+    const networkLabel = getNetworkLabel(result.chainId ?? 42161);
+    doc.text(`${networkLabel} · ${locale.toUpperCase()}`, pageWidth - marginX, y, {
       align: "right",
     });
 
@@ -80,11 +83,13 @@ export function useDonationReceipt() {
 
     /* ---------- 字段表 ---------- */
     const purposeLabel = tPurpose(result.purpose as never);
-    // 预启动阶段只支持 USDC（6 decimals），amount 是原始 bigint
-    const usdcAmount = Number(result.amount) / 10 ** 6;
+    // 精度按交易所在链的稳定币 decimals（BSC 为 18），符号按链配置
+    const decimals = result.assetDecimals ?? 6;
+    const symbol = result.assetSymbol ?? "USDC";
+    const usdcAmount = Number(result.amount) / 10 ** decimals;
     const amountStr = `${usdcAmount.toLocaleString("en-US", {
       maximumFractionDigits: 2,
-    })} USDC`;
+    })} ${symbol}`;
 
     const date = new Date(result.timestamp);
     const dateStr = format.dateTime(date, {
@@ -104,7 +109,7 @@ export function useDonationReceipt() {
       [t("purpose"), purposeLabel],
       [t("donor"), result.donor],
       [t("treasury"), result.treasury],
-      [t("network"), "Arbitrum One"],
+      [t("network"), networkLabel],
     ];
 
     const labelWidth = 110;

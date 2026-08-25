@@ -29,7 +29,7 @@ import {AetherDonation} from "../src/AetherDonation.sol";
  *   FOUNDER_1=0xAAA FOUNDER_TIER_1=6 \
  *   FOUNDER_2=0xBBB FOUNDER_TIER_2=9 \
  *   forge script script/DeployMinimal.s.sol:DeployMinimal \
- *     --rpc-url https://sepolia-rollup.arbitrum.io/rpc \
+ *     --rpc-url https://data-seed-prebsc-1-s1.binance.org:8545 \
  *     --broadcast -vvv
  *
  * 层级参考：

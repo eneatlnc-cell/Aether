@@ -173,7 +173,7 @@ function TreasuryBalanceCard({
       </p>
       <p className="mt-4 pt-4 border-t border-border text-xs text-muted leading-relaxed">
         Real-time on-chain balance of the Foundation treasury multisig on
-        Arbitrum.
+        BNB Smart Chain.
       </p>
     </Card>
   );

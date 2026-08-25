@@ -10,7 +10,7 @@
 
 ### 1.1 关于 Aether Foundation
 
-Aether Foundation 是部署于 Arbitrum 区块链的非营利 DAO，专注于去中心化基础设施与 AI 研究的长期资助。所有资金分配由链上治理决定，任何人都可审计。
+Aether Foundation 是部署于 BNB Smart Chain（BSC）的非营利 DAO，专注于去中心化基础设施与 AI 研究的长期资助。所有资金分配由链上治理决定，任何人都可审计。
 
 ### 1.2 为什么成为公民？
 
@@ -37,7 +37,7 @@ Aether Foundation 是部署于 Arbitrum 区块链的非营利 DAO，专注于去
 
 **步骤**：
 
-1. 准备一个 Arbitrum 钱包（推荐 MetaMask / Rabby）
+1. 准备一个 BSC（BNB Smart Chain）钱包（推荐 MetaMask / Rabby）
 2. 通过基金会官网发起 PayPal 捐款，**最低 $10**
 3. PayPal 交易完成后，webhook 服务端自动调用合约
 4. 合约验证通过后，铸公民道环（SBT）到你的钱包
@@ -325,9 +325,9 @@ Aether Foundation 是部署于 Arbitrum 区块链的非营利 DAO，专注于去
 |---|---|
 | 官网 | https://aether.foundation（待上线）|
 | 治理前端 | https://gov.aether.foundation（待上线）|
-| Arbitrum One | https://arbitrum.io |
+| BNB Smart Chain | https://www.bnbchain.org |
 | Safe 多签 | https://app.safe.global |
-| Arbiscan | https://arbiscan.io |
+| BscScan | https://bscscan.com |
 | IPFS 网关 | https://gateway.pinata.cloud/ipfs/ |
 | 合约源码 | https://github.com/（待推送）|
 | 技术白皮书 | [TECHNICAL_WHITEPAPER.md](./TECHNICAL_WHITEPAPER.md) |

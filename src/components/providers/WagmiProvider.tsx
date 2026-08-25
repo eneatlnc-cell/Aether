@@ -2,7 +2,7 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { createConfig, http, WagmiProvider as WagmiProviderBase } from "wagmi";
-import { arbitrum, arbitrumSepolia, mainnet } from "wagmi/chains";
+import { bsc, bscTestnet } from "wagmi/chains";
 import { walletConnect, injected, coinbaseWallet } from "@wagmi/connectors";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { ReactNode, useState } from "react";
@@ -12,12 +12,13 @@ import { ReactNode, useState } from "react";
 const WALLETCONNECT_PROJECT_ID =
   process.env.NEXT_PUBLIC_WC_PROJECT_ID || "f7e4e9de252752ac3fd539c42747e7a1";
 
+// v3.6（单链 BSC）：唯一目标链为 BNB Smart Chain（56），排首位作为默认链。
+// Arbitrum 已移除（早期仅作测试链使用，从未部署主网）。
 const config = createConfig({
-  chains: [arbitrum, arbitrumSepolia, mainnet],
+  chains: [bsc, bscTestnet],
   transports: {
-    [arbitrum.id]: http(),
-    [arbitrumSepolia.id]: http(),
-    [mainnet.id]: http(),
+    [bsc.id]: http(),
+    [bscTestnet.id]: http(),
   },
   // injected 在前：PC 端装了 MetaMask 等扩展时优先直连，避免无谓弹 QR
   // walletConnect 兜底：移动端 / 无扩展时弹出 QR 让用户手机扫

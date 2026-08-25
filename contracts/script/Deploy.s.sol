@@ -33,9 +33,10 @@ import {AetherDonation} from "../src/AetherDonation.sol";
  *   - 新增 USDC 环境变量（必需）：捐款合约构造函数参数，纯链上转账用
  *   - 删除 PAYPAL_SERVER 环境变量与 donation.MINTER_ROLE 授权（donateAndMint 为 public，无需外部 minter）
  *
- * USDC 地址参考：
- *   - Arbitrum One 主网原生 USDC：0xaf88d065e77c8cC2239327C5EDb3A432268e5831
- *   - Arbitrum Sepolia 测试网 USDC 地址需部署时确认（通过环境变量传入）
+ * USDC 地址参考（BSC Binance-Peg 稳定币均为 18 decimals，合约按 decimals() 动态计算门槛）：
+ *   - BNB Smart Chain 主网 Binance-Peg USDC：0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d
+ *   - BNB Smart Chain 主网 Binance-Peg USDT：0x55d398326f99059fF775485246999027B3197955
+ *   - BSC 测试网稳定币地址需部署时确认（通过环境变量传入）
  *   - 部署占位：0x0000000000000000000000000000000000000000（仅用于本地 anvil 测试，
  *     真实部署必须传入有效 USDC 合约地址）
  *
@@ -56,10 +57,10 @@ import {AetherDonation} from "../src/AetherDonation.sol";
  *     --broadcast \
  *     -vvv
  *
- * 部署到 Arbitrum Sepolia：
+ * 部署到 BSC 测试网：
  *   PRIVATE_KEY=0x... TREASURY=0x... SAFE=0x... USDC=0x... \
  *   forge script script/Deploy.s.sol:Deploy \
- *     --rpc-url https://sepolia-rollup.arbitrum.io/rpc \
+ *     --rpc-url https://data-seed-prebsc-1-s1.binance.org:8545 \
  *     --broadcast \
  *     --verify
  */

@@ -20,7 +20,8 @@ import {
   AetherRingABI,
   donationAddress,
   ringAddress,
-  getUsdcAddress,
+  getStablecoin,
+  getMinDonation,
   getTreasuryAddress,
 } from "@/lib/contracts";
 
@@ -42,8 +43,12 @@ const ERC20_ABI = [
 //  常量（与合约 AetherDonation.sol 对齐）
 // ═══════════════════════════════════════════════════════════
 
-/** 最低捐款金额（$10，USDC 6 decimals） */
-export const MIN_DONATION_USD = 10n * 10n ** 6n;
+/**
+ * 最低捐款金额（$10 的整数部分，与合约 MIN_DONATION_WHOLE_USD 一致）。
+ * 注意：最小单位门槛按链精度动态计算（getMinDonation）：
+ *   BSC Binance-Peg USDC/USDT（18 decimals）→ 10 * 10^18
+ */
+export const MIN_DONATION_USD_WHOLE = 10n;
 /** 快速通道所需担保人数 */
 export const SPONSORS_REQUIRED = 3;
 /** 快速通道等待期（24h） */
@@ -58,7 +63,7 @@ export const NORMAL_TRACK_DELAY = 7 * 24 * 60 * 60;
 /** 与 IAetherDonation.Donation 对齐的 5 字段结构体 */
 export interface DonationInfo {
   donor: `0x${string}`;
-  amount: bigint; // USDC 数量（6 decimals）
+  amount: bigint; // 稳定币数量（精度跟随所配稳定币：BSC 18）
   timestamp: number; // 铸造时间戳（秒）
   sponsorCount: number; // 当前担保人数
   fastTrackActivated: boolean; // 是否已激活快速通道
@@ -79,9 +84,9 @@ export type DonationStep =
   | "error";
 
 export interface DonationResult {
-  /** USDC.transfer 的 tx hash（链上真实转账） */
+  /** 稳定币 transfer 的 tx hash（链上真实转账） */
   txHash: string;
-  /** 捐款金额（USDC，原始 6 decimals） */
+  /** 捐款金额（稳定币原始最小单位，精度 = assetDecimals） */
   amount: bigint;
   /** 捐款用途（仅前端展示用，后端记录但不入合约） */
   purpose: DonationPurpose;
@@ -89,8 +94,14 @@ export interface DonationResult {
   timestamp: number;
   /** 捐款人地址 */
   donor: Address;
-  /** 金库地址（USDC 接收方，预启动阶段为 EOA） */
+  /** 金库地址（稳定币接收方，预启动阶段为 EOA） */
   treasury: Address;
+  /** 交易所在链（56=BSC 主网，97=BSC 测试网） */
+  chainId: number;
+  /** 该链稳定币精度（BSC Binance-Peg 为 18） */
+  assetDecimals: number;
+  /** 该链稳定币符号（如 "USDC"） */
+  assetSymbol: string;
   /** 后端生成的模拟道环 ID（keccak256，0x + 64 hex） */
   ringId?: string;
   /** 是否为该地址的首次捐款（首次时生成公民身份） */
@@ -98,7 +109,7 @@ export interface DonationResult {
 }
 
 interface SubmitArgs {
-  amount: bigint; // USDC 6 decimals
+  amount: bigint; // 稳定币最小单位（精度按当前链稳定币 decimals）
   purpose: DonationPurpose;
 }
 
@@ -135,9 +146,13 @@ export function useDonation() {
     setLastTxHash(null);
   }, []);
 
-  // ── 解析地址（预启动阶段不需要 donation 合约地址） ──
-  const usdc = getUsdcAddress(chainId ?? 0);
-  const treasury = getTreasuryAddress(chainId ?? 0);
+  // ── 解析地址与精度（预启动阶段不需要 donation 合约地址） ──
+  // v3.5：稳定币地址/精度按链解析（BSC 为 18），最低捐款额动态计算
+  const effectiveChainId = chainId ?? 0;
+  const stablecoin = getStablecoin(effectiveChainId);
+  const usdc = stablecoin?.address ?? null;
+  const treasury = getTreasuryAddress(effectiveChainId);
+  const minDonation = getMinDonation(effectiveChainId);
 
   const submit = useCallback(
     async ({ amount, purpose }: SubmitArgs) => {
@@ -145,7 +160,7 @@ export function useDonation() {
         push(t("connectFirst"), "info");
         return;
       }
-      if (amount < MIN_DONATION_USD) {
+      if (!minDonation || amount < minDonation) {
         push(t("errorMinAmount"), "info");
         return;
       }
@@ -156,7 +171,7 @@ export function useDonation() {
 
       let transferTx: `0x${string}` | null = null;
       try {
-        // ── 步骤 1：USDC.transfer 直接转给金库 EOA ──
+        // ── 步骤 1：稳定币.transfer 直接转给金库 EOA ──
         setStep("transferring");
         transferTx = await writeContractAsync({
           address: usdc,
@@ -182,6 +197,7 @@ export function useDonation() {
             txHash: transferTx,
             donorAddress: address,
             purpose,
+            chainId: effectiveChainId,
           }),
         });
 
@@ -202,6 +218,9 @@ export function useDonation() {
           timestamp: Date.now(),
           donor: address,
           treasury,
+          chainId: effectiveChainId,
+          assetDecimals: stablecoin?.decimals ?? 6,
+          assetSymbol: stablecoin?.symbol ?? "USDC",
           ringId: data.ringId,
           isFirstDonation: data.isFirstDonation,
         };
@@ -225,7 +244,21 @@ export function useDonation() {
         }
       }
     },
-    [address, isConnected, chainId, usdc, treasury, writeContractAsync, wagmiConfig, push, t, tToast]
+    [
+      address,
+      isConnected,
+      chainId,
+      effectiveChainId,
+      minDonation,
+      usdc,
+      stablecoin,
+      treasury,
+      writeContractAsync,
+      wagmiConfig,
+      push,
+      t,
+      tToast,
+    ]
   );
 
   return {
@@ -235,6 +268,12 @@ export function useDonation() {
     preferredAsset: PREFERRED_ASSET,
     treasuryAddress: treasury ?? "",
     usdcAddress: usdc,
+    /** 当前链稳定币精度（金额换算用；BSC 18） */
+    assetDecimals: stablecoin?.decimals ?? null,
+    /** 当前链稳定币符号（如 "USDC"） */
+    assetSymbol: stablecoin?.symbol ?? null,
+    /** 最低捐款额（最小单位，按链精度动态计算；未配置稳定币的链为 null） */
+    minDonation,
     submit,
     reset,
     /** wagmi 写入状态 */

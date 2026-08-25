@@ -43,7 +43,7 @@ type LoadState =
   | { status: "error"; message: string }
   | { status: "ok"; data: CitizenApiResponse };
 
-const ARBISCAN_TX = "https://arbiscan.io/tx/";
+const BSCSCAN_TX = "https://bscscan.com/tx/";
 
 /** 格式化 USDC 金额 */
 function formatUsdc(n: number): string {
@@ -232,7 +232,7 @@ export function CitizenView({ address }: { address: string }) {
                     </span>
                   </div>
                   <a
-                    href={`${ARBISCAN_TX}${d.txHash}`}
+                    href={`${BSCSCAN_TX}${d.txHash}`}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-xs text-accent hover:underline font-mono"

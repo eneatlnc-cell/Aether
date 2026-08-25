@@ -19,7 +19,13 @@ import {AetherRing} from "./AetherRing.sol";
  *  - V7  首次捐款铸公民道环，二次捐款不重复铸（去重逻辑）
  *  - V8  防女巫：3 公民担保快速通道（链上转账天然防女巫，无需账户去重）
  *  - V11 公民放弃冷却期 30 天（调 ring.canReacquireCitizenship 检查）
- *  - 补充 捐款门槛 ≥ $10（MIN_DONATION_USD = 10 * 10^6，USDC 6 decimals）
+ *  - 补充 捐款门槛 ≥ $10（MIN_DONATION_USD，按稳定币 decimals 动态计算）
+ *
+ *  链无关精度（v3.5 修复，审计 P0-1）：
+ *    MIN_DONATION_USD 不再硬编码 6 decimals，而是在构造时与 setUsdcToken
+ *    切换代币时读取 IERC20.decimals() 动态计算（10 * 10^decimals）。
+ *    这样同一份合约可部署在 6-decimals 与
+ *    18-decimals（BNB Chain 的 Binance-Peg USDC/USDT）网络上，门槛语义一致。
  *
  *  纯链上流程（替代原 PayPal webhook 方案）：
  *    用户连钱包 → approve USDC → 调 donateAndMint()
@@ -54,6 +60,7 @@ import {AetherRing} from "./AetherRing.sol";
 interface IERC20 {
     function transferFrom(address from, address to, uint256 amount) external returns (bool);
     function balanceOf(address account) external view returns (uint256);
+    function decimals() external view returns (uint8);
 }
 
 contract AetherDonation is ERC721, AccessControl, IAetherDonation {
@@ -66,12 +73,24 @@ contract AetherDonation is ERC721, AccessControl, IAetherDonation {
     address public usdc; // USDC 合约地址（链上转账用）
 
     // ──────────── 常量 ────────────
-    uint256 public constant MIN_DONATION_USD = 10 * 10 ** 6; // $10（USDC 6 decimals）
+    /** 最低捐款额（以美元计的整数部分）：$10 */
+    uint256 public constant MIN_DONATION_WHOLE_USD = 10;
+    /** 允许的代币最大精度（防止异常 decimals 导致乘法溢出/门槛失真） */
+    uint8 public constant MAX_TOKEN_DECIMALS = 18;
     uint256 public constant SPONSORS_REQUIRED = 3; // V8: 3 公民担保激活快速通道
     uint256 public constant FAST_TRACK_DELAY = 24 hours; // 快速通道等待期
     uint256 public constant NORMAL_TRACK_DELAY = 7 days; // 普通通道等待期
 
     // ──────────── 存储 ────────────
+    /**
+     * 最低捐款额（代币最小单位）。
+     * 构造时按所配稳定币 decimals 动态计算：10 * 10^decimals。
+     * 例：6-decimals 稳定币 → 10_000_000；
+     *     BNB Chain Binance-Peg USDC/USDT（18 decimals）→ 10_000_000_000_000_000_000。
+     * setUsdcToken 切换代币时会同步重算。
+     */
+    uint256 public MIN_DONATION_USD;
+
     mapping(uint256 => Donation) private _donations;
     mapping(address => uint256[]) private _donorTokenIds; // donor → tokenId 列表
     mapping(uint256 => mapping(address => bool)) public hasSponsored; // tokenId → sponsor → bool
@@ -87,6 +106,7 @@ contract AetherDonation is ERC721, AccessControl, IAetherDonation {
     event TreasuryUpdated(address indexed oldTreasury, address indexed newTreasury);
     event RingContractUpdated(address indexed oldRing, address indexed newRing);
     event UsdcTokenUpdated(address indexed oldUsdc, address indexed newUsdc);
+    event MinDonationUpdated(uint256 oldMin, uint256 newMin);
 
     // ──────────── 错误 ────────────
     error DonationTooSmall(uint256 amount, uint256 minRequired);
@@ -101,6 +121,7 @@ contract AetherDonation is ERC721, AccessControl, IAetherDonation {
     error InvalidTreasury();
     error InvalidRingContract();
     error InvalidUsdcToken();
+    error InvalidTokenDecimals(uint8 decimals);
     error UsdcTransferFailed();
 
     // ═══════════════════════════════════════════════════════════
@@ -110,7 +131,7 @@ contract AetherDonation is ERC721, AccessControl, IAetherDonation {
     /**
      * @param ring      AetherRing 合约地址
      * @param _treasury Safe 多签国库地址（USDC 接收方）
-     * @param _usdc     USDC 合约地址（链上转账用）
+     * @param _usdc     USDC 合约地址（链上转账用；需实现 decimals()）
      * @param admin     初始管理员（部署者，后续转交 Safe）
      */
     constructor(address ring, address _treasury, address _usdc, address admin)
@@ -124,8 +145,22 @@ contract AetherDonation is ERC721, AccessControl, IAetherDonation {
         treasury = _treasury;
         usdc = _usdc;
 
+        // 按代币精度计算最低捐款额（链无关：6 或 18 decimals 语义一致）
+        MIN_DONATION_USD = _computeMinDonation(_usdc);
+
         _grantRole(DEFAULT_ADMIN_ROLE, admin);
         _grantRole(ADMIN_ROLE, admin);
+    }
+
+    /**
+     * @dev 按稳定币 decimals 计算 $10 对应的最小单位数量。
+     *      decimals > 18 视为异常代币直接拒绝（防溢出与门槛失真）；
+     *      decimals() 调用失败同样 revert（构造/切换即失败，fail-safe）。
+     */
+    function _computeMinDonation(address token) internal view returns (uint256) {
+        uint8 d = IERC20(token).decimals();
+        if (d > MAX_TOKEN_DECIMALS) revert InvalidTokenDecimals(d);
+        return MIN_DONATION_WHOLE_USD * 10 ** d;
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -135,7 +170,7 @@ contract AetherDonation is ERC721, AccessControl, IAetherDonation {
     /**
      * @notice 纯链上捐款：转账 USDC + 铸捐款凭证 NFT + 铸公民道环
      *         任何人可调（public），需先 approve USDC 给本合约
-     * @param amount 捐款金额（USDC 6 decimals，≥ $10）
+     * @param amount 捐款金额（代币最小单位，≥ $10，精度跟随所配稳定币）
      * @return tokenId 新铸的捐款凭证 ID
      *
      * 流程：
@@ -279,13 +314,20 @@ contract AetherDonation is ERC721, AccessControl, IAetherDonation {
 
     /**
      * @notice 更新 USDC 合约地址（切换 USDC 实现时用）
-     * @param _usdc 新的 USDC 合约地址
+     * @param _usdc 新的 USDC 合约地址（需实现 decimals()；门槛将按新代币精度重算）
      */
     function setUsdcToken(address _usdc) external onlyRole(ADMIN_ROLE) {
         if (_usdc == address(0)) revert InvalidUsdcToken();
         address old = usdc;
         usdc = _usdc;
+        // 同步重算最低捐款额，避免换币后门槛失真（如 6→18 decimals 切换）
+        uint256 newMin = _computeMinDonation(_usdc);
+        uint256 oldMin = MIN_DONATION_USD;
+        MIN_DONATION_USD = newMin;
         emit UsdcTokenUpdated(old, _usdc);
+        if (newMin != oldMin) {
+            emit MinDonationUpdated(oldMin, newMin);
+        }
     }
 
     // ═══════════════════════════════════════════════════════════

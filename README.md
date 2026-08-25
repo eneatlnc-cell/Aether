@@ -2,7 +2,11 @@
 
 > Tokenless on-chain governance for public-good infrastructure.
 
-Aether is a tokenless on-chain governance kernel deployed on Arbitrum. It provides three-chamber councils (Council, Parliament, Elders), weighted voting, a 14-rank soulbound-token (SBT) identity system, and a Safe multisig treasury — without issuing any token. The governance kernel is co-developed with the [Havix](https://github.com/eneatlnc-cell/Havix) network layer, which provides the off-chain P2P coordination plane.
+Aether is a tokenless on-chain governance kernel targeting BNB Smart Chain (chainId 56). It provides three-chamber councils (Council, Parliament, Elders), weighted voting, a 14-rank soulbound-token (SBT) identity system, and a Safe multisig treasury — without issuing any token. The governance kernel is co-developed with the [Havix](https://github.com/eneatlnc-cell/Havix) network layer, which provides the off-chain P2P coordination plane.
+
+> 部署目标链：BNB Smart Chain（56）主网 / BSC 测试网（97），单链部署。
+> 稳定币地址、decimals、金库、合约地址均按 chainId 解析。
+> Arbitrum 为早期测试链（从未部署主网），v3.6 起支持已完全移除。详见 `DEPLOY.md`。
 
 ## Getting Started
 
@@ -80,4 +84,4 @@ The `contracts/lib/openzeppelin-contracts` submodule is **not** covered by the A
 
 ### Related project
 
-The Aether governance kernel is co-developed with the [Havix](https://github.com/eneatlnc-cell/Havix) network layer. Aether provides the on-chain governance kernel on Arbitrum; Havix provides the off-chain P2P coordination plane. Both are released under Apache-2.0.
+The Aether governance kernel is co-developed with the [Havix](https://github.com/eneatlnc-cell/Havix) network layer. Aether provides the on-chain governance kernel on BNB Smart Chain; Havix provides the off-chain P2P coordination plane. Both are released under Apache-2.0.

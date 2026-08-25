@@ -54,8 +54,8 @@ forge coverage
 # 1. 启动本地链
 anvil --block-time 1 &
 
-# 2. 部署 4 合约
-PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
+# 2. 部署 4 合约（私钥从 Anvil 启动时打印的测试账户复制；切勿硬编码真实私钥）
+PRIVATE_KEY=<Anvil-打印的第一个测试账户私钥> \
 TREASURY=0x70997970C51812dc3A010C7d01b50e0d17dc79C8 \
 forge script contracts/script/Deploy.s.sol:Deploy \
   --rpc-url http://127.0.0.1:8545 \
@@ -81,38 +81,38 @@ forge script contracts/script/Genesis.s.sol:Genesis \
 **问题**：`appointElder` 和 `retireToEmeritus` 要求 `msg.sender == Safe`，需要先创建 Safe 多签钱包
 
 **待执行**：
-1. 在 Arbitrum 上创建 Safe v1.4.1 多签钱包（建议 3/5 阈值）
+1. 在 BNB Smart Chain 上创建 Safe v1.4.1 多签钱包（建议 3/5 阈值）
 2. 将 Safe 地址配置到 `ring.setSafeWallet(<SAFE>)`
 3. 通过 Safe 多签执行 5 次 `ring.appointElder(<elder>, "")`
 4. 将 `donation.ADMIN_ROLE` 转移给 Safe
 
 **参考**：https://app.safe.global/
 
-### 2.3 Arbitrum Sepolia 测试网部署
+### 2.3 BSC 测试网部署
 
 **待执行命令**：
 ```bash
 PRIVATE_KEY=0x... \
 TREASURY=0x... \
 forge script contracts/script/Deploy.s.sol:Deploy \
-  --rpc-url https://sepolia-rollup.arbitrum.io/rpc \
+  --rpc-url https://data-seed-prebsc-1-s1.binance.org:8545 \
   --broadcast \
   --verify \
-  --etherscan-api-key $ARBISCAN_API_KEY
+  --etherscan-api-key $BSCSCAN_API_KEY
 ```
 
 ### 2.4 前端环境变量配置
 
 部署完成后，在 Vercel 或 `.env.local` 中设置：
 ```bash
-# Arbitrum Sepolia (421614)
+# BSC 测试网 (97)
 NEXT_PUBLIC_AETHER_RING_421614_ADDRESS=0x...
 NEXT_PUBLIC_AETHER_GOVERNANCE_421614_ADDRESS=0x...
 NEXT_PUBLIC_AETHER_ELECTION_421614_ADDRESS=0x...
 NEXT_PUBLIC_AETHER_DONATION_421614_ADDRESS=0x...
 NEXT_PUBLIC_SAFE_WALLET_421614_ADDRESS=0x...
 
-# Arbitrum One (42161) - 主网部署后
+# BNB Smart Chain (56) - 主网部署后
 NEXT_PUBLIC_AETHER_RING_42161_ADDRESS=0x...
 NEXT_PUBLIC_AETHER_GOVERNANCE_42161_ADDRESS=0x...
 NEXT_PUBLIC_AETHER_ELECTION_42161_ADDRESS=0x...
@@ -157,7 +157,7 @@ NEXT_PUBLIC_SAFE_WALLET_42161_ADDRESS=0x...
 **待实现**：
 1. Safe 多签发起 USDC 转账（donor → treasury）
 2. 转账确认后调用 `donation.settleDonation(tokenId, usdcAmount)`
-3. USDC 合约地址：Arbitrum One `0xaf88d065e77c8cC2239327C5EDb3A432268e5831`（原生 USDC）
+3. USDC 合约地址（BSC Binance-Peg，18 decimals）：`0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d`
 4. 金额精度：6 decimals
 
 ---
@@ -186,8 +186,8 @@ NEXT_PUBLIC_SAFE_WALLET_42161_ADDRESS=0x...
 
 ### 4.3 已知前端待处理（真实环境）
 
-- **useDonation 旧版 ETH 转账**：当前 `useDonation()` 仍保留 ETH 直接转账到 `TREASURY_ADDRESSES.arbitrum`（占位地址 `0x000…AeTh`）。真实部署后应：
-  1. 将 `TREASURY_ADDRESSES.arbitrum` 替换为真实 Safe 多签地址，或改为读取 `useDonationTreasury()` 返回值
+- **useDonation 旧版 ETH 转账**：当前 `useDonation()` 仍保留 ETH 直接转账到占位地址（`0x000…AeTh`，v3.6 已移除该分支的链特定引用）。真实部署后应：
+  1. 将 `TREASURY_ADDRESSES.bsc` 替换为真实 Safe 多签地址，或改为读取 `useDonationTreasury()` 返回值
   2. USDC/USDT 分支目前为模拟交易，需接入真实 ERC20 `transfer(treasury, amount)`（建议另建 `useErc20Transfer` hook）
 - **wagmi struct 返回值类型**：`useRingInfo.getRingInfo` / `useDonation.getDonation` 等返回 struct 的函数，wagmi 推断为命名对象而非数组，已用 `as unknown as readonly unknown[]` 二次转换绕过；升级 wagmi 版本后需复核此 cast 是否仍必要。
 
@@ -332,7 +332,7 @@ v3 合约不可升级（无 proxy）。若需修复严重 bug：
 **最高优先级**：
 1. ✅ 已完成 (v3.1)
 2. 本地执行 `forge test` 验证全部 89 个测试
-3. 创建 Safe 多签并完成 Arbitrum Sepolia 部署
+3. 创建 Safe 多签并完成 BSC 测试网部署
 4. 真实环境执行 `pnpm build` + UI 组件适配 v3 枚举
 
 ---

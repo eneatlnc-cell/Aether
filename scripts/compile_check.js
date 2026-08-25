@@ -1,17 +1,21 @@
 // 用 solc-js 编译 Aether DAO 所有合约，验证编译通过（语法/类型/链接）
 // 不跑测试，仅做编译检查（相当于 forge build 的前置验证）
+// 用法：node scripts/compile_check.js（需先 npm install solc @openzeppelin/contracts）
 const fs = require("fs");
 const path = require("path");
-const solc = require("/workspace/node_modules/solc");
 
-const CONTRACTS_DIR = "/workspace/contracts/src";
-const TEST_DIR = "/workspace/contracts/test";
-const SCRIPT_DIR = "/workspace/contracts/script";
+// 仓库根目录（本脚本位于 <repo>/scripts/）
+const REPO_ROOT = path.resolve(__dirname, "..");
+const solc = require(path.join(REPO_ROOT, "node_modules", "solc"));
+
+const CONTRACTS_DIR = path.join(REPO_ROOT, "contracts", "src");
+const TEST_DIR = path.join(REPO_ROOT, "contracts", "test");
+const SCRIPT_DIR = path.join(REPO_ROOT, "contracts", "script");
 // OZ npm 包：@openzeppelin/contracts 是包名，其内部 import 路径就是
 // @openzeppelin/contracts/access/AccessControl.sol → node_modules/@openzeppelin/contracts/access/AccessControl.sol
 // 所以 remapping 应该把 "@openzeppelin/contracts/" 直接映射到包目录
 const REMAPPINGS = {
-  "@openzeppelin/contracts/": "/workspace/node_modules/@openzeppelin/contracts/",
+  "@openzeppelin/contracts/": path.join(REPO_ROOT, "node_modules", "@openzeppelin", "contracts") + "/",
 };
 
 // 递归收集 .sol 文件
@@ -67,25 +71,23 @@ interface Vm {
 }
 contract Test {
   Vm internal constant vm = Vm(address(0x7109709ECfa91a80626fF3989D68f67F5b1DD12D));
-  function assertTrue(bool) public {}
-  function assertTrue(bool, string memory) public {}
-  function assertFalse(bool) public {}
-  function assertFalse(bool, string memory) public {}
-  function assertEq(uint256,uint256) public {}
-  function assertEq(address,address) public {}
-  function assertEq(bytes32,bytes32) public {}
-  function assertEq(uint8,uint8) public {}
-  function assertEq(string memory,string memory) public {}
-  function assertEq(uint256,uint256,string memory) public {}
-  function assertEq(address,address,string memory) public {}
-  function assertEq(uint8,uint8,string memory) public {}
-  function assertEq(bool,bool) public {}
-  function assertNotEq(uint256,uint256) public {}
-  function assertGt(uint256,uint256) public {}
-  function assertGt(uint256,uint256,string memory) public {}
-  function assertLt(uint256,uint256) public {}
-  function assertApproxEqAbs(uint256,uint256,uint256) public {}
-  function assertApproxEqAbs(uint256,uint256,uint256,string memory) public {}
+  function assertTrue(bool) public view {}
+  function assertTrue(bool, string memory) public view {}
+  function assertFalse(bool) public view {}
+  function assertFalse(bool, string memory) public view {}
+  function assertEq(uint256,uint256) public view {}
+  function assertEq(address,address) public view {}
+  function assertEq(bytes32,bytes32) public view {}
+  function assertEq(string memory,string memory) public view {}
+  function assertEq(uint256,uint256,string memory) public view {}
+  function assertEq(address,address,string memory) public view {}
+  function assertEq(bool,bool) public view {}
+  function assertNotEq(uint256,uint256) public view {}
+  function assertGt(uint256,uint256) public view {}
+  function assertGt(uint256,uint256,string memory) public view {}
+  function assertLt(uint256,uint256) public view {}
+  function assertApproxEqAbs(uint256,uint256,uint256) public view {}
+  function assertApproxEqAbs(uint256,uint256,uint256,string memory) public view {}
   function skip(uint256) public {}
   function rewind(uint256) public {}
 }

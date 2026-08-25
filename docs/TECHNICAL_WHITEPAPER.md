@@ -2,7 +2,7 @@
 
 > **版本**：v3.0
 > **日期**：2026-07-24
-> **链**：Arbitrum One（L2 Rollup）
+> **链**：BNB Smart Chain（BSC，chainId 56）
 > **状态**：Phase 1-6 开发完成，v3.1 已修复 C2/H11/C1 等关键问题，待主网部署
 
 ---
@@ -11,7 +11,7 @@
 
 ### 1.1 愿景
 
-Aether Foundation 是一个部署于 Arbitrum 区块链的非营利 DAO，致力于去中心化基础设施与 AI 研究的长期资助。通过链上治理系统，实现资金的透明分配与社区共治，避免传统基金会的中心化信任问题。
+Aether Foundation 是一个部署于 BNB Smart Chain（BSC）的非营利 DAO，致力于去中心化基础设施与 AI 研究的长期资助。通过链上治理系统，实现资金的透明分配与社区共治，避免传统基金会的中心化信任问题。
 
 ### 1.2 核心目标
 
@@ -24,7 +24,7 @@ Aether Foundation 是一个部署于 Arbitrum 区块链的非营利 DAO，致力
 
 | 层 | 技术 |
 |---|---|
-| 区块链 | Arbitrum One（EVM 兼容，低 gas，~1s 确认）|
+| 区块链 | BNB Smart Chain（EVM 兼容，低 gas，~3s 出块）|
 | 智能合约 | Solidity 0.8.26 + OpenZeppelin Contracts v5 |
 | 开发框架 | Foundry（forge / anvil / cast）|
 | 多签金库 | Safe v1.4.1（3/5 阈值）|
@@ -375,7 +375,7 @@ v3 删除了 `REELECTION` 类型和 `renewTerm` 函数，所有任期到期后�
 
 ### 8.3 配置层
 
-- `config.ts`：支持 Arbitrum One / Sepolia / Anvil，链专属 + 通用环境变量两级回退
+- `config.ts`：支持 BSC 主网 / 测试网 / Anvil，链专属 + 通用环境变量两级回退
 - `index.ts`：14 tier + 12 status + 新枚举定义，与合约 ABI 对齐
 
 ---

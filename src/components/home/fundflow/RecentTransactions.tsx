@@ -92,7 +92,7 @@ function TransactionRow({ tx }: { tx: TreasuryTransaction }) {
           })}
         </p>
         <a
-          href={`https://arbiscan.io/tx/${tx.txHash}`}
+          href={`https://bscscan.com/tx/${tx.txHash}`}
           target="_blank"
           rel="noopener noreferrer"
           className="inline-flex items-center gap-1 text-xs text-muted hover:text-accent transition-colors mt-0.5"

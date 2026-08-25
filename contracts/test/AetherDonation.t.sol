@@ -24,6 +24,9 @@ import {IAetherDonation} from "../src/interfaces/IAetherDonation.sol";
  *   T2.11 构造函数零地址校验（ring / treasury / usdc）
  *   T2.12 重复担保 revert
  *   T2.13 setUsdcToken 管理函数
+ *   T2.14 BSC 场景：18 decimals 稳定币（Binance-Peg USDC/USDT）门槛 = 10 * 10^18
+ *   T2.15 setUsdcToken 跨精度切换（6 → 18）：门槛重算 + MinDonationUpdated 事件
+ *   T2.16 异常 decimals（>18）代币：构造与切换均 revert InvalidTokenDecimals
  */
 contract AetherDonationTest is Test {
     AetherRing ring;
@@ -370,6 +373,90 @@ contract AetherDonationTest is Test {
         donation.setUsdcToken(address(newUsdc));
         assertEq(donation.usdc(), address(newUsdc));
     }
+
+    // ═══════════════════════════════════════════════════════════
+    //  T2.14 BSC 场景：18 decimals 稳定币（Binance-Peg USDC/USDT）
+    // ═══════════════════════════════════════════════════════════
+    function test_Constructor_18Decimals_BscStablecoin() public {
+        // 模拟 BNB Chain 上的 Binance-Peg USDT（18 decimals）
+        MockStablecoin bscUsdt = new MockStablecoin(18);
+        AetherDonation bscDonation =
+            new AetherDonation(address(ring), treasury, address(bscUsdt), admin);
+        ring.grantRole(ring.MINTER_ROLE(), address(bscDonation));
+
+        // 门槛按 18 decimals 计算：$10 = 10 * 10^18
+        uint256 expected = 10 * 10 ** 18;
+        assertEq(bscDonation.MIN_DONATION_USD(), expected);
+
+        // 9.99 USDT（= 999 * 10^16）→ revert DonationTooSmall
+        uint256 small = 999 * 10 ** 16;
+        bscUsdt.mint(alice, small);
+        vm.startPrank(alice);
+        bscUsdt.approve(address(bscDonation), small);
+        vm.expectRevert(
+            abi.encodeWithSelector(AetherDonation.DonationTooSmall.selector, small, expected)
+        );
+        bscDonation.donateAndMint(small);
+        vm.stopPrank();
+        assertEq(bscDonation.getTotalDonations(), 0);
+
+        // 10 USDT → 成功（铸凭证 + 公民道环 + 转账到国库）
+        bscUsdt.mint(alice, expected);
+        vm.startPrank(alice);
+        bscUsdt.approve(address(bscDonation), expected);
+        uint256 tokenId = bscDonation.donateAndMint(expected);
+        vm.stopPrank();
+
+        assertEq(tokenId, 1);
+        assertEq(bscUsdt.balanceOf(treasury), expected);
+        assertEq(bscUsdt.balanceOf(alice), 0);
+        assertTrue(ring.isBearer(alice));
+        assertEq(bscDonation.ownerOf(tokenId), alice);
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  T2.15 setUsdcToken 跨精度切换（6 → 18）：门槛重算 + 事件
+    // ═══════════════════════════════════════════════════════════
+    function test_SetUsdcToken_DecimalsChange_RecalculatesMinDonation() public {
+        MockStablecoin bscUsdt = new MockStablecoin(18);
+
+        // 切换前：6 decimals 门槛 = 10 * 10^6
+        assertEq(donation.MIN_DONATION_USD(), 10 * 10 ** 6);
+
+        // 切换到 18 decimals：UsdcTokenUpdated + MinDonationUpdated 均发出
+        vm.expectEmit(true, true, true, true);
+        emit AetherDonation.UsdcTokenUpdated(address(usdc), address(bscUsdt));
+        vm.expectEmit(true, true, true, true);
+        emit AetherDonation.MinDonationUpdated(10 * 10 ** 6, 10 * 10 ** 18);
+        donation.setUsdcToken(address(bscUsdt));
+
+        // 门槛已按 18 decimals 重算
+        assertEq(donation.MIN_DONATION_USD(), 10 * 10 ** 18);
+        assertEq(donation.usdc(), address(bscUsdt));
+    }
+
+    // ═══════════════════════════════════════════════════════════
+    //  T2.16 异常 decimals（>18）：构造与切换均 revert，门槛不受污染
+    // ═══════════════════════════════════════════════════════════
+    function test_AbnormalDecimals_Revert() public {
+        WeirdDecimalsToken weird = new WeirdDecimalsToken();
+
+        // 构造时 revert（fail-safe：异常代币直接拒绝部署）
+        vm.expectRevert(
+            abi.encodeWithSelector(AetherDonation.InvalidTokenDecimals.selector, 36)
+        );
+        new AetherDonation(address(ring), treasury, address(weird), admin);
+
+        // setUsdcToken 切换到异常代币 revert（revert 回滚 usdc 赋值）
+        vm.expectRevert(
+            abi.encodeWithSelector(AetherDonation.InvalidTokenDecimals.selector, 36)
+        );
+        donation.setUsdcToken(address(weird));
+
+        // 状态未被污染：仍是原 USDC 与原门槛
+        assertEq(donation.usdc(), address(usdc));
+        assertEq(donation.MIN_DONATION_USD(), 10 * 10 ** 6);
+    }
 }
 
 /**
@@ -449,5 +536,63 @@ contract BadUSDC {
     // 关键：transferFrom 恒返回 false（不 revert），模拟某些 USDC 实现的失败行为
     function transferFrom(address, address, uint256) external returns (bool) {
         return false;
+    }
+}
+
+/**
+ * @title MockStablecoin — 可配置 decimals 的标准 ERC20 mock
+ * @dev 用于跨链精度测试：
+ *      6  = 6-decimals 稳定币（非 BSC 场景，用于验证跨精度兼容）
+ *      18 = BNB Chain Binance-Peg USDC / USDT
+ */
+contract MockStablecoin {
+    string public name = "Mock Stablecoin";
+    string public symbol = "MST";
+    uint8 public decimals;
+
+    mapping(address => uint256) public balanceOf;
+    mapping(address => mapping(address => uint256)) public allowance;
+
+    constructor(uint8 d) {
+        decimals = d;
+    }
+
+    function mint(address to, uint256 amount) external {
+        balanceOf[to] += amount;
+    }
+
+    function approve(address spender, uint256 amount) external returns (bool) {
+        allowance[msg.sender][spender] = amount;
+        return true;
+    }
+
+    function transfer(address to, uint256 amount) external returns (bool) {
+        return _transfer(msg.sender, to, amount);
+    }
+
+    function transferFrom(address from, address to, uint256 amount) external returns (bool) {
+        uint256 allowed = allowance[from][msg.sender];
+        require(allowed >= amount, "MST: insufficient allowance");
+        allowance[from][msg.sender] = allowed - amount;
+        return _transfer(from, to, amount);
+    }
+
+    function _transfer(address from, address to, uint256 amount) internal returns (bool) {
+        require(balanceOf[from] >= amount, "MST: insufficient balance");
+        balanceOf[from] -= amount;
+        balanceOf[to] += amount;
+        return true;
+    }
+}
+
+/**
+ * @title WeirdDecimalsToken — decimals=36 的异常代币
+ * @dev 用于测试 InvalidTokenDecimals 防线（防止异常精度导致门槛失真/溢出）
+ */
+contract WeirdDecimalsToken {
+    uint8 public decimals = 36;
+
+    function transferFrom(address, address, uint256) external pure returns (bool) {
+        return true;
     }
 }

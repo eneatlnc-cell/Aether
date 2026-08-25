@@ -45,6 +45,8 @@ export interface DonationRow {
   tx_timestamp: Date;
   purpose: string;
   ring_id: string | null;
+  /** 交易所在链（新增列；历史行迁移默认 42161=预启动期 Arbitrum 测试） */
+  chain_id: number;
   recorded_at: Date;
   migrated: boolean;
 }
@@ -58,6 +60,8 @@ export interface RecordDonationInput {
   /** 区块时间戳（unix 秒） */
   txTimestamp: number;
   purpose?: string;
+  /** 交易所在链（56=BSC 主网，97=BSC 测试网） */
+  chainId: number;
 }
 
 export interface RecordDonationResult {
@@ -97,12 +101,16 @@ export async function ensureSchema(): Promise<void> {
       tx_timestamp TIMESTAMPTZ NOT NULL,
       purpose TEXT NOT NULL DEFAULT 'unrestricted',
       ring_id TEXT,
+      chain_id INTEGER NOT NULL DEFAULT 42161,
       recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       migrated BOOLEAN NOT NULL DEFAULT FALSE
     )
   `;
+  // v3.5 幂等迁移：为旧库补 chain_id 列（历史行 42161 = 预启动期 Arbitrum 测试标记）
+  await sql`ALTER TABLE donations ADD COLUMN IF NOT EXISTS chain_id INTEGER NOT NULL DEFAULT 42161`;
   await sql`CREATE INDEX IF NOT EXISTS idx_donations_donor ON donations(donor_address)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_donations_tx ON donations(tx_hash)`;
+  await sql`CREATE INDEX IF NOT EXISTS idx_donations_chain ON donations(chain_id)`;
 }
 
 /**
@@ -195,7 +203,7 @@ export async function recordDonation(
   const addr = input.donorAddress.toLowerCase();
   const txHash = input.txHash.toLowerCase();
   const purpose = input.purpose ?? "unrestricted";
-  const blockNum = Number(input.blockNumber); // BIGINT 列；Arbitrum 区块号在安全范围内
+  const blockNum = Number(input.blockNumber); // BIGINT 列；BSC 区块号在安全范围内
   const txIso = new Date(input.txTimestamp * 1000).toISOString();
 
   const ringId = generateRingId(addr, txHash, input.txTimestamp);
@@ -205,10 +213,10 @@ export async function recordDonation(
   const citizen = await getCitizenByAddress(addr);
   const canonicalRingId = citizen!.ring_id;
 
-  // 2. 幂等写入捐款（donations.donor_address 有 FK → 必须先有公民）
+  // 2. 幂等写入捐款（donations.donor_address 有 FK → 必须先有公民；chain_id 记录所在链）
   const { rows } = await sql<{ id: number }>`
-    INSERT INTO donations (tx_hash, donor_address, amount_usdc, block_number, tx_timestamp, purpose, ring_id)
-    VALUES (${txHash}, ${addr}, ${input.amountUsdc}, ${blockNum}, ${txIso}, ${purpose}, ${canonicalRingId})
+    INSERT INTO donations (tx_hash, donor_address, amount_usdc, block_number, tx_timestamp, purpose, ring_id, chain_id)
+    VALUES (${txHash}, ${addr}, ${input.amountUsdc}, ${blockNum}, ${txIso}, ${purpose}, ${canonicalRingId}, ${input.chainId})
     ON CONFLICT (tx_hash) DO NOTHING
     RETURNING id
   `;

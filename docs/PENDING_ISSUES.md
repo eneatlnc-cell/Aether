@@ -212,13 +212,13 @@ myth analyze contracts/src/AetherGovernance.sol
 
 - [ ] Safe 多签发起 USDC 转账（donor → treasury）
 - [ ] 转账确认后调用 `donation.settleDonation(tokenId, usdcAmount)`
-- [ ] USDC 合约地址：Arbitrum One `0xaf88d065e77c8cC2239327C5EDb3A432268e5831`
-- [ ] 金额精度：6 decimals
+- [ ] USDC 合约地址（BSC Binance-Peg）：`0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d`
+- [ ] 金额精度：18 decimals（Binance-Peg USDC/USDT）
 
 ### 3.4 前端待处理
 
 - [ ] **useDonation 旧版 ETH 转账**：当前 `useDonation()` 仍保留 ETH 直接转账到占位地址 `0x000…AeTh`。真实部署后：
-  1. 将 `TREASURY_ADDRESSES.arbitrum` 替换为真实 Safe 地址，或改为读取 `useDonationTreasury()` 返回值
+  1. 将 `TREASURY_ADDRESSES.bsc` 替换为真实 Safe 地址，或改为读取 `useDonationTreasury()` 返回值
   2. USDC/USDT 分支目前为模拟交易，需接入真实 ERC20 `transfer(treasury, amount)`
 - [ ] **wagmi struct 返回值类型**：`useRingInfo.getRingInfo` / `useDonation.getDonation` 等返回 struct 的函数，wagmi 推断为命名对象而非数组，已用 `as unknown as readonly unknown[]` 二次转换绕过；升级 wagmi 版本后需复核
 - [ ] **UI 组件适配 v3 枚举**：
@@ -333,7 +333,7 @@ v3 合约不可升级（无 proxy）。若需修复严重 bug：
 9. ✅ **修复 H10**：端到端集成测试已编写
 10. ✅ **修复 H11**：权重重归一化 1666 BPS/院 + 5000 BPS 公民
 11. ⏳ **本地执行 `forge test -vvv`** 验证全部测试（需 Foundry 环境）
-12. ⏳ **创建 Safe 多签** 并完成 Arbitrum Sepolia 部署
+12. ⏳ **创建 Safe 多签** 并完成 BSC 测试网部署
 13. ⏳ **真实环境执行 `pnpm build`** + UI 组件适配 v3 枚举
 
 ---

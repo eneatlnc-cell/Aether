@@ -60,8 +60,8 @@ export function getTreasuryAddress(chainId: number): `0x${string}` | null {
 }
 
 // 保留旧常量名兼容（内部用），但改为 null 占位，强制走 getTreasuryAddress
-export const TREASURY_ADDRESSES: Record<"arbitrum" | "ethereum", string> = {
-  arbitrum: "",
+export const TREASURY_ADDRESSES: Record<"bsc" | "ethereum", string> = {
+  bsc: "",
   ethereum: "",
 };
 

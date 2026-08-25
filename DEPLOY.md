@@ -1,7 +1,8 @@
 # Aether DAO 部署文档
 
 > 三院分权治理 + Safe v1.4 多签 + 选举 + 弹劾
-> 目标链：Arbitrum One (42161) / Arbitrum Sepolia (421614) / 本地 Anvil (31337)
+> 目标链：BNB Smart Chain (56) 主网 / BSC 测试网 (97) / 本地 Anvil (31337)
+> （Arbitrum 为早期测试链，从未部署主网，v3.6 起支持已完全移除）
 
 ---
 
@@ -12,9 +13,9 @@
 | 1 | Foundry (`forge`, `cast`, `anvil`) | https://book.getfoundry.sh/getting-started/installation |
 | 2 | Node.js 20+ + pnpm 9+ | https://nodejs.org / `npm i -g pnpm` |
 | 3 | Deployer 私钥 | `cast wallet new`（推荐硬件钱包） |
-| 4 | Deployer ETH 余额 | Arbitrum One ≥ 0.05 ETH |
-| 5 | Arbitrum RPC URL | Alchemy / Infura / QuickNode 申请 |
-| 6 | Arbiscan API Key | https://arbiscan.io/myapikey |
+| 4 | Deployer BNB 余额 | BSC 主网 ≥ 0.05 BNB |
+| 5 | BSC RPC URL | 官方 `https://bsc-dataseed.binance.org` 或 NodeReal / Ankr / QuickNode 申请 |
+| 6 | BscScan API Key | https://bscscan.com/myapikey |
 | 7 | 5 个多签持有人地址 | 5 个独立硬件钱包 / 钱包 |
 | 8 | WalletConnect Project ID | https://cloud.walletconnect.com |
 | 9 | Pinata API Key + Secret | https://app.pinata.cloud |
@@ -24,8 +25,9 @@
 ```bash
 # .env（已在 .gitignore 中）
 PRIVATE_KEY=0x...                                  # 部署私钥
-ARBITRUM_RPC_URL=https://arb-mainnet.g.alchemy.com/v2/<KEY>
-ARBISCAN_API_KEY=...
+BSC_RPC_URL=https://bsc-dataseed.binance.org
+BSC_TESTNET_RPC_URL=https://data-seed-prebsc-1-s1.binance.org:8545
+BSCSCAN_API_KEY=...
 SAFE_OWNERS=0xAddr1,0xAddr2,0xAddr3,0xAddr4,0xAddr5
 SAFE_THRESHOLD=3
 ```
@@ -66,7 +68,7 @@ node scripts/verify-contracts.js
 ### 方式 A（推荐）：用 Safe 官方 UI
 
 1. 打开 https://app.safe.global → "Create Account"
-2. 选 **Arbitrum** 网络
+2. 选 **BNB Smart Chain** 网络
 3. 添加 5 个 Owner 地址，Threshold = 3
 4. 部署（需要 Deployer 支付 gas，约 $2-5）
 5. 记录 Safe 地址：`0x...`（这就是 `SAFE_WALLET_ADDRESS`）
@@ -82,12 +84,13 @@ node scripts/verify-contracts.js
 
 ```bash
 # 调用 ISafe.getOwners() 应返回 5 个地址
-cast call <SAFE_ADDR> "getOwners()(address[])" --rpc-url $ARBITRUM_RPC_URL
+cast call <SAFE_ADDR> "getOwners()(address[])" --rpc-url $BSC_RPC_URL
 # 调用 ISafe.getThreshold() 应返回 3
-cast call <SAFE_ADDR> "getThreshold()(uint256)" --rpc-url $ARBITRUM_RPC_URL
+cast call <SAFE_ADDR> "getThreshold()(uint256)" --rpc-url $BSC_RPC_URL
 ```
 
-Safe v1.4.1 在 Arbitrum One 已部署单例：`0x41675C099F32341bf84BFc5382aF534df5C7461a`
+Safe v1.4.1 官方支持 BNB Smart Chain 主网与测试网（单例地址与多链一致，
+见 Safe 官方支持网络文档；部署后在 bscscan 复核）。
 
 ---
 
@@ -100,10 +103,12 @@ Safe v1.4.1 在 Arbitrum One 已部署单例：`0x41675C099F32341bf84BFc5382aF53
 anvil --block-time 2
 
 # 终端 2：部署
-cd /workspace/contracts
+cd contracts
+# 私钥从 Anvil 启动时打印的测试账户复制；生产环境从密钥管理注入，切勿硬编码
+export PRIVATE_KEY=<Anvil-打印的第一个测试账户私钥>
 forge script script/Deploy.s.sol:Deploy \
   --rpc-url http://127.0.0.1:8545 \
-  --private-key 0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \  # Anvil 默认第一个账户
+  --private-key $PRIVATE_KEY \
   --broadcast \
   -vvv
 ```
@@ -116,32 +121,49 @@ AetherGovernance:0x...
 AetherElection:  0x...
 ```
 
-### 3.2 Arbitrum Sepolia（测试网）
+### 3.2 BNB Smart Chain 测试网（chainId 97，目标链测试网）
 
 ```bash
 forge script script/Deploy.s.sol:Deploy \
-  --rpc-url https://sepolia-rollup.arbitrum.io/rpc \
+  --rpc-url $BSC_TESTNET_RPC_URL \
   --private-key $PRIVATE_KEY \
   --broadcast \
   --verify \
-  --verifier-url https://api-sepolia.arbiscan.io/api \
-  --etherscan-api-key $ARBISCAN_API_KEY \
+  --verifier-url https://api-testnet.bscscan.com/api \
+  --etherscan-api-key $BSCSCAN_API_KEY \
   -vvv
 ```
 
-### 3.3 Arbitrum One（主网）
+### 3.3 BNB Smart Chain 主网（chainId 56，v3.5 目标主网）
 
 ```bash
 forge script script/Deploy.s.sol:Deploy \
-  --rpc-url $ARBITRUM_RPC_URL \
+  --rpc-url $BSC_RPC_URL \
   --private-key $PRIVATE_KEY \
   --broadcast \
   --verify \
-  --verifier-url https://api.arbiscan.io/api \
-  --etherscan-api-key $ARBISCAN_API_KEY \
+  --verifier-url https://api.bscscan.com/api \
+  --etherscan-api-key $BSCSCAN_API_KEY \
   --slow \
   -vvv
 ```
+
+**BSC 部署要点**：
+
+1. 合约层零改动：代码不含任何链专属依赖（无 precompile / chainId 分支），
+   直接换 RPC 部署即可。
+2. 稳定币精度：`AetherDonation` 构造时按 `USDC.decimals()` 动态计算
+   `MIN_DONATION_USD`。BSC 上 Binance-Peg USDC/USDT 均为 **18 decimals**
+   （$10 = 10 * 10^18）；合约对任意 ≤18 decimals 的稳定币语义一致。
+3. 稳定币地址（BSC 主网）：
+   - Binance-Peg USDC：`0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d`
+   - Binance-Peg USDT：`0x55d398326f99059fF775485246999027B3197955`
+4. Safe 多签：Safe v1.4.1 官方支持 BNB Smart Chain 主网与测试网
+   （单例地址与多链一致，见 Safe 官方支持网络文档；部署后在 bscscan 复核）。
+5. 前端配置：`NEXT_PUBLIC_CHAIN_ID=56`，金库地址必须显式配置
+   （无代码内置默认金库，未配置时捐款入口自动禁用，fail-safe）。
+6. 区块确认：BSC 出块约 3 秒（无最终性插槽，建议捐款验证按 1 个区块确认 +
+   后端二次校验的现有方案即可；若对接交易所级最终性需求再提高确认数）。
 
 部署脚本 `Deploy.s.sol` 自动完成：
 1. 部署 AetherRing
@@ -161,11 +183,11 @@ forge script script/Deploy.s.sol:Deploy \
 ```bash
 # 在 Ring 合约上设置
 cast send <RING_ADDR> "setSafeWallet(address)" <SAFE_ADDR> \
-  --rpc-url $ARBITRUM_RPC_URL --private-key $PRIVATE_KEY
+  --rpc-url $BSC_RPC_URL --private-key $PRIVATE_KEY
 
 # 在 Governance 合约上设置（弹劾多签审查）
 cast send <GOVERNANCE_ADDR> "setSafeWallet(address)" <SAFE_ADDR> \
-  --rpc-url $ARBITRUM_RPC_URL --private-key $PRIVATE_KEY
+  --rpc-url $BSC_RPC_URL --private-key $PRIVATE_KEY
 ```
 
 ### 4.2 铸造初始道环（创始团队）
@@ -175,7 +197,7 @@ cast send <GOVERNANCE_ADDR> "setSafeWallet(address)" <SAFE_ADDR> \
 cast send <RING_ADDR> \
   "mintRing(address,uint8,string)" \
   0xABC 3 "ipfs://QmFounderCovenantHash..." \
-  --rpc-url $ARBITRUM_RPC_URL --private-key $PRIVATE_KEY
+  --rpc-url $BSC_RPC_URL --private-key $PRIVATE_KEY
 ```
 
 权级对照：
@@ -197,23 +219,23 @@ cast send <RING_ADDR> \
 ```bash
 # 给创始议员授提案权
 cast send <GOVERNANCE_ADDR> "grantProposerRole(address)" 0xDEF \
-  --rpc-url $ARBITRUM_RPC_URL --private-key $PRIVATE_KEY
+  --rpc-url $BSC_RPC_URL --private-key $PRIVATE_KEY
 ```
 
 ### 4.4 验证部署
 
 ```bash
 # 检查 Ring 合约状态
-cast call <RING_ADDR> "getTierCount(uint8)" 3 --rpc-url $ARBITRUM_RPC_URL  # 应返回已铸的议长数
-cast call <RING_ADDR> "getTotalMembers()" --rpc-url $ARBITRUM_RPC_URL       # 普通会员总数
-cast call <RING_ADDR> "safeWallet()" --rpc-url $ARBITRUM_RPC_URL            # 应返回 Safe 地址
+cast call <RING_ADDR> "getTierCount(uint8)" 3 --rpc-url $BSC_RPC_URL  # 应返回已铸的议长数
+cast call <RING_ADDR> "getTotalMembers()" --rpc-url $BSC_RPC_URL       # 普通会员总数
+cast call <RING_ADDR> "safeWallet()" --rpc-url $BSC_RPC_URL            # 应返回 Safe 地址
 
 # 检查 Governance
-cast call <GOVERNANCE_ADDR> "proposalCount()" --rpc-url $ARBITRUM_RPC_URL   # 应为 0
-cast call <GOVERNANCE_ADDR> "safeWallet()" --rpc-url $ARBITRUM_RPC_URL      # 应返回 Safe 地址
+cast call <GOVERNANCE_ADDR> "proposalCount()" --rpc-url $BSC_RPC_URL   # 应为 0
+cast call <GOVERNANCE_ADDR> "safeWallet()" --rpc-url $BSC_RPC_URL      # 应返回 Safe 地址
 
 # 检查 Election
-cast call <ELECTION_ADDR> "electionCount()" --rpc-url $ARBITRUM_RPC_URL     # 应为 0
+cast call <ELECTION_ADDR> "electionCount()" --rpc-url $BSC_RPC_URL     # 应为 0
 ```
 
 ---
@@ -223,18 +245,20 @@ cast call <ELECTION_ADDR> "electionCount()" --rpc-url $ARBITRUM_RPC_URL     # �
 ### 5.1 创建 `.env.local`（本地开发）
 
 ```bash
-# /workspace/.env.local
-NEXT_PUBLIC_CHAIN_ID=42161
-NEXT_PUBLIC_ARBITRUM_RPC_URL=https://arb-mainnet.g.alchemy.com/v2/<KEY>
+# .env.local
+NEXT_PUBLIC_CHAIN_ID=56
 NEXT_PUBLIC_WC_PROJECT_ID=<WalletConnect Project ID>
 NEXT_PUBLIC_AETHER_RING_ADDRESS=0x...
 NEXT_PUBLIC_AETHER_GOVERNANCE_ADDRESS=0x...
 NEXT_PUBLIC_AETHER_ELECTION_ADDRESS=0x...
 NEXT_PUBLIC_SAFE_WALLET_ADDRESS=0x...
+NEXT_PUBLIC_TREASURY_ADDRESS=0x...   # BSC 上必须显式配置（无代码默认值）
 NEXT_PUBLIC_IPFS_GATEWAY=https://gateway.pinata.cloud/ipfs/
 ```
 
-> 多链部署可用链专属变量覆盖：`NEXT_PUBLIC_AETHER_RING_ADDRESS_421614=0x...`
+> 多链部署可用链专属变量覆盖：`NEXT_PUBLIC_AETHER_RING_ADDRESS_97=0x...`
+> BSC 主网稳定币默认 Binance-Peg USDC（18 decimals），可用
+> `NEXT_PUBLIC_STABLECOIN_ADDRESS` / `_SYMBOL` / `_DECIMALS` 换成 USDT 等。
 
 ### 5.2 启动开发服务器
 
@@ -275,7 +299,7 @@ pnpm start
 | ✅ | AetherRing 已授权 Election | `cast call <RING> "hasRole(bytes32,address)" <ADMIN_ROLE> <ELECTION>` → true |
 | ✅ | Governance 已设 Safe | `cast call <GOV> "safeWallet()(address)"` → 非 0 |
 | ✅ | Governance PROPOSER_ROLE 已授 | `cast call <GOV> "hasRole(bytes32,address)" <PROPOSER_ROLE> <addr>` → true |
-| ✅ | Arbiscan 源码已验证 | 访问合约页面应显示绿色 ✓ Source Code Submitted |
+| ✅ | BscScan 源码已验证 | 访问合约页面应显示绿色 ✓ Source Code Submitted |
 | ✅ | 前端读取合约地址 | 浏览器控制台 `process.env.NEXT_PUBLIC_AETHER_RING_ADDRESS` 应为合约地址 |
 | ✅ | WalletConnect 可连接 | 点击 "Connect Wallet" 能拉起钱包 |
 | ✅ | Safe 多签可签名 | 用任一 Owner 在 Safe UI 发起交易，3 个签名后执行 |
@@ -288,7 +312,7 @@ pnpm start
 # === 部署记录 ===
 DEPLOY_DATE=$(date -u +"%Y-%m-%dT%H:%M:%SZ")
 DEPLOYER=0x...
-ARBITRUM_RPC_URL=https://arb-mainnet.g.alchemy.com/v2/<KEY>
+BSC_RPC_URL=https://bsc-dataseed.binance.org
 
 # Safe v1.4
 SAFE_WALLET_ADDRESS=0x...
@@ -300,8 +324,12 @@ AETHER_RING_ADDRESS=0x...
 AETHER_GOVERNANCE_ADDRESS=0x...
 AETHER_ELECTION_ADDRESS=0x...
 
+# 捐款稳定币（BSC 默认 Binance-Peg USDC 18 decimals）
+STABLECOIN_ADDRESS=0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d
+TREASURY_ADDRESS=0x...
+
 # 前端
-NEXT_PUBLIC_CHAIN_ID=42161
+NEXT_PUBLIC_CHAIN_ID=56
 NEXT_PUBLIC_WC_PROJECT_ID=...
 NEXT_PUBLIC_IPFS_GATEWAY=https://gateway.pinata.cloud/ipfs/
 
@@ -358,7 +386,7 @@ PINATA_API_SECRET=...
 | `SeatLimitExceeded` | 该 tier 席位已满 | 退还或先撤销他人 |
 | `TermLimitReached` | 已连任 1 次 | 不可再 renewTerm |
 | 前端读不到合约地址 | 环境变量未注入 | 检查 Vercel env vars / `.env.local` |
-| `cast call` 返回 0x | 合约地址错或未部署 | 用 Arbiscan 确认地址 |
+| `cast call` 返回 0x | 合约地址错或未部署 | 用 BscScan 确认地址 |
 
 ---
 

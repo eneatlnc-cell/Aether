@@ -2,7 +2,8 @@
 
 > **版本**：v3.0
 > **日期**：2026-07-24
-> **适用环境**：本地 Anvil / Arbitrum Sepolia 测试网 / Arbitrum One 主网
+> **适用环境**：本地 Anvil / BSC 测试网（97）/ BNB Smart Chain 主网（56）
+> **链变更**：Arbitrum 为早期测试链（从未部署主网），v3.6 起支持已完全移除
 > **前置文档**：先阅读 [V3_AUDIT_REPORT.md](./V3_AUDIT_REPORT.md) 确认 Critical/High 问题已修复
 
 ---
@@ -55,12 +56,12 @@ PRIVATE_KEY=0x0000000000000000000000000000000000000000000000000000000000000000
 TREASURY=0x0000000000000000000000000000000000000000
 
 # ─── RPC ───
-ARBITRUM_RPC_URL=https://arb1.arbitrum.io/rpc
-SEPOLIA_RPC_URL=https://sepolia-rollup.arbitrum.io/rpc
+BSC_RPC_URL=https://bsc-dataseed.binance.org
+BSC_TESTNET_RPC_URL=https://data-seed-prebsc-1-s1.binance.org:8545
 ANVIL_RPC_URL=http://127.0.0.1:8545
 
-# ─── Arbiscan API（验证合约）───
-ARBISCAN_API_KEY=your_api_key
+# ─── BscScan API（验证合约）───
+BSCSCAN_API_KEY=your_api_key
 
 # ─── 创世成员地址（Genesis 脚本）───
 PAR_SPEAKER_1=0x...
@@ -106,7 +107,8 @@ anvil --block-time 1 &
 ### 2.2 部署合约
 
 ```bash
-PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80 \
+# 私钥从 Anvil 启动时打印的测试账户复制（或从密钥管理注入）；切勿硬编码真实私钥
+PRIVATE_KEY=<Anvil-打印的第一个测试账户私钥> \
 TREASURY=0x70997970C51812dc3A010C7d01b50e0d17dc79C8 \
 forge script contracts/script/Deploy.s.sol:Deploy \
   --rpc-url http://127.0.0.1:8545 \
@@ -185,7 +187,7 @@ forge coverage
 ### 3.1 创建 Safe
 
 1. 访问 https://app.safe.global/
-2. 选择 **Arbitrum** 网络
+2. 选择 **BNB Smart Chain** 网络
 3. 创建新 Safe：
    - 名称：`Aether Treasury`
    - 签名者：5 个地址（建议基金会核心成员）
@@ -194,7 +196,7 @@ forge coverage
 
 ### 3.2 Safe 单例地址
 
-Arbitrum One 上 Safe v1.4.1 单例：
+Safe v1.4.1 官方支持 BNB Smart Chain 主网与测试网（单例地址与多链一致，部署后在 BscScan 复核）：
 
 ```
 0x41675C099F32341bf84BFc5382aF534df5C7461a
@@ -210,14 +212,13 @@ Safe 地址将用于：
 
 ---
 
-## 四、Arbitrum Sepolia 测试网部署
+## 四、BSC 测试网部署
 
 ### 4.1 获取测试币
 
 从水龙头获取 Sepolia ETH：
 
-- https://faucet.quicknode.com/arbitrum/sepolia
-- https://www.alchemy.com/faucets/arbitrum-sepolia
+- https://testnet.bnbchain.org/faucet-smart（BSC 测试网水龙头）
 
 ### 4.2 部署合约
 
@@ -225,10 +226,10 @@ Safe 地址将用于：
 PRIVATE_KEY=0x... \
 TREASURY=<SAFE_ADDRESS> \
 forge script contracts/script/Deploy.s.sol:Deploy \
-  --rpc-url https://sepolia-rollup.arbitrum.io/rpc \
+  --rpc-url $BSC_TESTNET_RPC_URL \
   --broadcast \
   --verify \
-  --etherscan-api-key $ARBISCAN_API_KEY \
+  --etherscan-api-key $BSCSCAN_API_KEY \
   -vvv
 ```
 
@@ -240,7 +241,7 @@ forge script contracts/script/Deploy.s.sol:Deploy \
 forge verify-contract <RING_ADDR> AetherRing \
   --chain-id 421614 \
   --verifier etherscan \
-  --etherscan-api-key $ARBISCAN_API_KEY
+  --etherscan-api-key $BSCSCAN_API_KEY
 ```
 
 ### 4.4 运行创世脚本
@@ -251,7 +252,7 @@ forge verify-contract <RING_ADDR> AetherRing \
 RING=0x... GOV=0x... ELECTION=0x... DONATION=0x... SAFE=0x... \
 # ... 地址 \
 forge script contracts/script/Genesis.s.sol:Genesis \
-  --rpc-url https://sepolia-rollup.arbitrum.io/rpc \
+  --rpc-url $BSC_TESTNET_RPC_URL \
   --broadcast -vvv
 ```
 
@@ -312,7 +313,7 @@ cast send $RING "renounceRole(bytes32,address)" \
 
 ---
 
-## 六、Arbitrum One 主网部署
+## 六、BNB Smart Chain 主网部署
 
 > **⚠️ 前置条件**：[V3_AUDIT_REPORT.md](./V3_AUDIT_REPORT.md) 中所有 Critical/High 问题已修复 + 测试网运行稳定至少 7 天 + 外部审计完成
 
@@ -322,10 +323,10 @@ cast send $RING "renounceRole(bytes32,address)" \
 PRIVATE_KEY=0x... \
 TREASURY=<SAFE_ADDRESS> \
 forge script contracts/script/Deploy.s.sol:Deploy \
-  --rpc-url https://arb1.arbitrum.io/rpc \
+  --rpc-url $BSC_RPC_URL \
   --broadcast \
   --verify \
-  --etherscan-api-key $ARBISCAN_API_KEY \
+  --etherscan-api-key $BSCSCAN_API_KEY \
   -vvv
 ```
 
@@ -334,7 +335,7 @@ forge script contracts/script/Deploy.s.sol:Deploy \
 部署完成后，在 `docs/CONTRACT_ADDRESSES.md` 记录：
 
 ```markdown
-# Arbitrum One 合约地址
+# BNB Smart Chain 合约地址
 
 - AetherRing: 0x...
 - AetherGovernance: 0x...
@@ -357,14 +358,14 @@ forge script contracts/script/Deploy.s.sol:Deploy \
 在 `.env.local`（本地开发）或 Vercel 环境变量（生产）中设置：
 
 ```bash
-# Arbitrum One (42161) — 主网
+# BNB Smart Chain (56) — 主网
 NEXT_PUBLIC_AETHER_RING_42161_ADDRESS=0x...
 NEXT_PUBLIC_AETHER_GOVERNANCE_42161_ADDRESS=0x...
 NEXT_PUBLIC_AETHER_ELECTION_42161_ADDRESS=0x...
 NEXT_PUBLIC_AETHER_DONATION_42161_ADDRESS=0x...
 NEXT_PUBLIC_SAFE_WALLET_42161_ADDRESS=0x...
 
-# Arbitrum Sepolia (421614) — 测试网
+# BSC 测试网 (97)
 NEXT_PUBLIC_AETHER_RING_421614_ADDRESS=0x...
 NEXT_PUBLIC_AETHER_GOVERNANCE_421614_ADDRESS=0x...
 NEXT_PUBLIC_AETHER_ELECTION_421614_ADDRESS=0x...
@@ -484,7 +485,8 @@ async function uploadProposal(content) {
 
 **USDC 合约地址**：
 
-- Arbitrum One：`0xaf88d065e77c8cC2239327C5EDb3A432268e5831`（原生 USDC）
+- BNB Smart Chain（Binance-Peg USDC，18 decimals）：`0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d`
+- BNB Smart Chain（Binance-Peg USDT，18 decimals）：`0x55d398326f99059fF775485246999027B3197955`
 - 金额精度：6 decimals
 
 ---
@@ -578,7 +580,7 @@ v3 合约**不可升级**（无 proxy）。若需修复严重 bug：
 
 ---
 
-## 十二、重要地址清单（Arbitrum One）
+## 十二、重要地址清单（BNB Smart Chain）
 
 | 资源 | 地址 |
 |---|---|
@@ -586,7 +588,7 @@ v3 合约**不可升级**（无 proxy）。若需修复严重 bug：
 | USDC（原生）| `0xaf88d065e77c8cC2239327C5EDb3A432268e5831` |
 | USDT | `0xFd086bC7CD5C481D9C376f8B1a1c1f3a5f3a5f3a` |
 | WETH | `0x82aF49447D8a07e3bd95BD0d56f35241523fBab1` |
-| Arbiscan | https://arbiscan.io |
+| BscScan | https://bscscan.com |
 
 ---
 

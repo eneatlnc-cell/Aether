@@ -101,8 +101,9 @@ forge coverage
 # 一个终端跑 Anvil
 anvil
 
-# 另一个终端部署（用 Anvil 默认的第一个账户私钥）
-export PRIVATE_KEY=0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80
+# 另一个终端部署（私钥从 Anvil 启动时打印的测试账户复制，或从密钥管理注入；
+# 切勿把真实私钥写入文档、脚本或命令历史）
+export PRIVATE_KEY=<Anvil-打印的第一个测试账户私钥>
 forge script script/Deploy.s.sol:Deploy \
   --rpc-url http://127.0.0.1:8545 \
   --broadcast \
@@ -110,6 +111,13 @@ forge script script/Deploy.s.sol:Deploy \
 ```
 
 部署后会输出两个合约地址，记下来给前端用。
+
+> **BSC 主网部署（唯一目标链）**：合约不依赖任何链专属特性，
+> `AetherDonation` 的捐款门槛按所配稳定币 `decimals()` 动态计算
+> （BSC Binance-Peg USDC/USDT 为 18 decimals，$10 = 10 * 10^18）。
+> 部署命令把 `--rpc-url` 换成 BSC RPC（如 `https://bsc-dataseed.binance.org`），
+> `TREASURY` 用 BSC 上的 Safe 多签，`USDC` 传 Binance-Peg USDC
+> `0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d`（或 USDT `0x55d398...7955`）即可。
 
 ### 7. 铸造初始道环（可选：初始化理事会）
 
@@ -121,17 +129,17 @@ cast send <RING_ADDRESS> "mintRing(address,uint8,string)" \
   --rpc-url http://127.0.0.1:8545
 ```
 
-## 部署到 Arbitrum Sepolia
+## 部署到 BSC 测试网
 
 ```bash
 export PRIVATE_KEY=0x...你的测试网私钥
 
 forge script script/Deploy.s.sol:Deploy \
-  --rpc-url https://sepolia-rollup.arbitrum.io/rpc \
+  --rpc-url https://data-seed-prebsc-1-s1.binance.org:8545 \
   --broadcast \
   --verify \
   --verifier etherscan \
-  --verifier-url https://api-sepolia.arbiscan.io/api
+  --verifier-url https://api-testnet.bscscan.com/api
 ```
 
 ## 测试覆盖

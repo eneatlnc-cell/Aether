@@ -140,12 +140,12 @@ export function Footer() {
               </li>
               <li>
                 <a
-                  href="https://arbiscan.io"
+                  href="https://bscscan.com"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-ink/80 hover:text-accent transition-colors"
                 >
-                  Arbiscan
+                  BscScan
                 </a>
               </li>
             </ul>
@@ -184,7 +184,8 @@ export function Footer() {
               {t("statusLive")}
             </span>
             <span className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-full bg-bg border border-border text-[11px] text-muted">
-              {t("statusArbitrum")}
+              <span className="w-1.5 h-1.5 rounded-full bg-amber-500/70" />
+              {t("statusChain")}
             </span>
           </div>
         </div>

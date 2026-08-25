@@ -19,13 +19,18 @@ interface DonationModalProps {
   onDownloadReceipt?: (result: NonNullable<ReturnType<typeof useDonation>["result"]>) => void;
 }
 
-/** USDC 6 decimals：1 USDC = 1_000_000 最小单位 */
-const USDC_DECIMALS = 6;
-
 export function DonationModal({ open, onClose, onDownloadReceipt }: DonationModalProps) {
   const t = useTranslations("donation");
-  const { step, result, isConnected, treasuryAddress, submit, reset } =
-    useDonation();
+  const {
+    step,
+    result,
+    isConnected,
+    treasuryAddress,
+    assetDecimals,
+    assetSymbol,
+    submit,
+    reset,
+  } = useDonation();
 
   const [amount, setAmount] = useState<string>("");
 
@@ -51,8 +56,9 @@ export function DonationModal({ open, onClose, onDownloadReceipt }: DonationModa
   const handleSubmit = () => {
     const numericAmount = parseFloat(amount);
     if (Number.isNaN(numericAmount) || numericAmount <= 0) return;
-    // 转 bigint（USDC 6 decimals）
-    const amountBigInt = BigInt(Math.round(numericAmount * 10 ** USDC_DECIMALS));
+    // 转 bigint（精度按当前链稳定币 decimals：BSC 18）
+    const decimals = assetDecimals ?? 6;
+    const amountBigInt = BigInt(Math.round(numericAmount * 10 ** decimals));
     submit({ amount: amountBigInt, purpose: "unrestricted" });
   };
 
@@ -84,6 +90,7 @@ export function DonationModal({ open, onClose, onDownloadReceipt }: DonationModa
           setAmount={setAmount}
           step={step}
           isConnected={isConnected}
+          assetSymbol={assetSymbol}
           onSubmit={handleSubmit}
         />
       )}
@@ -97,12 +104,14 @@ function FormView({
   setAmount,
   step,
   isConnected,
+  assetSymbol,
   onSubmit,
 }: {
   amount: string;
   setAmount: (v: string) => void;
   step: DonationStep;
   isConnected: boolean;
+  assetSymbol: string | null;
   onSubmit: () => void;
 }) {
   const t = useTranslations("donation");
@@ -122,11 +131,11 @@ function FormView({
 
   return (
     <div className="space-y-5">
-      {/* 资产固定为 USDC（预启动阶段只支持 USDC） */}
+      {/* 资产固定为当前链稳定币（预启动阶段只支持单一稳定币，符号按链配置） */}
       <Field label={t("selectAsset")}>
         <div className="grid grid-cols-1 gap-2">
           <div className="px-3 py-2 rounded-[8px] text-sm font-medium border bg-accent text-white border-accent">
-            USDC
+            {assetSymbol ?? "USDC"}
           </div>
         </div>
       </Field>
