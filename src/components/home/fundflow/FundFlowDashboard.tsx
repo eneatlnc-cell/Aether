@@ -7,6 +7,8 @@ import { MonthlyTrendChart } from "./MonthlyTrendChart";
 import { RecentTransactions } from "./RecentTransactions";
 import { useFundFlow } from "@/hooks/useFundFlow";
 import { useTreasuryTransactions } from "@/hooks/useTreasuryTransactions";
+import { TREASURY_DEPLOYED } from "@/lib/deployment";
+import { DemoBanner } from "@/components/ui/DemoBanner";
 
 export function FundFlowDashboard() {
   const t = useTranslations("fundFlow");
@@ -17,7 +19,7 @@ export function FundFlowDashboard() {
   return (
     <section className="py-16 sm:py-20 px-6 lg:px-8">
       <div className="max-w-[1280px] mx-auto">
-        <header className="mb-10 sm:mb-12">
+        <header className="mb-8 sm:mb-10">
           <h2 className="text-3xl sm:text-4xl font-bold text-ink">
             {t("sectionTitle")}
           </h2>
@@ -25,6 +27,12 @@ export function FundFlowDashboard() {
             {t("sectionSubtitle")}
           </p>
         </header>
+
+        {!TREASURY_DEPLOYED && (
+          <div className="mb-8 sm:mb-10">
+            <DemoBanner variant="treasury" />
+          </div>
+        )}
 
         <KpiCards
           totalDonated={totalDonated}

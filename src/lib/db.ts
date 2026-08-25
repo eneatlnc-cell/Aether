@@ -45,7 +45,7 @@ export interface DonationRow {
   tx_timestamp: Date;
   purpose: string;
   ring_id: string | null;
-  /** 交易所在链（新增列；历史行迁移默认 42161=预启动期 Arbitrum 测试） */
+  /** 交易所在链（v3.6 单链 BSC：56=主网，97=测试网） */
   chain_id: number;
   recorded_at: Date;
   migrated: boolean;
@@ -101,13 +101,15 @@ export async function ensureSchema(): Promise<void> {
       tx_timestamp TIMESTAMPTZ NOT NULL,
       purpose TEXT NOT NULL DEFAULT 'unrestricted',
       ring_id TEXT,
-      chain_id INTEGER NOT NULL DEFAULT 42161,
+      chain_id INTEGER NOT NULL DEFAULT 56,
       recorded_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
       migrated BOOLEAN NOT NULL DEFAULT FALSE
     )
   `;
-  // v3.5 幂等迁移：为旧库补 chain_id 列（历史行 42161 = 预启动期 Arbitrum 测试标记）
-  await sql`ALTER TABLE donations ADD COLUMN IF NOT EXISTS chain_id INTEGER NOT NULL DEFAULT 42161`;
+  // v3.5 幂等迁移：为旧库补 chain_id 列
+  // v3.6：默认值改为 56（BSC 主网）——Arbitrum 支持已移除，
+  // 旧库中 42161 的历史行为预启动期测试数据，不影响 BSC 主网记账
+  await sql`ALTER TABLE donations ADD COLUMN IF NOT EXISTS chain_id INTEGER NOT NULL DEFAULT 56`;
   await sql`CREATE INDEX IF NOT EXISTS idx_donations_donor ON donations(donor_address)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_donations_tx ON donations(tx_hash)`;
   await sql`CREATE INDEX IF NOT EXISTS idx_donations_chain ON donations(chain_id)`;

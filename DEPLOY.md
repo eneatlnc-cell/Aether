@@ -134,7 +134,7 @@ forge script script/Deploy.s.sol:Deploy \
   -vvv
 ```
 
-### 3.3 BNB Smart Chain 主网（chainId 56，v3.5 目标主网）
+### 3.3 BNB Smart Chain 主网（chainId 56，v3.6 目标主网）
 
 ```bash
 forge script script/Deploy.s.sol:Deploy \

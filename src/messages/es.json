@@ -37,6 +37,8 @@
     "totalDonated": "Donaciones Totales Recibidas",
     "projectAllocated": "Asignaciones a Proyectos",
     "treasuryBalance": "Saldo Actual de la Tesorería",
+    "treasuryBalanceNoteDemo": "Cifra de demostración. Cuando la multisig de tesorería se despliegue en BNB Smart Chain, esta tarjeta mostrará el saldo on-chain en tiempo real.",
+    "treasuryBalanceNoteLive": "Saldo on-chain en tiempo real de la tesorería de la Fundación en BNB Smart Chain.",
     "monthlyTrend": "Ingresos vs. Gastos de 12 Meses",
     "recentTransactions": "Actividad Reciente en Cadena",
     "income": "Ingreso",
@@ -51,7 +53,8 @@
       "ai-framework": "Gobernanza Empresarial",
       "self-organizing-net": "Red Autoorganizada",
       "unrestricted": "Operaciones"
-    }
+    },
+    "demoTxNote": "registro de demostración"
   },
   "proposals": {
     "sectionTitle": "Propuestas Estratégicas de Gobernanza",
@@ -212,6 +215,8 @@
     "remaining": "Tiempo restante",
     "voteClosed": "La votación para esta propuesta ha cerrado.",
     "connectToVote": "Conecte su wallet para votar.",
+    "votingNotLiveTitle": "Votación aún no disponible",
+    "votingNotLiveBody": "Los contratos de gobernanza aún no están desplegados. Cuando la DAO entre en funcionamiento en BNB Smart Chain, los ciudadanos podrán votar aquí mediante agregación de firmas fuera de cadena EIP-712.",
     "notFound": "Propuesta no encontrada."
   },
   "impact": {
@@ -264,7 +269,8 @@
       "cadence": "Semestral (dos veces por año fiscal)",
       "providerLabel": "Proveedor",
       "provider": "Firma independiente de terceros rotada cada 2 años",
-      "lastReportLabel": "Último informe"
+      "lastReportLabel": "Último informe",
+      "notPublished": "Aún no publicado"
     }
   },
   "toast": {
@@ -294,6 +300,11 @@
   },
   "common": {
     "loading": "Cargando...",
-    "viewAll": "Ver todo"
+    "viewAll": "Ver todo",
+    "demoData": {
+      "title": "Datos de demostración",
+      "governanceBody": "Los contratos de gobernanza aún no están desplegados: las propuestas y los votos que se muestran son una demostración de interfaz, no registros on-chain.",
+      "treasuryBody": "La tesorería aún no está desplegada: los importes y transacciones que se muestran son una demostración de interfaz, no registros on-chain."
+    }
   }
 }

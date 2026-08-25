@@ -37,6 +37,8 @@
     "totalDonated": "Total Donations Received",
     "projectAllocated": "Project Allocations",
     "treasuryBalance": "Current Treasury Balance",
+    "treasuryBalanceNoteDemo": "Demo figure. Once the treasury multisig is deployed on BNB Smart Chain, this card will show the real-time on-chain balance.",
+    "treasuryBalanceNoteLive": "Real-time on-chain balance of the Foundation treasury on BNB Smart Chain.",
     "monthlyTrend": "12-Month Income vs. Expense",
     "recentTransactions": "Recent On-Chain Activity",
     "income": "Income",
@@ -51,7 +53,8 @@
       "ai-framework": "Enterprise Governance",
       "self-organizing-net": "Self-Organizing Net",
       "unrestricted": "Operations"
-    }
+    },
+    "demoTxNote": "demo record"
   },
   "proposals": {
     "sectionTitle": "Strategic Governance Proposals",
@@ -212,6 +215,8 @@
     "remaining": "Time remaining",
     "voteClosed": "Voting on this proposal has closed.",
     "connectToVote": "Connect your wallet to cast a vote.",
+    "votingNotLiveTitle": "Voting not yet available",
+    "votingNotLiveBody": "The governance contracts have not been deployed yet. Once the DAO goes live on BNB Smart Chain, citizens will be able to cast votes here via EIP-712 offline signature aggregation.",
     "notFound": "Proposal not found."
   },
   "impact": {
@@ -264,7 +269,8 @@
       "cadence": "Semi-annual (twice per fiscal year)",
       "providerLabel": "Provider",
       "provider": "Independent third-party firm rotated every 2 years",
-      "lastReportLabel": "Latest Report"
+      "lastReportLabel": "Latest Report",
+      "notPublished": "Not yet published"
     }
   },
   "toast": {
@@ -294,6 +300,11 @@
   },
   "common": {
     "loading": "Loading...",
-    "viewAll": "View all"
+    "viewAll": "View all",
+    "demoData": {
+      "title": "Demo data",
+      "governanceBody": "The governance contracts are not yet deployed — the proposals and vote counts below are UI placeholders, not on-chain records.",
+      "treasuryBody": "The treasury is not yet deployed — the amounts and transactions below are UI placeholders, not on-chain records."
+    }
   }
 }

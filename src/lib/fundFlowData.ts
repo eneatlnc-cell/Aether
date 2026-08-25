@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: Apache-2.0
 import { getTreasuryAddress as _getTreasuryAddress } from "@/lib/contracts/config";
 
-export type AssetCode = "USDC" | "USDT" | "ETH";
+export type AssetCode = "USDC" | "USDT" | "BNB";
 
 export type DonationPurpose =
   | "ai-framework"
@@ -60,18 +60,21 @@ export function getTreasuryAddress(chainId: number): `0x${string}` | null {
 }
 
 // 保留旧常量名兼容（内部用），但改为 null 占位，强制走 getTreasuryAddress
-export const TREASURY_ADDRESSES: Record<"bsc" | "ethereum", string> = {
+// v3.6：单链 BSC —— 不再保留 ethereum 键
+export const TREASURY_ADDRESSES: Record<"bsc", string> = {
   bsc: "",
-  ethereum: "",
 };
 
 export const PREFERRED_ASSET: AssetCode = "USDC";
 
+// ⚠️ 演示数据：金库合约尚未部署（见 src/lib/deployment.ts TREASURY_DEPLOYED）
+// 以下金额/交易/月度流均为界面演示，TREASURY_DEPLOYED=true 后替换为链上真实数据。
+// 资产口径与目标链一致：BSC 上的稳定币（USDC/USDT）与 BNB。
 export const fundFlow: FundFlowSnapshot = {
   totalDonated: [
     { asset: "USDC", amount: 512_340, usdValue: 512_340 },
     { asset: "USDT", amount: 88_500, usdValue: 88_500 },
-    { asset: "ETH", amount: 124.6, usdValue: 312_876 },
+    { asset: "BNB", amount: 412.6, usdValue: 247_560 },
   ],
   projectFunds: [
     {
@@ -122,8 +125,8 @@ export const treasuryTransactions: TreasuryTransaction[] = [
     id: "tx-003",
     timestamp: "2026-07-12T03:48:00Z",
     direction: "in",
-    asset: "ETH",
-    amount: 6.2,
+    asset: "BNB",
+    amount: 26.5,
     usdValue: 15_568,
     purpose: "unrestricted",
     counterparty: "0x9b1E…44d2",

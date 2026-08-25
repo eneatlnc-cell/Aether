@@ -26,7 +26,11 @@ export interface AuditArrangement {
   cadenceKey: string;
   providerKey: string;
   reportPublic: boolean;
-  lastReportDate: string;
+  /**
+   * 最近一份审计报告日期；null = 尚未发布任何报告。
+   * 诚实性约束：没有真实报告就不得展示日期。
+   */
+  lastReportDate: string | null;
 }
 
 export const fundAllocations: FundAllocation[] = [
@@ -86,5 +90,5 @@ export const auditArrangement: AuditArrangement = {
   cadenceKey: "impact.audit.cadence",
   providerKey: "impact.audit.provider",
   reportPublic: true,
-  lastReportDate: "2026-04-30",
+  lastReportDate: null, // 基金会尚未发布审计报告；发布后回填真实日期
 };

@@ -37,6 +37,8 @@
     "totalDonated": "총 기부 수령액",
     "projectAllocated": "프로젝트 배정액",
     "treasuryBalance": "현재 재무 잔고",
+    "treasuryBalanceNoteDemo": "데모 수치입니다. 재고 멀티시그가 BNB Smart Chain에 배포되면 이 카드는 실시간 온체인 잔액을 표시합니다.",
+    "treasuryBalanceNoteLive": "BNB Smart Chain에서 재단 재고의 실시간 온체인 잔액입니다.",
     "monthlyTrend": "12개월간 수입 대 지출",
     "recentTransactions": "최근 온체인 활동",
     "income": "수입",
@@ -51,7 +53,8 @@
       "ai-framework": "엔터프라이즈 거버넌스",
       "self-organizing-net": "자기조직화 네트워크",
       "unrestricted": "운영비"
-    }
+    },
+    "demoTxNote": "데모 기록"
   },
   "proposals": {
     "sectionTitle": "전략적 거버넌스 제안",
@@ -212,6 +215,8 @@
     "remaining": "남은 시간",
     "voteClosed": "이 제안에 대한 투표가 마감되었습니다.",
     "connectToVote": "투표하려면 지갑을 연결하세요.",
+    "votingNotLiveTitle": "투표 기능 미개방",
+    "votingNotLiveBody": "거버넌스 컨트랙트가 아직 배포되지 않았습니다. DAO가 BNB Smart Chain에서 출시되면 시민들은 EIP-712 오프라인 서명 집계로 여기서 투표할 수 있습니다.",
     "notFound": "제안을 찾을 수 없습니다."
   },
   "impact": {
@@ -264,7 +269,8 @@
       "cadence": "반기별 (회계연도당 2회)",
       "providerLabel": "제공자",
       "provider": "2년마다 교체되는 독립적인 제3자 기관",
-      "lastReportLabel": "최신 보고서"
+      "lastReportLabel": "최신 보고서",
+      "notPublished": "아직 게시되지 않음"
     }
   },
   "toast": {
@@ -294,6 +300,11 @@
   },
   "common": {
     "loading": "불러오는 중...",
-    "viewAll": "전체 보기"
+    "viewAll": "전체 보기",
+    "demoData": {
+      "title": "데모 데이터",
+      "governanceBody": "거버넌스 컨트랙트가 아직 배포되지 않았습니다. 아래 제안과 투표 수는 UI 데모이며 온체인 기록이 아닙니다.",
+      "treasuryBody": "재고(Treasury)가 아직 배포되지 않았습니다. 아래 금액과 거래는 UI 데모이며 온체인 기록이 아닙니다."
+    }
   }
 }

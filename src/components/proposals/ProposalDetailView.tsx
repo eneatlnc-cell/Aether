@@ -10,7 +10,9 @@ import { ProgressBar } from "@/components/ui/ProgressBar";
 import { Button } from "@/components/ui/Button";
 import { useWallet } from "@/hooks/useWallet";
 import { proposals } from "@/lib/data";
-import { ArrowLeft, Check, X, Minus } from "lucide-react";
+import { GOVERNANCE_DEPLOYED } from "@/lib/deployment";
+import { DemoBanner } from "@/components/ui/DemoBanner";
+import { ArrowLeft, Check, X, Minus, Clock } from "lucide-react";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 
@@ -47,6 +49,12 @@ export function ProposalDetailView({ proposalId }: ProposalDetailViewProps) {
       <main className="flex-1 py-12 sm:py-16 px-6 lg:px-8">
         <div className="max-w-[960px] mx-auto">
           <BackLink />
+
+          {!GOVERNANCE_DEPLOYED && (
+            <div className="mt-6">
+              <DemoBanner variant="governance" />
+            </div>
+          )}
 
           <article className="mt-6">
             {/* 标题区 */}
@@ -118,16 +126,42 @@ export function ProposalDetailView({ proposalId }: ProposalDetailViewProps) {
               <h2 className="text-base font-semibold text-ink mb-4">
                 {tDetail("castVote")}
               </h2>
-              <VoteControls
-                isActive={proposal.status === "active"}
-                deadline={proposal.deadline}
-              />
+              {!GOVERNANCE_DEPLOYED ? (
+                <VotingNotLive />
+              ) : (
+                <VoteControls
+                  isActive={proposal.status === "active"}
+                  deadline={proposal.deadline}
+                />
+              )}
             </Card>
           </article>
         </div>
       </main>
       <Footer />
     </>
+  );
+}
+
+/**
+ * 诚实占位：治理合约尚未部署，投票功能不存在。
+ * 不渲染任何"看起来能投票"的按钮，避免用户误以为点击已生效。
+ * 部署后由 GOVERNANCE_DEPLOYED 开关切换回真实 VoteControls。
+ */
+function VotingNotLive() {
+  const t = useTranslations("proposalDetail");
+  return (
+    <div className="rounded-xl border border-border bg-bg px-5 py-5">
+      <div className="flex items-center gap-2 mb-2">
+        <Clock size={15} className="text-muted" aria-hidden />
+        <p className="text-sm font-semibold text-ink">
+          {t("votingNotLiveTitle")}
+        </p>
+      </div>
+      <p className="text-sm text-muted leading-relaxed">
+        {t("votingNotLiveBody")}
+      </p>
+    </div>
   );
 }
 

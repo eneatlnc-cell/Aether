@@ -37,6 +37,8 @@
     "totalDonated": "受領した寄付総額",
     "projectAllocated": "プロジェクトへの配分",
     "treasuryBalance": "現在のトレジャリー残高",
+    "treasuryBalanceNoteDemo": "デモ数値です。トレジャリー・マルチシグが BNB Smart Chain にデプロイされると、このカードはリアルタイムのオンチェーン残高を表示します。",
+    "treasuryBalanceNoteLive": "BNB Smart Chain 上の財団トレジャリーのリアルタイム・オンチェーン残高。",
     "monthlyTrend": "過去12か月の収支",
     "recentTransactions": "最近のオンチェーンアクティビティ",
     "income": "収入",
@@ -51,7 +53,8 @@
       "ai-framework": "エンタープライズガバナンス",
       "self-organizing-net": "自己組織化ネットワーク",
       "unrestricted": "運営費"
-    }
+    },
+    "demoTxNote": "デモ記録"
   },
   "proposals": {
     "sectionTitle": "戦略的ガバナンス提案",
@@ -212,6 +215,8 @@
     "remaining": "残り時間",
     "voteClosed": "この提案の投票は終了しました。",
     "connectToVote": "投票するにはウォレットを接続してください。",
+    "votingNotLiveTitle": "投票機能は未公開",
+    "votingNotLiveBody": "ガバナンスコントラクトはまだデプロイされていません。DAO が BNB Smart Chain で稼働開始後、市民は EIP-712 オフライン署名集約でここから投票できます。",
     "notFound": "提案が見つかりません。"
   },
   "impact": {
@@ -264,7 +269,8 @@
       "cadence": "半期ごと（会計年度あたり2回）",
       "providerLabel": "提供者",
       "provider": "2年ごとに交代する独立した第三者機関",
-      "lastReportLabel": "最新報告書"
+      "lastReportLabel": "最新報告書",
+      "notPublished": "未発表"
     }
   },
   "toast": {
@@ -294,6 +300,11 @@
   },
   "common": {
     "loading": "読み込み中...",
-    "viewAll": "すべて表示"
+    "viewAll": "すべて表示",
+    "demoData": {
+      "title": "デモデータ",
+      "governanceBody": "ガバナンスコントラクトはまだデプロイされていません。以下の提案と票数は UI デモであり、オンチェーン記録ではありません。",
+      "treasuryBody": "トレジャリーはまだデプロイされていません。以下の金額と取引は UI デモであり、オンチェーン記録ではありません。"
+    }
   }
 }

@@ -37,6 +37,8 @@
     "totalDonated": "Total des Dons Reçus",
     "projectAllocated": "Allocations aux Projets",
     "treasuryBalance": "Solde Actuel de la Trésorerie",
+    "treasuryBalanceNoteDemo": "Chiffre de démonstration. Une fois le multisig de trésorerie déployé sur BNB Smart Chain, cette carte affichera le solde on-chain en temps réel.",
+    "treasuryBalanceNoteLive": "Solde on-chain en temps réel de la trésorerie de la Fondation sur BNB Smart Chain.",
     "monthlyTrend": "Revenus vs. Dépenses sur 12 Mois",
     "recentTransactions": "Activité On-Chain Récente",
     "income": "Revenus",
@@ -51,7 +53,8 @@
       "ai-framework": "Gouvernance d'Entreprise",
       "self-organizing-net": "Réseau Auto-organisé",
       "unrestricted": "Opérations"
-    }
+    },
+    "demoTxNote": "enregistrement de démo"
   },
   "proposals": {
     "sectionTitle": "Propositions Stratégiques de Gouvernance",
@@ -212,6 +215,8 @@
     "remaining": "Temps restant",
     "voteClosed": "Le vote pour cette proposition est clos.",
     "connectToVote": "Connectez votre wallet pour voter.",
+    "votingNotLiveTitle": "Vote pas encore disponible",
+    "votingNotLiveBody": "Les contrats de gouvernance ne sont pas encore déployés. Lorsque la DAO sera lancée sur BNB Smart Chain, les citoyens pourront voter ici via l'agrégation de signatures hors chaîne EIP-712.",
     "notFound": "Proposition introuvable."
   },
   "impact": {
@@ -264,7 +269,8 @@
       "cadence": "Semestriel (deux fois par exercice)",
       "providerLabel": "Prestataire",
       "provider": "Cabinet tiers indépendant, rotation tous les 2 ans",
-      "lastReportLabel": "Dernier rapport"
+      "lastReportLabel": "Dernier rapport",
+      "notPublished": "Pas encore publié"
     }
   },
   "toast": {
@@ -294,6 +300,11 @@
   },
   "common": {
     "loading": "Chargement...",
-    "viewAll": "Voir tout"
+    "viewAll": "Voir tout",
+    "demoData": {
+      "title": "Données de démonstration",
+      "governanceBody": "Les contrats de gouvernance ne sont pas encore déployés — les propositions et les votes affichés sont une démo d'interface, pas des enregistrements on-chain.",
+      "treasuryBody": "La trésorerie n'est pas encore déployée — les montants et transactions affichés sont une démo d'interface, pas des enregistrements on-chain."
+    }
   }
 }

@@ -7,9 +7,9 @@ the Aether on-chain governance kernel project.
 
 The Aether governance kernel is co-developed with the Havix network
 layer under the same GitHub organization (eneatlnc-cell). Aether
-provides the on-chain governance kernel on Arbitrum (three-chamber
-councils, soulbound-identity ranks, Safe multisig treasury); Havix
-provides the off-chain P2P coordination plane.
+provides the on-chain governance kernel on BNB Smart Chain
+(three-chamber councils, soulbound-identity ranks, Safe multisig
+treasury); Havix provides the off-chain P2P coordination plane.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.

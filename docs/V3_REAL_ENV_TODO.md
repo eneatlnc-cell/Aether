@@ -321,7 +321,7 @@ v3 合约不可升级（无 proxy）。若需修复严重 bug：
 | 类别 | 数量 | 优先级 |
 |---|---|---|
 | 测试执行 | 1 项（forge test） | 🔴 高 |
-| 合约部署 | 4 项（Anvil/Sepolia/Mainnet/Safe） | 🔴 高 |
+| 合约部署 | 4 项（Anvil/BSC测试网/Mainnet/Safe） | 🔴 高 |
 | 外部服务 | 3 项（PayPal/IPFS/USDC） | 🟡 中 |
 | 前端 hooks | 5 个（Phase 6 — ✅ 已完成） | 🟢 低 |
 | 前端 UI 适配 | 3 项（tier 标签/状态流转图/选举指示器 + pnpm build） | 🟡 中 |

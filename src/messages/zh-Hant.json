@@ -37,6 +37,8 @@
     "totalDonated": "累計受捐金額",
     "projectAllocated": "各計畫已撥付資金",
     "treasuryBalance": "目前金庫餘額",
+    "treasuryBalanceNoteDemo": "演示數字。金庫多簽部署至 BNB Smart Chain 後，此卡片將顯示鏈上即時餘額。",
+    "treasuryBalanceNoteLive": "基金會金庫於 BNB Smart Chain 的鏈上即時餘額。",
     "monthlyTrend": "過去 12 個月收入與支出",
     "recentTransactions": "近期鏈上活動",
     "income": "收入",
@@ -51,7 +53,8 @@
       "ai-framework": "企業治理",
       "self-organizing-net": "自組織網路",
       "unrestricted": "行政經費"
-    }
+    },
+    "demoTxNote": "演示記錄"
   },
   "proposals": {
     "sectionTitle": "戰略治理提案",
@@ -212,6 +215,8 @@
     "remaining": "剩餘時間",
     "voteClosed": "本提案投票已結束。",
     "connectToVote": "請連接錢包以投票。",
+    "votingNotLiveTitle": "投票功能尚未開放",
+    "votingNotLiveBody": "治理合約尚未部署。DAO 於 BNB Smart Chain 上線後，公民即可在此透過 EIP-712 鏈下簽名聚合參與投票。",
     "notFound": "找不到提案。"
   },
   "impact": {
@@ -264,7 +269,8 @@
       "cadence": "每半年一次（每會計年度兩次）",
       "providerLabel": "提供者",
       "provider": "獨立第三方事務所，每兩年輪換",
-      "lastReportLabel": "最近報告"
+      "lastReportLabel": "最近報告",
+      "notPublished": "尚未發布"
     }
   },
   "toast": {
@@ -294,6 +300,11 @@
   },
   "common": {
     "loading": "載入中...",
-    "viewAll": "查看全部"
+    "viewAll": "查看全部",
+    "demoData": {
+      "title": "演示資料",
+      "governanceBody": "治理合約尚未部署——以下提案與票數為介面演示，並非鏈上記錄。",
+      "treasuryBody": "金庫尚未部署——以下金額與交易為介面演示，並非鏈上記錄。"
+    }
   }
 }

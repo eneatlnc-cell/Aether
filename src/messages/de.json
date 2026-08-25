@@ -37,6 +37,8 @@
     "totalDonated": "Erhaltene Spenden gesamt",
     "projectAllocated": "Projektzuweisungen",
     "treasuryBalance": "Aktuelle Kassenbestand",
+    "treasuryBalanceNoteDemo": "Demozahl. Sobald das Treasury-Multisig auf BNB Smart Chain deployed ist, zeigt diese Karte den Echtzeit-On-Chain-Saldo.",
+    "treasuryBalanceNoteLive": "Echtzeit-On-Chain-Saldo der Foundation-Treasury auf BNB Smart Chain.",
     "monthlyTrend": "Einnahmen vs. Ausgaben über 12 Monate",
     "recentTransactions": "Aktuelle On-Chain-Aktivität",
     "income": "Einnahmen",
@@ -51,7 +53,8 @@
       "ai-framework": "Unternehmens-Governance",
       "self-organizing-net": "Selbstorganisierendes Netz",
       "unrestricted": "Betrieb"
-    }
+    },
+    "demoTxNote": "Demo-Eintrag"
   },
   "proposals": {
     "sectionTitle": "Strategische Governance-Anträge",
@@ -212,6 +215,8 @@
     "remaining": "Verbleibende Zeit",
     "voteClosed": "Die Abstimmung zu diesem Antrag ist geschlossen.",
     "connectToVote": "Verbinden Sie Ihr Wallet, um abzustimmen.",
+    "votingNotLiveTitle": "Abstimmung noch nicht verfügbar",
+    "votingNotLiveBody": "Die Governance-Verträge sind noch nicht deployed. Sobald das DAO auf BNB Smart Chain live geht, können Citizens hier per EIP-712-Offline-Signaturaggregation abstimmen.",
     "notFound": "Antrag nicht gefunden."
   },
   "impact": {
@@ -264,7 +269,8 @@
       "cadence": "Halbjährlich (zweimal pro Geschäftsjahr)",
       "providerLabel": "Anbieter",
       "provider": "Unabhängige Drittpartei, alle 2 Jahre rotiert",
-      "lastReportLabel": "Neuester Bericht"
+      "lastReportLabel": "Neuester Bericht",
+      "notPublished": "Noch nicht veröffentlicht"
     }
   },
   "toast": {
@@ -294,6 +300,11 @@
   },
   "common": {
     "loading": "Wird geladen...",
-    "viewAll": "Alle ansehen"
+    "viewAll": "Alle ansehen",
+    "demoData": {
+      "title": "Demodaten",
+      "governanceBody": "Die Governance-Verträge sind noch nicht deployed — die unten gezeigten Vorschläge und Stimmenzahlen sind UI-Demos, keine On-Chain-Daten.",
+      "treasuryBody": "Die Treasury ist noch nicht deployed — die unten gezeigten Beträge und Transaktionen sind UI-Demos, keine On-Chain-Daten."
+    }
   }
 }

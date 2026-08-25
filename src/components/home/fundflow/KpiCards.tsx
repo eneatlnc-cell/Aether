@@ -5,6 +5,7 @@ import { useTranslations, useFormatter } from "next-intl";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { useCountUp } from "@/hooks/useCountUp";
+import { TREASURY_DEPLOYED } from "@/lib/deployment";
 import type { AssetHolding, ProjectFund } from "@/lib/fundFlowData";
 
 interface KpiCardsProps {
@@ -84,7 +85,7 @@ function TotalDonatedCard({
             <span className="text-muted">{a.asset}</span>
             <span className="text-ink font-medium tabular-nums">
               {format.number(a.amount, {
-                maximumFractionDigits: a.asset === "ETH" ? 2 : 0,
+                maximumFractionDigits: a.asset === "BNB" ? 2 : 0,
               })}
             </span>
           </div>
@@ -158,6 +159,7 @@ function TreasuryBalanceCard({
   usd: number;
   title: string;
 }) {
+  const t = useTranslations("fundFlow");
   const format = useFormatter();
   const animated = useCountUp(usd);
 
@@ -172,8 +174,7 @@ function TreasuryBalanceCard({
         })}
       </p>
       <p className="mt-4 pt-4 border-t border-border text-xs text-muted leading-relaxed">
-        Real-time on-chain balance of the Foundation treasury multisig on
-        BNB Smart Chain.
+        {t(TREASURY_DEPLOYED ? "treasuryBalanceNoteLive" : "treasuryBalanceNoteDemo")}
       </p>
     </Card>
   );

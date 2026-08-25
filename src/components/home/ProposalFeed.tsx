@@ -7,6 +7,8 @@ import { Card } from "@/components/ui/Card";
 import { StatusDot } from "@/components/ui/StatusDot";
 import { ProgressBar } from "@/components/ui/ProgressBar";
 import { useProposals } from "@/hooks/useProposals";
+import { GOVERNANCE_DEPLOYED } from "@/lib/deployment";
+import { DemoBanner } from "@/components/ui/DemoBanner";
 import { ArrowRight } from "lucide-react";
 import { useEffect, useState } from "react";
 
@@ -22,6 +24,11 @@ export function ProposalFeed() {
           {t("sectionSubtitle")}
         </p>
       </header>
+      {!GOVERNANCE_DEPLOYED && (
+        <div className="mb-5">
+          <DemoBanner variant="governance" />
+        </div>
+      )}
       <div className="flex flex-col gap-4">
         {proposals.map((p) => (
           <Card key={p.id} hover>

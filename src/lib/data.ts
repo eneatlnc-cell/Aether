@@ -44,6 +44,12 @@ export const projects: ProjectMeta[] = [
   { id: "self-organizing-net", icon: "mesh", status: "research" },
 ];
 
+/**
+ * ⚠️ 演示数据：治理合约（AetherGovernance）尚未部署到 BNB Smart Chain。
+ * 以下提案、票数、截止时间均为界面演示，不是链上记录。
+ * 页面已通过 DemoBanner 向用户明示（见 src/lib/deployment.ts）。
+ * 合约部署后：useProposals() 切换为 wagmi useReadContract，本数组删除。
+ */
 export const proposals: Proposal[] = [
   {
     id: "ai-opensource-ecosystem",

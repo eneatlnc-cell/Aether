@@ -174,11 +174,14 @@ export function ImpactView() {
                     {t("audit.lastReportLabel")}
                   </p>
                   <p className="text-ink font-medium">
-                    {new Date(auditArrangement.lastReportDate).toLocaleDateString()}
+                    {auditArrangement.lastReportDate
+                      ? new Date(auditArrangement.lastReportDate).toLocaleDateString()
+                      : t("audit.notPublished")}
                   </p>
                 </div>
               </div>
-              {auditArrangement.reportPublic && (
+              {/* 报告未发布前不提供下载入口（没有报告就不渲染下载按钮） */}
+              {auditArrangement.reportPublic && auditArrangement.lastReportDate && (
                 <button
                   onClick={() => push(t("downloadReport"), "info")}
                   className="mt-6 inline-flex items-center gap-2 text-sm text-accent hover:text-accent/80 transition-colors"

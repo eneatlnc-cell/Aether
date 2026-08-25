@@ -53,7 +53,8 @@ export function useDonationReceipt() {
     doc.setFont(font, "normal");
     doc.text("AETHER FOUNDATION", marginX, y);
     // v3.5：网络标签按交易所在链动态显示（BSC 56 / 97）
-    const networkLabel = getNetworkLabel(result.chainId ?? 42161);
+    // v3.6：兜底链改为 56（BSC 主网）——唯一目标链
+    const networkLabel = getNetworkLabel(result.chainId ?? 56);
     doc.text(`${networkLabel} · ${locale.toUpperCase()}`, pageWidth - marginX, y, {
       align: "right",
     });

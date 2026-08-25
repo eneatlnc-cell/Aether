@@ -5,6 +5,7 @@ import { useTranslations, useFormatter } from "next-intl";
 import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ArrowDownLeft, ArrowUpRight, ExternalLink } from "lucide-react";
+import { TREASURY_DEPLOYED } from "@/lib/deployment";
 import type { TreasuryTransaction, AssetCode } from "@/lib/fundFlowData";
 
 interface RecentTransactionsProps {
@@ -55,7 +56,7 @@ function TransactionRow({ tx }: { tx: TreasuryTransaction }) {
   });
 
   const amountLabel = `${tx.amount.toLocaleString("en-US", {
-    maximumFractionDigits: tx.asset === "ETH" ? 2 : 0,
+    maximumFractionDigits: tx.asset === "BNB" ? 2 : 0,
   })} ${tx.asset}`;
 
   return (
@@ -91,15 +92,22 @@ function TransactionRow({ tx }: { tx: TreasuryTransaction }) {
             maximumFractionDigits: 0,
           })}
         </p>
-        <a
-          href={`https://bscscan.com/tx/${tx.txHash}`}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="inline-flex items-center gap-1 text-xs text-muted hover:text-accent transition-colors mt-0.5"
-        >
-          {t("viewOnExplorer")}
-          <ExternalLink size={10} />
-        </a>
+        {TREASURY_DEPLOYED ? (
+          <a
+            href={`https://bscscan.com/tx/${tx.txHash}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-1 text-xs text-muted hover:text-accent transition-colors mt-0.5"
+          >
+            {t("viewOnExplorer")}
+            <ExternalLink size={10} />
+          </a>
+        ) : (
+          // 演示数据：txHash 为占位假值，不出示可点击的浏览器链接以免误导
+          <span className="inline-flex items-center gap-1 text-xs text-muted/60 mt-0.5">
+            {t("demoTxNote")}
+          </span>
+        )}
       </div>
     </li>
   );
