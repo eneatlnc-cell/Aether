@@ -2,6 +2,10 @@
 
 > Tokenless on-chain governance for public-good infrastructure.
 
+> **当前版本**: v3.6 —— BSC 单链迁移完成 (Arbitrum 支持移除), v3.0 审计
+> 修复闭环 (v3.1 内部修复 + v3.4 外部审计 Critical/High 修复), 待主网部署。
+> 版本沿革: v3.0 设计定稿 → v3.1 审计修复 → v3.4 外部审计 C/H 修复 → v3.6 BSC 单链。
+
 Aether is a tokenless on-chain governance kernel targeting BNB Smart Chain (chainId 56). It provides three-chamber councils (Council, Parliament, Elders), weighted voting, a 14-rank soulbound-token (SBT) identity system, and a Safe multisig treasury — without issuing any token. The governance kernel is co-developed with the [Havix](https://github.com/eneatlnc-cell/Havix) network layer, which provides the off-chain P2P coordination plane.
 
 > 部署目标链：BNB Smart Chain（56）主网 / BSC 测试网（97），单链部署。
