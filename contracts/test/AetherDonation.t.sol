@@ -409,7 +409,8 @@ contract AetherDonationTest is Test {
 
         assertEq(tokenId, 1);
         assertEq(bscUsdt.balanceOf(treasury), expected);
-        assertEq(bscUsdt.balanceOf(alice), 0);
+        // revert 分支铸入的 small（9.99 USDT）未被消耗，仍留在 alice 账上
+        assertEq(bscUsdt.balanceOf(alice), small);
         assertTrue(ring.isBearer(alice));
         assertEq(bscDonation.ownerOf(tokenId), alice);
     }

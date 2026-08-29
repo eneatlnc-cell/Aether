@@ -47,3 +47,6 @@ next-env.d.ts
 /.pnpm-store/
 aether-foundation.zip
 *.local
+
+# 凭证字体构建中间产物（scripts/build-receipt-font.py）
+/.font-build/

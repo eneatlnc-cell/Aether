@@ -1,9 +1,9 @@
 // SPDX-License-Identifier: Apache-2.0
 // Aether DAO — 预启动阶段数据库层
 // 使用 @vercel/postgres 的 `sql` 模板字符串；DATABASE_URL 由 Vercel 自动注入。
-// 每次 API 调用应先 await ensureSchema()（幂等）。
+// ensureSchema() 幂等且每个进程只执行一次（模块级缓存），API 路由可放心重复调用。
 
-import { sql } from "@vercel/postgres";
+import { sql, type VercelPoolClient } from "@vercel/postgres";
 import { keccak256, toHex } from "viem";
 
 /** 道环等级（预启动阶段只有公民身份一种） */
@@ -73,10 +73,23 @@ export interface RecordDonationResult {
 }
 
 /**
- * 初始化数据库表（幂等）。
- * 在首次 API 调用时自动执行，或手动调用。
+ * 初始化数据库表（幂等，模块级缓存）。
+ *
+ * 每个进程/冷启动只执行一次 DDL；失败时清空缓存允许下次请求重试。
+ * v3.6：移出请求热路径——此前每次 API 调用都执行 6 条 DDL 语句，
+ * 白白增加 ~50-200ms 延迟并持有 schema 锁。
  */
-export async function ensureSchema(): Promise<void> {
+let schemaReady: Promise<void> | null = null;
+
+export function ensureSchema(): Promise<void> {
+  schemaReady ??= runSchemaMigrations().catch((err) => {
+    schemaReady = null; // 失败不缓存，下次请求重试
+    throw err;
+  });
+  return schemaReady;
+}
+
+async function runSchemaMigrations(): Promise<void> {
   await sql`
     CREATE TABLE IF NOT EXISTS citizens (
       address TEXT PRIMARY KEY,
@@ -189,9 +202,40 @@ export async function getDonationByTxHash(
 }
 
 /**
+ * 在单个数据库事务中执行 fn。
+ *
+ * 从池中租借专用连接（池模式下 BEGIN/COMMIT 必须绑定同一连接，
+ * 直接对全局 sql 发 BEGIN 可能落到不同连接上），成功 COMMIT、
+ * 异常 ROLLBACK 并重新抛出；ROLLBACK 本身失败则销毁该连接。
+ */
+async function withTransaction<T>(
+  fn: (tx: VercelPoolClient) => Promise<T>
+): Promise<T> {
+  const client = await sql.connect();
+  try {
+    await client.sql`BEGIN`;
+    const result = await fn(client);
+    await client.sql`COMMIT`;
+    client.release();
+    return result;
+  } catch (err) {
+    try {
+      await client.sql`ROLLBACK`;
+      client.release();
+    } catch {
+      client.release(true); // ROLLBACK 失败：连接状态未知，销毁
+    }
+    throw err;
+  }
+}
+
+/**
  * 核心函数：记录一笔捐款 + 更新公民统计 + 首次捐款时确定 ring_id。
  *
- * 流程：
+ * v3.6：捐款 INSERT 与公民统计 UPDATE 包在单个事务（sql.begin）中，
+ * 消除"捐款已写入但统计累加失败"导致的账实不一致。
+ *
+ * 流程（全部在同一事务内）：
  *   1. 由 (donorAddress, txHash, txTimestamp) 生成 ring_id
  *   2. 幂等创建公民（写入 ring_id；已存在则保留原 ring_id）
  *   3. 幂等写入捐款（tx_hash 唯一）；若该 tx 已存在则返回 alreadyRecorded
@@ -210,44 +254,53 @@ export async function recordDonation(
 
   const ringId = generateRingId(addr, txHash, input.txTimestamp);
 
-  // 1. 确保公民存在（首次创建时写入 ring_id；已存在则忽略）
-  await getOrCreateCitizen(addr, ringId);
-  const citizen = await getCitizenByAddress(addr);
-  const canonicalRingId = citizen!.ring_id;
+  return withTransaction(async (tx) => {
+    // 1. 幂等确保公民存在（首次创建写入 ring_id；已存在则忽略）
+    //    donations.donor_address 有 FK → 必须先有公民
+    await tx.sql`
+      INSERT INTO citizens (address, ring_id, ring_tier, total_donated_usdc, donation_count, first_donation_at, updated_at)
+      VALUES (${addr}, ${ringId}, ${RING_TIER_CITIZEN}, 0, 0, NOW(), NOW())
+      ON CONFLICT (address) DO NOTHING
+    `;
+    const { rows: cRows } = await tx.sql<{ ring_id: string }>`
+      SELECT ring_id FROM citizens WHERE address = ${addr}
+    `;
+    const canonicalRingId = cRows[0]!.ring_id;
 
-  // 2. 幂等写入捐款（donations.donor_address 有 FK → 必须先有公民；chain_id 记录所在链）
-  const { rows } = await sql<{ id: number }>`
-    INSERT INTO donations (tx_hash, donor_address, amount_usdc, block_number, tx_timestamp, purpose, ring_id, chain_id)
-    VALUES (${txHash}, ${addr}, ${input.amountUsdc}, ${blockNum}, ${txIso}, ${purpose}, ${canonicalRingId}, ${input.chainId})
-    ON CONFLICT (tx_hash) DO NOTHING
-    RETURNING id
-  `;
-  if (rows.length === 0) {
-    // 该 tx 已被记录（并发或重复请求），不重复累加
+    // 2. 幂等写入捐款（chain_id 记录所在链）
+    const { rows } = await tx.sql<{ id: number }>`
+      INSERT INTO donations (tx_hash, donor_address, amount_usdc, block_number, tx_timestamp, purpose, ring_id, chain_id)
+      VALUES (${txHash}, ${addr}, ${input.amountUsdc}, ${blockNum}, ${txIso}, ${purpose}, ${canonicalRingId}, ${input.chainId})
+      ON CONFLICT (tx_hash) DO NOTHING
+      RETURNING id
+    `;
+    if (rows.length === 0) {
+      // 该 tx 已被记录（并发或重复请求），不重复累加
+      return {
+        ringId: canonicalRingId,
+        isFirstDonation: false,
+        alreadyRecorded: true,
+        tier: RING_TIER_CITIZEN,
+      };
+    }
+
+    // 3. 累加公民统计（与捐款写入同事务，保证账实一致）
+    const { rows: updRows } = await tx.sql<{ donation_count: number }>`
+      UPDATE citizens
+      SET total_donated_usdc = total_donated_usdc + ${input.amountUsdc},
+          donation_count = donation_count + 1,
+          updated_at = NOW()
+      WHERE address = ${addr}
+      RETURNING donation_count
+    `;
+    const isFirstDonation = (updRows[0]?.donation_count ?? 0) === 1;
+
     return {
       ringId: canonicalRingId,
-      isFirstDonation: false,
-      alreadyRecorded: true,
+      isFirstDonation,
       tier: RING_TIER_CITIZEN,
     };
-  }
-
-  // 3. 累加公民统计
-  const { rows: updRows } = await sql<{ donation_count: number }>`
-    UPDATE citizens
-    SET total_donated_usdc = total_donated_usdc + ${input.amountUsdc},
-        donation_count = donation_count + 1,
-        updated_at = NOW()
-    WHERE address = ${addr}
-    RETURNING donation_count
-  `;
-  const isFirstDonation = (updRows[0]?.donation_count ?? 0) === 1;
-
-  return {
-    ringId: canonicalRingId,
-    isFirstDonation,
-    tier: RING_TIER_CITIZEN,
-  };
+  });
 }
 
 /**

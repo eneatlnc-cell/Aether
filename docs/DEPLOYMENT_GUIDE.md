@@ -1,7 +1,7 @@
-# Aether DAO v3.0 部署说明
+# Aether DAO v3.6 部署说明
 
-> **版本**：v3.0
-> **日期**：2026-07-24
+> **版本**：v3.6（BSC 单链，Arbitrum 支持已移除；v3.3 起捐款为纯链上 USDC，PayPal 方案已删除）
+> **日期**：2026-08-29
 > **适用环境**：本地 Anvil / BSC 测试网（97）/ BNB Smart Chain 主网（56）
 > **链变更**：Arbitrum 为早期测试链（从未部署主网），v3.6 起支持已完全移除
 > **前置文档**：先阅读 [V3_AUDIT_REPORT.md](./V3_AUDIT_REPORT.md) 确认 Critical/High 问题已修复
@@ -17,16 +17,18 @@
 curl -L https://foundry.paradigm.xyz | bash
 foundryup
 
-# 2. Node.js 20+ 与 pnpm（前端）
+# 2. Node.js 20+（前端，npm 10+ 随 Node 附带）
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
 sudo apt install -y nodejs
-npm install -g pnpm
 
 # 3. 验证
 forge --version    # forge 0.2.x
 node --version     # v20.x
-pnpm --version     # 9.x
+npm --version      # 10.x
 ```
+
+> 包管理器已统一为 **npm**（仓库内 `package-lock.json` + `packageManager: npm@10.9.4`；
+> v3.6 清理了早期残留的 `pnpm-lock.yaml` 双锁文件，Vercel 会按 lockfile 自动识别）。
 
 ### 1.2 代码克隆与依赖
 
@@ -41,7 +43,7 @@ forge install OpenZeppelin/openzeppelin-contracts --no-commit
 cd ..
 
 # 前端依赖
-pnpm install
+npm install
 ```
 
 ### 1.3 环境变量模板
@@ -81,9 +83,6 @@ ELDER_3=0x...
 ELDER_4=0x...
 ELDER_5=0x...
 
-# ─── PayPal webhook 服务端地址（部署后配置）───
-PAYPAL_SERVER=0x...
-
 # ─── 前端环境变量 ───
 # 链专属变量后缀格式：_<CHAINID>_ADDRESS（56=BSC 主网，97=BSC 测试网）
 NEXT_PUBLIC_AETHER_RING_97_ADDRESS=0x...
@@ -93,6 +92,11 @@ NEXT_PUBLIC_AETHER_DONATION_97_ADDRESS=0x...
 NEXT_PUBLIC_SAFE_WALLET_97_ADDRESS=0x...
 NEXT_PUBLIC_IPFS_GATEWAY=https://gateway.pinata.cloud/ipfs/
 ```
+
+> **v3.3 变更**：PayPal webhook 方案已整体移除（`mintDonation` /
+> `settleDonation` / `grantMinterRole` 均已删除），**不存在 `PAYPAL_SERVER`
+> 变量**；捐款走 `AetherDonation.donateAndMint`（public，纯链上 USDC 转账）。
+> 新增必需变量 `SAFE` 与 `USDC`（`Deploy.s.sol` M12 校验，缺失即 revert）。
 
 ---
 
@@ -109,8 +113,13 @@ anvil --block-time 1 &
 
 ```bash
 # 私钥从 Anvil 启动时打印的测试账户复制（或从密钥管理注入）；切勿硬编码真实私钥
+# TREASURY / SAFE / USDC 三个必需变量缺一不可（Deploy.s.sol M12 校验，缺失即 revert）
+# 本地测试：SAFE 需为有代码的地址（H4 校验），可先用 Anvil 自动生成的合约地址；
+#           USDC 可用 mock ERC20；0x0 占位时 donateAndMint 不可用，仅验证部署链路
 PRIVATE_KEY=<Anvil-打印的第一个测试账户私钥> \
 TREASURY=0x70997970C51812dc3A010C7d01b50e0d17dc79C8 \
+SAFE=0x... \
+USDC=0x... \
 forge script contracts/script/Deploy.s.sol:Deploy \
   --rpc-url http://127.0.0.1:8545 \
   --broadcast -vvv
@@ -295,12 +304,13 @@ cast send $DONATION "grantRole(bytes32,address)" \
   --rpc-url $RPC --private-key $PRIVATE_KEY
 ```
 
-### 5.2 配置 PayPal MINTER_ROLE
+### 5.2 捐款合约权限（v3.3 起无需额外配置）
 
-```bash
-cast send $DONATION "grantMinterRole(address)" $PAYPAL_SERVER \
-  --rpc-url $RPC --private-key $PRIVATE_KEY
-```
+> v3.3 起捐款为纯链上路径：`donateAndMint` 为 **public** 函数，
+> 捐款人自己发起 USDC `transferFrom` + 合约铸凭证 NFT，
+> **不存在** `grantMinterRole` / PayPal 服务端授权。
+> `donation.ADMIN_ROLE`（setTreasury / setRingContract / setUsdcToken）
+> 已由 `Deploy.s.sol` 第 8 步授予 Safe（M9）。
 
 ### 5.3 deployer 放弃角色（可选，建议确认 Safe 工作正常后）
 
@@ -322,12 +332,15 @@ cast send $RING "renounceRole(bytes32,address)" \
 
 ```bash
 PRIVATE_KEY=0x... \
-TREASURY=<SAFE_ADDRESS> \
+TREASURY=<SAFE地址或Safe管理的国库地址> \
+SAFE=<Safe多签地址> \
+USDC=0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d \
 forge script contracts/script/Deploy.s.sol:Deploy \
   --rpc-url $BSC_RPC_URL \
   --broadcast \
   --verify \
   --etherscan-api-key $BSCSCAN_API_KEY \
+  --slow \
   -vvv
 ```
 
@@ -376,22 +389,22 @@ NEXT_PUBLIC_SAFE_WALLET_97_ADDRESS=0x...
 # IPFS
 NEXT_PUBLIC_IPFS_GATEWAY=https://gateway.pinata.cloud/ipfs/
 
-# WalletConnect（可选）
-NEXT_PUBLIC_WALLETCONNECT_PROJECT_ID=...
+# WalletConnect（移动端钱包扫码；生产环境缺失会导致构建 fail-fast）
+NEXT_PUBLIC_WC_PROJECT_ID=...
 ```
 
 ### 7.2 本地开发
 
 ```bash
-pnpm dev
+npm run dev
 # 访问 http://localhost:3000
 ```
 
 ### 7.3 生产构建
 
 ```bash
-pnpm build
-pnpm start
+npm run build
+npm run start
 ```
 
 ### 7.4 Vercel 部署
@@ -399,60 +412,41 @@ pnpm start
 1. 在 Vercel 导入 GitHub 仓库
 2. 配置环境变量（同 7.1）
 3. Framework Preset: **Next.js**
-4. Build Command: `pnpm build`
+4. Build Command: `npm run build`
 5. 部署
+
+> **WalletConnect 注意**：v3.6 起代码不再内置默认 Project ID，
+> `NEXT_PUBLIC_WC_PROJECT_ID` 未配置时生产构建直接报错（与金库地址同款 fail-fast 策略）；
+> 开发环境仅告警并禁用移动端扫码（桌面注入钱包不受影响）。
+> 在 https://cloud.reown.com（原 cloud.walletconnect.com）申请。
 
 ---
 
 ## 八、外部服务集成
 
-### 8.1 PayPal Webhook 服务端
+### 8.1 捐款链路（v3.3 起纯链上，无外部服务端）
 
-**职责**：验证 PayPal 交易后调用 `donation.mintDonation`
+> **v3.3 变更**：PayPal webhook 方案已整体移除。原 8.1 的
+> "PayPal Webhook 服务端 + `mintDonation`" 流程作废，
+> 以下为当前真实链路。
 
-**实现要点**：
+**流程**（单笔交易完成，无中转服务）：
 
-1. 接收 PayPal webhook 事件（`payment.completed`）
-2. 调用 PayPal API 回查交易真实性（防伪造）
-3. 提取：`donor` 地址、`amount`、`paypalTxId`、`payer_id`
-4. 计算 `paypalAccountHash = keccak256(payer_id)`
-5. 调用 `donation.mintDonation(donor, amount, paypalTxId, paypalAccountHash)`
+1. 用户在前端 `DonationModal` 输入金额、选用途
+2. 前端调 `AetherDonation.donateAndMint(purpose)`，合约内部：
+   - 校验金额 ≥ `MIN_DONATION_USD`（按 `USDC.decimals()` 动态计算，$10）
+   - USDC `transferFrom(donor → treasury)`（带返回值检查）
+   - 铸捐款凭证 NFT 给 donor
+   - 首捐者自动铸公民道环（tier 14）；休眠公民自动重激活
+3. 交易确认后前端拉凭证信息，本地生成 PDF 收据（jsPDF）
 
-**安全要求**：
+**安全属性**：
 
-- 服务端私钥仅用于 `mintDonation`，不持有资金
-- webhook 验签防重放
-- 金额单位：USD 6 decimals（$10 = 10000000）
-- 服务端地址需被授予 `donation.MINTER_ROLE`
-
-**参考实现**（Node.js + ethers）：
-
-```javascript
-import { ethers } from "ethers";
-
-const provider = new ethers.JsonRpcProvider(RPC_URL);
-const wallet = new ethers.Wallet(PAYPAL_SERVER_KEY, provider);
-const donation = new ethers.Contract(DONATION_ADDR, ABI, wallet);
-
-// PayPal webhook handler
-app.post("/webhook", async (req, res) => {
-  const event = req.body;
-  if (event.event_type !== "payments.payment.completed") return res.sendStatus(200);
-
-  const payment = event.resource;
-  const verified = await verifyPayPalPayment(payment.id);
-  if (!verified) return res.status(400).send("Invalid payment");
-
-  const donor = extractDonorAddress(payment);
-  const amount = parseAmount(payment.amount); // 6 decimals
-  const txId = payment.id;
-  const payerId = payment.payer_info.payer_id;
-  const accountHash = ethers.keccak256(ethers.toUtf8Bytes(payerId));
-
-  await donation.mintDonation(donor, amount, txId, accountHash);
-  res.sendStatus(200);
-});
-```
+- 捐款人自签自付（`transferFrom` 需 donor 的 USDC approve），无代付冒名
+- 合约 CEI 顺序 + 返回值检查，无重入面
+- `MIN_DONATION_USD` 构造时按 decimals 动态计算，链无关
+- 后端 `/api/donations/record` 仅做**展示层**记账（链上验证后入 KV/DB），
+  不参与资金流
 
 ### 8.2 IPFS 存储（Pinata）
 
@@ -476,20 +470,16 @@ async function uploadProposal(content) {
 }
 ```
 
-### 8.3 USDC 结算
-
-**流程**：
-
-1. 用户在 PayPal 捐款（USDC 金额记录在 donation NFT）
-2. Safe 多签发起 USDC 转账（donor → treasury）
-3. 转账确认后，Safe 调用 `donation.settleDonation(tokenId, usdcAmount)`
-
-**USDC 合约地址**：
+### 8.3 稳定币参考地址（BSC 主网，18 decimals）
 
 - BNB Smart Chain（Binance-Peg USDC，18 decimals）：`0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d`
 - BNB Smart Chain（Binance-Peg USDT，18 decimals）：`0x55d398326f99059fF775485246999027B3197955`
-- 金额精度：链上 USDC/USDT 结算按代币 decimals（BSC 上两者均为 18）；
-  PayPal 侧 USD 记账为 6 decimals（`mintDonation` 的 `usdAmount` 口径）
+- 金额精度：全部按代币 `decimals()`（BSC 上两者均为 18），
+  合约构造时动态计算门槛，前端换币时**必须**同时配置
+  `NEXT_PUBLIC_STABLECOIN_DECIMALS`（漏配会静默差 12 个数量级）
+
+> 原本节的 "PayPal 侧 USD 6 decimals / Safe 手动 settleDonation" 流程
+> 已随 v3.3 移除 —— 现在捐款入账即入金库，无需结算步骤。
 
 ---
 
@@ -501,7 +491,8 @@ async function uploadProposal(content) {
 - [ ] `ring.appointedElderCount()` 返回 5（或预期数量）
 - [ ] `ring.getActiveCitizens()` 返回合理值
 - [ ] `donation.treasury()` 返回 Safe 地址
-- [ ] `donation` 的 MINTER_ROLE 已授予 PayPal 服务端
+- [ ] `donation.usdcToken()` 返回正确稳定币地址
+- [ ] `donation.minDonationUsd()` 为 10 × 10^decimals（18 decimals 链上 1e19）
 - [ ] 4 个合约的 `DEFAULT_ADMIN_ROLE` 已授予 Safe
 - [ ] deployer 已 `renounceRole`（可选）
 
@@ -524,7 +515,7 @@ async function uploadProposal(content) {
 
 ### 9.4 前端
 
-- [ ] `pnpm build` 成功
+- [x] `npm run build` 成功（v3.6 沙箱已验证：lint 0 问题 / tsc 0 错误 / build 通过）
 - [ ] 钱包连接正常
 - [ ] 合约地址读取正确
 - [ ] 提案列表显示
@@ -584,13 +575,21 @@ v3 合约**不可升级**（无 proxy）。若需修复严重 bug：
 
 ## 十二、重要地址清单（BNB Smart Chain）
 
+> ⚠️ v3.6 修正：本清单旧版误列了 Arbitrum One 的 USDC/WETH/USDT 地址，
+> 已全部替换为 BSC 主网地址。
+
 | 资源 | 地址 |
 |---|---|
-| Safe v1.4.1 单例 | `0x41675C099F32341bf84BFc5382aF534df5C7461a` |
-| USDC（原生）| `0xaf88d065e77c8cC2239327C5EDb3A432268e5831` |
-| USDT | `0xFd086bC7CD5C481D9C376f8B1a1c1f3a5f3a5f3a` |
-| WETH | `0x82aF49447D8a07e3bd95BD0d56f35241523fBab1` |
-| BscScan | https://bscscan.com |
+| Safe v1.4.1 单例（BSC）| `0x41675C099F32341bf84BFc5382aF534df5C7461a`（部署后在 bscscan 复核，以 Safe 官方支持网络文档为准）|
+| Binance-Peg USDC（18 decimals）| `0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d` |
+| Binance-Peg USDT（18 decimals）| `0x55d398326f99059fF775485246999027B3197955` |
+| BSC 公共 RPC | `https://bsc-dataseed.binance.org`（测试网 `https://data-seed-prebsc-1-s1.binance.org:8545`）|
+| BscScan | https://bscscan.com（测试网 https://testnet.bscscan.com）|
+
+> BSC 测试网（97）无官方 Binance-Peg 稳定币，需自行部署 mock ERC20
+> （18 decimals）作为 `USDC` 传入。**切勿**把 Arbitrum 地址
+> （`0xaf88d…` USDC / `0x82aF…` WETH / `0xFd08…` USDT）配进任何
+> BSC 环境变量 —— 那是 v3.6 已移除的早期测试链残留。
 
 ---
 

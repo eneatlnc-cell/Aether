@@ -3,6 +3,7 @@
 
 import { useEffect, useState } from "react";
 import { useTranslations } from "next-intl";
+import { Link } from "@/i18n/navigation";
 import { AddressCopy } from "@/components/ui/AddressCopy";
 import { Card } from "@/components/ui/Card";
 import {
@@ -34,6 +35,8 @@ interface CitizenApiResponse {
     amountUsdc: number;
     timestamp: string;
     purpose: string;
+    /** 交易所在链（56=BSC 主网，97=BSC 测试网）；v3.6 后端透传 */
+    chainId: number;
   }>;
 }
 
@@ -43,7 +46,22 @@ type LoadState =
   | { status: "error"; message: string }
   | { status: "ok"; data: CitizenApiResponse };
 
-const BSCSCAN_TX = "https://bscscan.com/tx/";
+/** 异步拉取完成后的结果，与拉取目标地址绑定存储 */
+type FetchResult =
+  | { status: "not-found" }
+  | { status: "error"; message: string }
+  | { status: "ok"; data: CitizenApiResponse };
+
+/** 按链切换区块浏览器域名（v3.6：测试网捐款此前误链到主网 bscscan） */
+const BSCSCAN_TX_BY_CHAIN: Record<number, string> = {
+  56: "https://bscscan.com/tx/",
+  97: "https://testnet.bscscan.com/tx/",
+};
+
+function bscscanTxUrl(chainId: number | undefined, txHash: string): string {
+  const base = BSCSCAN_TX_BY_CHAIN[chainId ?? 56] ?? BSCSCAN_TX_BY_CHAIN[56];
+  return `${base}${txHash}`;
+}
 
 /** 格式化 USDC 金额 */
 function formatUsdc(n: number): string {
@@ -70,33 +88,43 @@ function formatDate(iso: string): string {
 
 export function CitizenView({ address }: { address: string }) {
   const t = useTranslations("citizen");
-  const [state, setState] = useState<LoadState>({ status: "loading" });
+  // 结果按拉取目标地址绑定存储；当前地址无匹配结果时派生为 loading。
+  // （替代 effect 内同步 setState：react-hooks/set-state-in-effect 禁止级联渲染）
+  const [result, setResult] = useState<{ key: string; data: FetchResult } | null>(
+    null
+  );
 
   useEffect(() => {
     let cancelled = false;
-    setState({ status: "loading" });
 
-    fetch(`/api/citizens/${address}`)
+    // encodeURIComponent 防御路径注入（address 来自 URL 路径段）
+    fetch(`/api/citizens/${encodeURIComponent(address)}`)
       .then(async (res) => {
         if (cancelled) return;
         if (res.status === 404) {
-          setState({ status: "not-found" });
+          setResult({ key: address, data: { status: "not-found" } });
           return;
         }
         if (!res.ok) {
           const body = await res.json().catch(() => ({}));
-          setState({
-            status: "error",
-            message: body.error ?? `HTTP ${res.status}`,
+          setResult({
+            key: address,
+            data: {
+              status: "error",
+              message: body.error ?? `HTTP ${res.status}`,
+            },
           });
           return;
         }
         const data = (await res.json()) as CitizenApiResponse;
-        setState({ status: "ok", data });
+        setResult({ key: address, data: { status: "ok", data } });
       })
       .catch(() => {
         if (!cancelled) {
-          setState({ status: "error", message: "Network error" });
+          setResult({
+            key: address,
+            data: { status: "error", message: "Network error" },
+          });
         }
       });
 
@@ -104,6 +132,9 @@ export function CitizenView({ address }: { address: string }) {
       cancelled = true;
     };
   }, [address]);
+
+  const state: LoadState =
+    result && result.key === address ? result.data : { status: "loading" };
 
   if (state.status === "loading") {
     return (
@@ -121,12 +152,12 @@ export function CitizenView({ address }: { address: string }) {
           {t("notCitizenTitle")}
         </h2>
         <p className="text-sm text-muted mb-6">{t("notCitizenDesc")}</p>
-        <a
+        <Link
           href="/"
           className="inline-flex items-center gap-2 px-4 py-2 bg-accent text-white rounded-[8px] text-sm hover:bg-accent/90 transition-colors"
         >
           {t("donateToJoin")}
-        </a>
+        </Link>
       </div>
     );
   }
@@ -232,7 +263,7 @@ export function CitizenView({ address }: { address: string }) {
                     </span>
                   </div>
                   <a
-                    href={`${BSCSCAN_TX}${d.txHash}`}
+                    href={bscscanTxUrl(d.chainId, d.txHash)}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1 text-xs text-accent hover:underline font-mono"

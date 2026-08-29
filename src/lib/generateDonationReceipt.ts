@@ -3,18 +3,55 @@
 
 import { jsPDF } from "jspdf";
 import { useTranslations, useLocale, useFormatter } from "next-intl";
+import { formatUnits } from "viem";
 import type { DonationResult } from "@/hooks/useDonation";
 import { getNetworkLabel } from "@/lib/contracts";
 
+/** CJK 字体族名（jsPDF addFont 注册名） */
+const CJK_FONT_FAMILY = "NotoSansCJK";
+/** CJK 子集字体路径（构建脚本产出，覆盖 zh-Hant/ko/ja 凭证全部文案字符） */
+const CJK_FONT_URL = "/fonts/NotoSansCJK-Receipt.ttf";
+
 const LOCALE_TO_PDF_FONT: Record<string, string> = {
   en: "helvetica",
-  "zh-Hant": "helvetica", // PDF 标准字体不支持中文，统一用 helvetica + 罗马字兜底
-  ko: "helvetica",
-  ja: "helvetica",
+  // v3.6：zh-Hant/ko/ja 嵌入 Noto Sans CJK 子集字体（315KB，按需懒加载），
+  // 不再用 helvetica 罗马字兜底（此前 CJK 文案在 PDF 中显示为乱码）
+  "zh-Hant": CJK_FONT_FAMILY,
+  ko: CJK_FONT_FAMILY,
+  ja: CJK_FONT_FAMILY,
   de: "helvetica",
   es: "helvetica",
   fr: "helvetica",
 };
+
+/** CJK 字体 base64 模块级缓存（每个会话只 fetch 一次） */
+let cjkFontBase64: string | null = null;
+
+/**
+ * 懒加载 CJK 子集字体并注册到 jsPDF。
+ * Noto Sans CJK 无真正的 bold 字重，将同一文件同时注册为
+ * normal/bold 两个 style，保证 doc.setFont(family, "bold") 不抛错。
+ */
+async function ensureCjkFont(doc: jsPDF): Promise<void> {
+  if (cjkFontBase64 === null) {
+    const res = await fetch(CJK_FONT_URL);
+    if (!res.ok) {
+      throw new Error(`Failed to load CJK font (${res.status})`);
+    }
+    const buf = new Uint8Array(await res.arrayBuffer());
+    // 分块转 base64，避免大数组触发 String.fromCharCode 栈溢出
+    let binary = "";
+    const CHUNK = 0x8000;
+    for (let i = 0; i < buf.length; i += CHUNK) {
+      binary += String.fromCharCode(...buf.subarray(i, i + CHUNK));
+    }
+    cjkFontBase64 = btoa(binary);
+  }
+  const fileName = "NotoSansCJK-Receipt.ttf";
+  doc.addFileToVFS(fileName, cjkFontBase64);
+  doc.addFont(fileName, CJK_FONT_FAMILY, "normal");
+  doc.addFont(fileName, CJK_FONT_FAMILY, "bold");
+}
 
 /**
  * 生成捐赠凭证 PDF 并触发浏览器下载
@@ -31,14 +68,23 @@ export function useDonationReceipt() {
   const locale = useLocale();
   const format = useFormatter();
 
-  return (result: DonationResult) => {
+  return async (result: DonationResult) => {
     const doc = new jsPDF({
       unit: "pt",
       format: "a4",
       orientation: "portrait",
     });
 
-    const font = LOCALE_TO_PDF_FONT[locale] ?? "helvetica";
+    let font = LOCALE_TO_PDF_FONT[locale] ?? "helvetica";
+    if (font === CJK_FONT_FAMILY) {
+      // CJK locale：懒加载子集字体并注册（失败则回退 helvetica，至少保住 ASCII 内容）
+      try {
+        await ensureCjkFont(doc);
+      } catch {
+        console.warn("[receipt] CJK font load failed, falling back to helvetica");
+        font = "helvetica";
+      }
+    }
     doc.setFont(font);
 
     const pageWidth = doc.internal.pageSize.getWidth();
@@ -87,7 +133,8 @@ export function useDonationReceipt() {
     // 精度按交易所在链的稳定币 decimals（BSC 为 18），符号按链配置
     const decimals = result.assetDecimals ?? 6;
     const symbol = result.assetSymbol ?? "USDC";
-    const usdcAmount = Number(result.amount) / 10 ** decimals;
+    // viem formatUnits：字符串精确换算，避免 18 decimals 大数先过 Number 丢精度
+    const usdcAmount = Number(formatUnits(result.amount, decimals));
     const amountStr = `${usdcAmount.toLocaleString("en-US", {
       maximumFractionDigits: 2,
     })} ${symbol}`;

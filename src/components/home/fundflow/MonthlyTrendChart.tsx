@@ -113,13 +113,26 @@ function Legend({ color, label }: { color: string; label: string }) {
   );
 }
 
-function TrendTooltip({ active, payload, label }: any) {
+/** recharts Tooltip 传入的最小字段集（自定义类型，替代 any） */
+interface TrendTooltipEntry {
+  dataKey?: string | number;
+  value?: number | string;
+  color?: string;
+}
+
+interface TrendTooltipProps {
+  active?: boolean;
+  payload?: TrendTooltipEntry[];
+  label?: string | number;
+}
+
+function TrendTooltip({ active, payload, label }: TrendTooltipProps) {
   const format = useFormatter();
   if (!active || !payload?.length) return null;
   return (
     <div className="bg-card border border-border rounded-[8px] shadow-[0_4px_12px_rgba(0,0,0,0.04)] px-3 py-2 text-xs">
       <p className="text-muted mb-2">{label}</p>
-      {payload.map((p: any) => (
+      {payload.map((p) => (
         <div key={p.dataKey} className="flex items-center gap-2">
           <span
             className="inline-block w-2 h-2 rounded-sm"
@@ -129,7 +142,7 @@ function TrendTooltip({ active, payload, label }: any) {
             {p.dataKey === "incomeUsd" ? "Income" : "Expense"}:
           </span>
           <span className="text-ink font-medium tabular-nums">
-            {format.number(p.value, {
+            {format.number(Number(p.value ?? 0), {
               style: "currency",
               currency: "USD",
               maximumFractionDigits: 0,

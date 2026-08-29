@@ -23,6 +23,11 @@ type LoadState =
   | { status: "not-citizen" }
   | { status: "ok"; data: CitizenBannerData };
 
+/** 异步拉取完成后的结果（not-citizen / ok），与拉取目标地址绑定存储 */
+type FetchResult =
+  | { status: "not-citizen" }
+  | { status: "ok"; data: CitizenBannerData };
+
 /** 格式化 USDC 金额 */
 function formatUsdc(n: number): string {
   return n.toLocaleString("en-US", {
@@ -46,37 +51,47 @@ export function CitizenBanner() {
   const t = useTranslations("citizenBanner");
   const locale = useLocale();
   const { address, isConnected } = useAccount();
-  const [state, setState] = useState<LoadState>({ status: "loading" });
+
+  // 结果按拉取目标地址绑定存储；当前地址无匹配结果时派生为 loading。
+  // （替代 effect 内同步 setState：react-hooks/set-state-in-effect 禁止级联渲染）
+  const [result, setResult] = useState<{ key: string; data: FetchResult } | null>(
+    null
+  );
+  const fetchKey = isConnected && address ? address.toLowerCase() : null;
 
   useEffect(() => {
     if (!isConnected || !address) return;
 
     let cancelled = false;
-    setState({ status: "loading" });
 
     fetch(`/api/citizens/${address.toLowerCase()}`)
       .then(async (res) => {
         if (cancelled) return;
         if (res.status === 404) {
-          setState({ status: "not-citizen" });
+          setResult({ key: address.toLowerCase(), data: { status: "not-citizen" } });
           return;
         }
         if (!res.ok) {
           // 服务端错误时静默降级为"还不是公民"，避免阻塞治理页
-          setState({ status: "not-citizen" });
+          setResult({ key: address.toLowerCase(), data: { status: "not-citizen" } });
           return;
         }
         const data = (await res.json()) as CitizenBannerData;
-        setState({ status: "ok", data });
+        setResult({ key: address.toLowerCase(), data: { status: "ok", data } });
       })
       .catch(() => {
-        if (!cancelled) setState({ status: "not-citizen" });
+        if (!cancelled) {
+          setResult({ key: address.toLowerCase(), data: { status: "not-citizen" } });
+        }
       });
 
     return () => {
       cancelled = true;
     };
   }, [isConnected, address]);
+
+  const state: LoadState =
+    result && result.key === fetchKey ? result.data : { status: "loading" };
 
   // 未连接钱包 → 不渲染（游客视图）
   if (!isConnected || !address) return null;

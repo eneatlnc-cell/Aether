@@ -15,6 +15,7 @@ import {
   decodeEventLog,
   isAddressEqual,
   getEventSelector,
+  formatUnits,
   type Hex,
   type Chain,
 } from "viem";
@@ -192,7 +193,8 @@ export async function verifyDonationTx(
   }
 
   // 5. 校验金额 >= $10（按该链稳定币精度换算）
-  const amountUsdc = Number(transferValue) / 10 ** stablecoin.decimals;
+  //    viem formatUnits：字符串精确换算，避免 18 decimals 大数先过 Number 丢精度
+  const amountUsdc = Number(formatUnits(transferValue, stablecoin.decimals));
   if (amountUsdc < MIN_DONATION_USDC) {
     return {
       valid: false,

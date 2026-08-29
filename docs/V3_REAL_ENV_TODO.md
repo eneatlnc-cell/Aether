@@ -1,8 +1,20 @@
-# Aether DAO v3.0 现实环境待解决问题清单
+# Aether DAO v3.6 现实环境待解决问题清单
 
-> **版本**：v3.0 Phase 1-6 完成后的遗留事项
-> **日期**：2026年7月
-> **说明**：以下问题需要在真实开发/部署环境（非沙箱）中处理，沙箱内已完成全部代码编写与编译验证（含 `tsc --noEmit` 0 错误）
+> **版本**：v3.6（v3.0 Phase 1-6 完成后的遗留事项，v3.6 文档校准更新）
+> **日期**：2026-08-29
+> **说明**：以下问题需要在真实开发/部署环境（非沙箱）中处理。沙箱内已完成：
+> `eslint .` 0 问题、`tsc --noEmit` 0 错误、`npm run build` 生产构建通过、
+> `forge test` 93/93 全绿（v3.6 通过代理安装 Foundry 1.8.1）
+> **v3.6 校准**：forge test 沙箱内已执行并全绿（修复 1 个测试断言 bug）、
+> 修正测试计数（93 个）、部署命令补齐 `SAFE`/`USDC` 必需变量、
+> 前端变量后缀 421614/42161 → 97/56（Arbitrum 残留清除）、
+> PayPal 章节（§3.1/§3.3）替换为纯链上捐款方案说明
+> **v3.6 安全加固（P4 + 收尾）**：API 限流（record 10/min、citizens 60/min，
+> 实例内固定窗口，见 `src/lib/rateLimit.ts`）、purpose 白名单+长度上限、
+> 捐款 tx 时间窗口校验（拒未来区块/超 30 天旧交易）、500 响应去除 `detail` 回传、
+> WC ProjectId 硬编码移除（生产缺配置构建 fail-fast）、双锁文件清理
+> （删 `pnpm-lock.yaml`，统一 npm 并补 `lint`/`typecheck`/`test` 脚本）、
+> React hooks 新规则 lint 全量修复（`useSyncExternalStore` 替代 mount 检测等）
 
 ---
 
@@ -10,38 +22,40 @@
 
 ### 1.1 安装 Foundry 工具链
 
-**问题**：沙箱环境无法通过 `foundryup` 下载 Forge 二进制（GitHub SSL 连接不稳定）
+**状态**：✅ **v3.6 已完成**（2026-08-29，通过沙箱 HTTP 代理安装 Foundry 1.8.1）
 
-**影响**：无法执行 `forge test` 验证测试逻辑正确性
-
-**当前状态**：
-- 全部 89 个测试函数已通过 `solc-js` 编译验证（0 errors）
-- 测试文件列表：
-  - `contracts/test/AetherRing.t.sol`（28 个测试）
-  - `contracts/test/AetherDonation.t.sol`（15 个测试）
-  - `contracts/test/AetherGovernance.t.sol`（30 个测试）
-  - `contracts/test/AetherElection.t.sol`（11 个测试）
-  - `contracts/test/Integration.t.sol`（5 个集成测试）
-
-**待执行命令**：
+**已执行**：
 ```bash
-# 1. 安装 Foundry
+# 1. 安装 Foundry（代理环境）
 curl -L https://foundry.paradigm.xyz | bash
-foundryup
+foundryup          # forge/cast/anvil 1.8.1
 
-# 2. 安装依赖（forge-std + openzeppelin）
+# 2. 安装依赖（forge-std v1.16.2 + openzeppelin v5.0.2）
 cd contracts
 forge install foundry-rs/forge-std --no-commit
-forge install OpenZeppelin/openzeppelin-contracts --no-commit
+git clone --depth 1 --branch v5.0.2 \
+  https://github.com/OpenZeppelin/openzeppelin-contracts lib/openzeppelin-contracts
 
 # 3. 运行测试
-forge test -vvv
-
-# 4. 覆盖率检查（目标 ≥ 90%）
-forge coverage
+forge test
 ```
 
-**预期**：测试可能发现少量逻辑 bug（如计票精度、时间窗口边界），需根据失败信息修复
+**结果**：**93 passed / 0 failed / 0 skipped**（5 个测试套件）
+
+**已修复**：`AetherDonation.t.sol` 的
+`test_Constructor_18Decimals_BscStablecoin` 原断言
+`assertEq(bscUsdt.balanceOf(alice), 0)` 未计入 revert 分支铸入且未消耗的
+`small`（9.99 USDT），已改为 `assertEq(bscUsdt.balanceOf(alice), small)`。
+**合约逻辑本身无 bug**——唯一失败项是测试自身的断言疏漏。
+
+**真实环境仍需执行**：
+```bash
+# 覆盖率检查（目标 ≥ 90%）
+forge coverage
+
+# invariant 测试（状态机所有路径）
+forge test --match-test invariant -vvv
+```
 
 ---
 
@@ -55,8 +69,13 @@ forge coverage
 anvil --block-time 1 &
 
 # 2. 部署 4 合约（私钥从 Anvil 启动时打印的测试账户复制；切勿硬编码真实私钥）
+# TREASURY / SAFE / USDC 三个必需变量缺一不可（Deploy.s.sol M12 校验，缺失即 revert）
+# 本地测试：SAFE 需为有代码的地址（H4 校验），可先用 Anvil 自动生成的合约地址；
+#           USDC 可用 mock ERC20；0x0 占位时 donateAndMint 不可用，仅验证部署链路
 PRIVATE_KEY=<Anvil-打印的第一个测试账户私钥> \
 TREASURY=0x70997970C51812dc3A010C7d01b50e0d17dc79C8 \
+SAFE=0x... \
+USDC=0x... \
 forge script contracts/script/Deploy.s.sol:Deploy \
   --rpc-url http://127.0.0.1:8545 \
   --broadcast -vvv
@@ -94,6 +113,8 @@ forge script contracts/script/Genesis.s.sol:Genesis \
 ```bash
 PRIVATE_KEY=0x... \
 TREASURY=0x... \
+SAFE=0x... \
+USDC=0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d \
 forge script contracts/script/Deploy.s.sol:Deploy \
   --rpc-url https://data-seed-prebsc-1-s1.binance.org:8545 \
   --broadcast \
@@ -101,45 +122,47 @@ forge script contracts/script/Deploy.s.sol:Deploy \
   --etherscan-api-key $BSCSCAN_API_KEY
 ```
 
+> 测试网 USDC 建议自行部署 mock ERC20（18 decimals）后替换地址。
+
 ### 2.4 前端环境变量配置
 
 部署完成后，在 Vercel 或 `.env.local` 中设置：
 ```bash
 # BSC 测试网 (97)
-NEXT_PUBLIC_AETHER_RING_421614_ADDRESS=0x...
-NEXT_PUBLIC_AETHER_GOVERNANCE_421614_ADDRESS=0x...
-NEXT_PUBLIC_AETHER_ELECTION_421614_ADDRESS=0x...
-NEXT_PUBLIC_AETHER_DONATION_421614_ADDRESS=0x...
-NEXT_PUBLIC_SAFE_WALLET_421614_ADDRESS=0x...
+NEXT_PUBLIC_AETHER_RING_97_ADDRESS=0x...
+NEXT_PUBLIC_AETHER_GOVERNANCE_97_ADDRESS=0x...
+NEXT_PUBLIC_AETHER_ELECTION_97_ADDRESS=0x...
+NEXT_PUBLIC_AETHER_DONATION_97_ADDRESS=0x...
+NEXT_PUBLIC_SAFE_WALLET_97_ADDRESS=0x...
 
 # BNB Smart Chain (56) - 主网部署后
-NEXT_PUBLIC_AETHER_RING_42161_ADDRESS=0x...
-NEXT_PUBLIC_AETHER_GOVERNANCE_42161_ADDRESS=0x...
-NEXT_PUBLIC_AETHER_ELECTION_42161_ADDRESS=0x...
-NEXT_PUBLIC_AETHER_DONATION_42161_ADDRESS=0x...
-NEXT_PUBLIC_SAFE_WALLET_42161_ADDRESS=0x...
+NEXT_PUBLIC_AETHER_RING_56_ADDRESS=0x...
+NEXT_PUBLIC_AETHER_GOVERNANCE_56_ADDRESS=0x...
+NEXT_PUBLIC_AETHER_ELECTION_56_ADDRESS=0x...
+NEXT_PUBLIC_AETHER_DONATION_56_ADDRESS=0x...
+NEXT_PUBLIC_SAFE_WALLET_56_ADDRESS=0x...
 ```
 
 ---
 
 ## 三、外部服务集成
 
-### 3.1 PayPal Webhook 服务端
+### 3.1 捐款链上化（原 PayPal Webhook 已移除）
 
-**问题**：`AetherDonation.mintDonation` 仅允许 `MINTER_ROLE` 调用，需要 PayPal webhook 服务端验证交易后调用
+**v3.3 变更**：PayPal webhook 方案已整体移除（`mintDonation` / `settleDonation` /
+`grantMinterRole` / `MINTER_ROLE` 均已从合约删除），**不存在服务端铸币环节**，
+无需部署任何后端服务、无需管理服务端私钥。
 
-**待实现**：
-1. 服务端接收 PayPal webhook 事件（payment.completed）
-2. 验证交易真实性（PayPal API 回查）
-3. 提取：donor 地址、金额、paypalTxId、payer_id
-4. 计算 `paypalAccountHash = keccak256(payer_id)`
-5. 调用 `donation.mintDonation(donor, amount, paypalTxId, paypalAccountHash)`
-6. 服务端持有 `donation.MINTER_ROLE`（通过 `donation.grantMinterRole(<SERVER>)`）
+**现行流程（纯链上）**：
+1. 捐款人在前端 `approve` USDC 给 `AetherDonation` 合约
+2. 前端调用 `donation.donateAndMint(amount)`（public，任何人可调）
+3. 合约内完成：USDC `transferFrom` → 铸捐款凭证 NFT → 铸公民道环
+4. 金额下限 $10（`MIN_DONATION_USD`），放弃冷却期内 revert
 
-**安全要求**：
-- 服务端私钥仅用于 mintDonation 调用，不持有资金
-- webhook 验签防重放
-- 金额单位：USD 6 decimals（$10 = 10000000）
+**仍需真实环境处理的**：
+- BSC 主网 Binance-Peg USDC 地址确认（`0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d`，18 decimals）
+- USDC `approve` 流程的前端 UI（DonationModal 接入 `useErc20Approve`）
+- `donateAndMint` 交易失败的用户提示与重试
 
 ### 3.2 IPFS 存储
 
@@ -150,15 +173,15 @@ NEXT_PUBLIC_SAFE_WALLET_42161_ADDRESS=0x...
 - 上传服务：Pinata / Web3.Storage / nft.storage
 - 环境变量：`NEXT_PUBLIC_IPFS_GATEWAY`
 
-### 3.3 USDC 结算
+### 3.3 USDC 到账核对（原 settleDonation 流程已移除）
 
-**问题**：`settleDonation` 记录 USDC 数量，但实际 USDC 转账需 Safe 多签执行
+**v3.3 变更**：`settleDonation` 已删除。USDC 在 `donateAndMint` 内实时
+`transferFrom` 到 treasury，**不存在链下结算环节**，Safe 多签无需手动执行转账。
 
-**待实现**：
-1. Safe 多签发起 USDC 转账（donor → treasury）
-2. 转账确认后调用 `donation.settleDonation(tokenId, usdcAmount)`
-3. USDC 合约地址（BSC Binance-Peg，18 decimals）：`0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d`
-4. 金额精度：6 decimals
+**仍需真实环境处理的**：
+- 部署后在 BscScan 复核 treasury 收款地址与 Safe 多签一致
+- 监控 `DonationMinted` 事件与 USDC 转账日志逐笔对账（金额 ≥ $1000 告警）
+- USDC 合约地址通过 `donation.setUsdcToken(<USDC>)` 配置（ADMIN_ROLE）
 
 ---
 
@@ -172,7 +195,7 @@ NEXT_PUBLIC_SAFE_WALLET_42161_ADDRESS=0x...
 | `src/hooks/useGovernance.ts` | ✅ 完成 | 7 阶段流程 + 12 状态 + 21 个写入方法 + 6 个读取 hooks（含信任投票 confidence vote）|
 | `src/hooks/useImpeachment.ts` | ✅ 完成 | 元老发起（createImpeachmentProposal）+ 3 联署（signImpeachment）+ 30%/70%（citizenFor）计票（finalizeImpeachment）|
 | `src/hooks/useElection.ts` | ✅ 完成 | 4 阶段状态机 + CITIZEN_TO_COUNCIL + appointToVacancy 空缺处理 + 8 个读取 hooks |
-| `src/hooks/useDonation.ts` | ✅ 完成 | 保留旧版 ETH 转账 hook（DonationModal 兼容）+ 12 个 v3 读取 hooks + useDonationWrite 写入 hook（mint/settle/sponsor/setTreasury/setRingContract/grantMinterRole/revokeMinterRole）|
+| `src/hooks/useDonation.ts` | ✅ 完成 | 保留旧版 ETH 转账 hook（DonationModal 兼容）+ 11 个 v3 读取 hooks + useDonationWrite 写入 hook（donateAndMint/sponsorDonation/setTreasury/setRingContract/setUsdcToken）|
 
 ### 4.2 v2 残留引用（已清理）
 
@@ -186,6 +209,14 @@ NEXT_PUBLIC_SAFE_WALLET_42161_ADDRESS=0x...
 
 ### 4.3 已知前端待处理（真实环境）
 
+- **金额精度（✅ v3.6 已修复）**：三处浮点换算已改用 viem 精确函数——
+  `DonationModal.handleSubmit` 用 `parseUnits`（消除 `parseFloat * 10**18` 舍入误差）、
+  `verifyDonationTx` / `generateDonationReceipt` 用 `formatUnits`
+  （消除 18 decimals 大数先过 `Number()` 的精度丢失）
+- **PDF 凭证 CJK 字体（✅ v3.6 已修复）**：zh-Hant/ko/ja 凭证嵌入
+  Noto Sans CJK 子集字体（`public/fonts/NotoSansCJK-Receipt.ttf`，315KB 懒加载），
+  三语文本经 pdftotext 验证完整还原（此前 helvetica 兜底显示乱码）。
+  文案更新后重建字体：`python3 scripts/build-receipt-font.py`
 - **useDonation 旧版 ETH 转账**：当前 `useDonation()` 仍保留 ETH 直接转账到占位地址（`0x000…AeTh`，v3.6 已移除该分支的链特定引用）。真实部署后应：
   1. 将 `TREASURY_ADDRESSES.bsc` 替换为真实 Safe 多签地址，或改为读取 `useDonationTreasury()` 返回值
   2. USDC/USDT 分支目前为模拟交易，需接入真实 ERC20 `transfer(treasury, amount)`（建议另建 `useErc20Transfer` hook）
@@ -289,30 +320,33 @@ v3 合约不可升级（无 proxy）。若需修复严重 bug：
 
 - [x] 5 个 hooks 更新/新建（见 4.1）
 - [x] `tsc --noEmit` 0 错误（修复 useDonation.ts / useRingInfo.ts 的 struct 返回值类型转换）
-- [ ] `pnpm build` 成功（待真实环境执行，沙箱仅验证 tsc）
+- [x] `npm run build` 成功（v3.6 沙箱已验证：`eslint .` 0 问题 / `tsc` 0 错误 / 生产构建通过）
 - [ ] UI 组件适配新枚举（tier 标签、proposal 状态流转图、election 阶段指示器）
 - [ ] 钱包连接与交易签名流程测试
 
 ### 7.3 Phase 6 新增 hooks 速览
 
-**useDonation.ts 新增导出**（v3 合约集成）：
+**useDonation.ts 导出清单**（v3.3 纯链上捐款版，与合约逐项核对）：
 
 | Hook | 类型 | 对应合约函数 |
 |---|---|---|
-| `useDonationInfo(tokenId)` | 读 | `getDonation`（9 字段 struct）|
+| `useDonationInfo(tokenId)` | 读 | `getDonation`（5 字段 struct：donor/amount/timestamp/sponsorCount/fastTrackActivated）|
 | `useDonationsByDonor(donor)` | 读 | `getDonationsByDonor` |
 | `useTotalDonations()` | 读 | `getTotalDonations` |
-| `useNextDonationTokenId()` | 读 | `nextTokenId` |
-| `useSponsorCount(tokenId)` | 读 | `getSponsorCount`（含 thresholdMet）|
+| `useSponsorCount(tokenId)` | 读 | `getSponsorCount` |
 | `useIsFastTrackActivated(tokenId)` | 读 | `isFastTrackActivated` |
 | `useHasSponsored(tokenId, sponsor)` | 读 | `hasSponsoredDonation` |
 | `useCanReacquireCitizenship(user)` | 读 | `canReacquireCitizenship`（代理 ring）|
 | `useDonationTreasury()` | 读 | `treasury` |
-| `useUnsettledDonations()` | 读 | `getUnsettledDonations`（审计）|
-| `useUsedPaypalTxId(txId)` | 读 | `usedPaypalTxIds` |
-| `usePaypalAccountWallet(hash)` | 读 | `paypalAccountToWallet` |
 | `useDonorStatus(donor)` | 读（批量）| 3 合约调用合并 |
-| `useDonationWrite()` | 写 | mintDonation / settleDonation / sponsorDonation / setTreasury / setRingContract / grantMinterRole / revokeMinterRole |
+| `useRingInfo(holder)` | 读（内部）| ring 3 字段合并查询 |
+| `useDonation()` | 写（旧版）| ETH 转账（DonationModal 兼容，待真实环境替换）|
+| `useDonationWrite()` | 写 | donateAndMint / sponsorDonation / setTreasury / setRingContract / setUsdcToken |
+
+> **v3.3 清理**：`useNextDonationTokenId` / `useUnsettledDonations` /
+> `useUsedPaypalTxId` / `usePaypalAccountWallet` 已随 PayPal 方案删除，
+> `useDonationWrite` 中的 `mintDonation` / `settleDonation` /
+> `grantMinterRole` / `revokeMinterRole` 同步移除。
 
 ---
 
@@ -320,20 +354,20 @@ v3 合约不可升级（无 proxy）。若需修复严重 bug：
 
 | 类别 | 数量 | 优先级 |
 |---|---|---|
-| 测试执行 | 1 项（forge test） | 🔴 高 |
+| 测试执行 | ✅ 已完成（93/93 通过，v3.6） | 🟢 低 |
 | 合约部署 | 4 项（Anvil/BSC测试网/Mainnet/Safe） | 🔴 高 |
-| 外部服务 | 3 项（PayPal/IPFS/USDC） | 🟡 中 |
+| 外部服务 | 2 项（IPFS/USDC 核对；PayPal 已移除） | 🟡 中 |
 | 前端 hooks | 5 个（Phase 6 — ✅ 已完成） | 🟢 低 |
-| 前端 UI 适配 | 3 项（tier 标签/状态流转图/选举指示器 + pnpm build） | 🟡 中 |
+| 前端 UI 适配 | 3 项（tier 标签/状态流转图/选举指示器） | 🟡 中 |
 | 安全审计 | 3 项（审计/invariant/slither） | 🟡 中 |
 | 已知 bug | 0 项 | ✅ v3.1 已全部修复 |
 | 运维 | 3 项（角色转移/监控/升级） | 🟢 低 |
 
 **最高优先级**：
 1. ✅ 已完成 (v3.1)
-2. 本地执行 `forge test` 验证全部 89 个测试
+2. ✅ `forge test` 全部 93 个测试通过（v3.6 沙箱代理环境，Foundry 1.8.1）
 3. 创建 Safe 多签并完成 BSC 测试网部署
-4. 真实环境执行 `pnpm build` + UI 组件适配 v3 枚举
+4. UI 组件适配 v3 枚举（`npm run build` 已在沙箱验证通过）
 
 ---
 

@@ -3,7 +3,7 @@
 
 import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
-import { Landmark, Waves, Share2, Heart, Code } from "lucide-react";
+import { Landmark, Share2, Heart, Code } from "lucide-react";
 
 const PROGRAM_ICONS = {
   "ai-framework": Landmark,

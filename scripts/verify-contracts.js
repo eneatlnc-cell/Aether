@@ -109,7 +109,7 @@ if (hasError) {
 // ──────────── 报告合约大小 ────────────
 console.log("\n✅ Compilation succeeded\n");
 console.log("Contract sizes (runtime bytecode bytes):");
-for (const [file, contracts] of Object.entries(output.contracts || {})) {
+for (const [, contracts] of Object.entries(output.contracts || {})) {
     for (const [name, data] of Object.entries(contracts)) {
         const bc = data.evm?.deployedBytecode?.object || "";
         const size = bc.length / 2; // hex string → bytes
@@ -122,7 +122,7 @@ for (const [file, contracts] of Object.entries(output.contracts || {})) {
 
 // ──────────── 输出 ABI（保存供后续生成前端用） ────────────
 const abis = {};
-for (const [file, contracts] of Object.entries(output.contracts || {})) {
+for (const [, contracts] of Object.entries(output.contracts || {})) {
     for (const [name, data] of Object.entries(contracts)) {
         abis[name] = data.abi;
     }

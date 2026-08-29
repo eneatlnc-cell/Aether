@@ -3,6 +3,7 @@
 
 import { useState, useEffect } from "react";
 import { useTranslations } from "next-intl";
+import { parseUnits } from "viem";
 import { Modal } from "@/components/ui/Modal";
 import { AddressCopy } from "@/components/ui/AddressCopy";
 import { Button } from "@/components/ui/Button";
@@ -58,7 +59,15 @@ export function DonationModal({ open, onClose, onDownloadReceipt }: DonationModa
     if (Number.isNaN(numericAmount) || numericAmount <= 0) return;
     // 转 bigint（精度按当前链稳定币 decimals：BSC 18）
     const decimals = assetDecimals ?? 6;
-    const amountBigInt = BigInt(Math.round(numericAmount * 10 ** decimals));
+    // viem parseUnits：按十进制字符串精确解析，消除
+    // parseFloat * 10**decimals 的浮点舍入误差（如 10.1 * 1e18 会偏 1 个最小单位）
+    let amountBigInt: bigint;
+    try {
+      amountBigInt = parseUnits(amount, decimals);
+    } catch {
+      return; // 小数位数超出该链精度等非法输入
+    }
+    if (amountBigInt <= 0n) return;
     submit({ amount: amountBigInt, purpose: "unrestricted" });
   };
 

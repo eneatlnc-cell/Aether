@@ -11,7 +11,18 @@ import {
 } from "wagmi";
 import { useToast } from "@/components/ui/Toast";
 import { useTranslations } from "next-intl";
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
+
+/** useSyncExternalStore 的空订阅：客户端快照只在 hydration 后读取一次 */
+const emptySubscribe = () => () => {};
+
+/** 读取 window.ethereum 是否存在（仅客户端执行；SSR 快照恒为 false） */
+function hasInjectedWallet(): boolean {
+  return (
+    typeof window !== "undefined" &&
+    typeof (window as unknown as { ethereum?: unknown }).ethereum !== "undefined"
+  );
+}
 
 export function useWallet() {
   const t = useTranslations("nav");
@@ -26,11 +37,14 @@ export function useWallet() {
   const connectors = useConnectors();
   const { reconnectAsync } = useReconnect();
 
-  // mounted 守卫：SSR 期间不渲染任何依赖 connectors 的逻辑
-  const [mounted, setMounted] = useState(false);
-  useEffect(() => {
-    setMounted(true);
-  }, []);
+  // mounted 守卫：SSR 期间 false，hydration 后 true。
+  // 用 useSyncExternalStore 惯用法替代 useEffect + setMounted(true)——
+  // 后者在 effect 内同步 setState 会触发级联渲染（react-hooks/set-state-in-effect）。
+  const mounted = useSyncExternalStore(
+    emptySubscribe,
+    () => true,
+    () => false
+  );
 
   // 页面加载时尝试重连（处理刷新后丢失连接的场景）
   useEffect(() => {
@@ -40,14 +54,12 @@ export function useWallet() {
     });
   }, [mounted, reconnectAsync]);
 
-  // SSR-safe 检测 window.ethereum：必须在 hydration 之后才能读
-  const [hasInjected, setHasInjected] = useState(false);
-  useEffect(() => {
-    setHasInjected(
-      typeof window !== "undefined" &&
-        typeof (window as unknown as { ethereum?: unknown }).ethereum !== "undefined"
-    );
-  }, []);
+  // SSR-safe 检测 window.ethereum：客户端快照在 hydration 后求值，服务端快照恒 false
+  const hasInjected = useSyncExternalStore(
+    emptySubscribe,
+    hasInjectedWallet,
+    () => false
+  );
 
   const connect = async () => {
     // connectors 在 hydration 前可能为空，必须等 mounted

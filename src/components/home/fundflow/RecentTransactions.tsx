@@ -6,7 +6,7 @@ import { Card } from "@/components/ui/Card";
 import { Skeleton } from "@/components/ui/Skeleton";
 import { ArrowDownLeft, ArrowUpRight, ExternalLink } from "lucide-react";
 import { TREASURY_DEPLOYED } from "@/lib/deployment";
-import type { TreasuryTransaction, AssetCode } from "@/lib/fundFlowData";
+import type { TreasuryTransaction } from "@/lib/fundFlowData";
 
 interface RecentTransactionsProps {
   data: TreasuryTransaction[];

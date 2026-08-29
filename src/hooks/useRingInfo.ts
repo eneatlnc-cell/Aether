@@ -22,8 +22,6 @@ export interface RingInfo {
   isAppointedElder: boolean; // 任命元老（有治理权：否决/弹劾）
 }
 
-const MAX_UINT64 = BigInt("18446744073709551615");
-
 /**
  * useRingInfo — 读取当前连接钱包的道环信息（v3）
  *
@@ -64,7 +62,7 @@ export function useRingInfo() {
 
   const info = useMemo<RingInfo | null>(() => {
     if (!hasRing || !detailsQuery.data) return null;
-    const [infoRes, , tierRes] = detailsQuery.data;
+    const [infoRes] = detailsQuery.data;
     if (infoRes.status !== "success" || !infoRes.result) return null;
     // RingInfo tuple（v3 12 字段）：
     //   tier, mintedAt, termEndAt, consecutiveTerms, isActive, isEmeritus, isExpired,
@@ -120,12 +118,9 @@ export function useRingInfo() {
     return detailsQuery.data[6].status === "success" && detailsQuery.data[6].result === true;
   }, [hasRing, detailsQuery.data]);
 
-  const termRemaining = useMemo(() => {
-    if (!info) return 0;
-    if (BigInt(info.termEndAt) === MAX_UINT64) return Infinity;
-    const diff = info.termEndAt - Math.floor(Date.now() / 1000);
-    return diff > 0 ? diff : 0;
-  }, [info]);
+  // termRemaining 已移除：渲染期调用 Date.now() 违反纯函数约束
+  // （react-hooks/purity），且当前无任何消费方。需要倒计时的组件请用
+  // ringInfo.termEndAt 自行在 effect/定时器中计算。
 
   return {
     ringId: ringId,
@@ -136,7 +131,6 @@ export function useRingInfo() {
     isExpired,
     isRetiredElder,
     isAppointedElder,
-    termRemaining, // 秒；Infinity 表示终生
     isLoading: ringIdQuery.isLoading || (hasRing && detailsQuery.isLoading),
     isError: ringIdQuery.isError || (hasRing && detailsQuery.isError),
   };

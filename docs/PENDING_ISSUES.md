@@ -1,9 +1,12 @@
 # Aether DAO v3.0 待处理问题清单
 
-> **版本**：v3.4 — 外部审计 Critical/High 全部修复
+> **版本**：v3.4 — 外部审计 Critical/High 全部修复（v3.6 文档校准更新）
 > **日期**：2026-07-26
 > **关联文档**：[V3_AUDIT_REPORT.md](./V3_AUDIT_REPORT.md)（详细审计报告）
 > **优先级**：🔴 阻断主网 / 🟠 部署前修复 / 🟡 主网前建议 / 🟢 长期优化
+> **v3.6 校准**：DEPLOY.md 已重写为 v3.6（H9 文档过时问题彻底关闭）；
+> PayPal 相关条目（M2/M10/§3.3.1/§3.3.3）已随 v3.3 纯链上捐款方案整体移除而失效；
+> 测试计数更新为 93 个
 
 ---
 
@@ -28,7 +31,7 @@
 | 🔴 H | H-9 | AetherGovernance.sol | 弹劾通过后 revoke 被弹劾者的 PROPOSER_ROLE（revokeRing 不自动清权限） |
 | 🔴 H | H-10 | Genesis.s.sol | _citizenEnvKey(10) 修复：支持两位数（原 0x30+10=0x3A=':' 致第 10 公民永远跳过） |
 | 🟠 M | — | AetherElection.sol | advanceToCouncilReview/advanceToParliamentApproval 加 ELECTION_MANAGER_ROLE 权限 |
-| 🟠 M | — | AetherDonation.sol | mintDonation 加 PayPal TxId 非空检查 |
+| 🟠 M | — | AetherDonation.sol | mintDonation 加 PayPal TxId 非空检查（v3.6 注：mintDonation 已随 v3.3 PayPal 方案移除，本项失效）|
 
 ### v3.4 设计决策（不改代码）
 
@@ -36,6 +39,7 @@
 |---|---|
 | H-3 双角色体系（DEFAULT_ADMIN + ADMIN） | OpenZeppelin 标准模式：DEFAULT_ADMIN 管角色 admin，ADMIN 管业务。v3.2 H8 已把 DEFAULT_ADMIN 转给 Safe，风险已缓解 |
 | Medium 弹劾忽略三院计票 | 设计决策：弹劾是公民对治理者的直接制衡（30% quorum + 70% 支持），白皮书明确"公民主权"，三院不参与弹劾 |
+| M2 paypalAccountHash 链下计算 | ~~设计决策，文档已说明多签保护~~ → **v3.6 已失效**：PayPal 方案 v3.3 整体移除，`paypalAccountHash` / `MINTER_ROLE` 已从合约删除，风险不复存在 |
 
 ---
 
@@ -81,8 +85,8 @@
 
 | ID | 原因 |
 |---|---|
-| M2 | paypalAccountHash 链下计算 + MINTER_ROLE 单点信任 — 设计决策，文档已说明多签保护 |
-| H9 | 旧 DEPLOY.md 已被 DEPLOYMENT_GUIDE.md 替代 |
+| M2 | ~~paypalAccountHash 链下计算 + MINTER_ROLE 单点信任 — 设计决策，文档已说明多签保护~~ → **v3.6 已失效**：PayPal 方案已整体移除，MINTER_ROLE 已删除 |
+| H9 | ~~旧 DEPLOY.md 已被 DEPLOYMENT_GUIDE.md 替代~~ → **v3.6 已彻底关闭**：DEPLOY.md 已按 v3.6 全面重写（补齐 TREASURY/SAFE/USDC 必需变量、14 级权级表、加权计票、纯链上捐款流程），与 DEPLOYMENT_GUIDE.md 并存互补（速查版 / 详版） |
 | L3-L8, I1 | 长期优化项，不阻塞主网（gas 优化 / 事件补全 / 边界一致性） |
 
 ---
@@ -132,7 +136,7 @@
 | M7 | AetherRing.sol:318-327 | setRingActive 可激活到期道环 | 检查 isExpired 和 termEndAt | ✅ |
 | M8 | AetherElection.sol:400-412 | forceAdvanceToVoting 使议会审批形同虚设 | `if (parliamentApprovalCount == 0) revert` | ✅ |
 | M9 | Deploy.s.sol:130-131 | donation ADMIN_ROLE 未转交 Safe | 脚本末尾 grantRole | ✅ |
-| M10 | Deploy.s.sol:133-134 | PayPal MINTER_ROLE 未配置 | 读 PAYPAL_SERVER 环境变量并 grantMinterRole | ✅ |
+| M10 | Deploy.s.sol:133-134 | PayPal MINTER_ROLE 未配置 | ~~读 PAYPAL_SERVER 环境变量并 grantMinterRole~~ → **v3.6 已失效**：MINTER_ROLE/PAYPAL_SERVER 已随 v3.3 PayPal 方案删除 |
 | M11 | IAetherRing.sol | 4 个写入方法未纳入接口 | RingTier/RingInfo + mintRing/updateTier/revokeRing/appointElder/reactivateDormantCitizen 声明加入接口 | ✅ |
 | M12 | Deploy/Genesis.s.sol | 环境变量默认 deployer | 必需变量校验 + 创世地址 ≠ deployer 检查 | ✅ |
 
@@ -149,31 +153,20 @@
 
 ### 3.1 测试执行（forge test）
 
-**问题**：沙箱环境无法通过 `foundryup` 下载 Forge 二进制（GitHub SSL 连接不稳定）
+**状态**：✅ **v3.6 已完成**（2026-08-29，沙箱代理环境安装 Foundry 1.8.1，**93/93 全绿**）
 
-**待执行**：
+唯一失败项 `test_Constructor_18Decimals_BscStablecoin` 为测试自身断言疏漏
+（未计入 revert 分支铸入且未消耗的 `small` 余额），已修复，**合约逻辑无 bug**。
+
+真实环境仍需执行（覆盖率 / invariant）：
 
 ```bash
-# 1. 安装 Foundry
-curl -L https://foundry.paradigm.xyz | bash
-foundryup
-
-# 2. 安装依赖
-cd contracts
-forge install foundry-rs/forge-std --no-commit
-forge install OpenZeppelin/openzeppelin-contracts --no-commit
-
-# 3. 运行测试（90 个，含新增 H10 端到端测试）
-forge test -vvv
-
-# 4. 覆盖率检查（目标 ≥ 90%）
+# 1. 覆盖率检查（目标 ≥ 90%）
 forge coverage
 
-# 5. invariant 测试（状态机所有路径）
+# 2. invariant 测试（状态机所有路径）
 forge test --match-test invariant -vvv
 ```
-
-**预期**：v3.2 修复后测试应全绿；如发现失败需根据失败信息修复
 
 ### 3.2 静态分析
 
@@ -191,15 +184,17 @@ myth analyze contracts/src/AetherGovernance.sol
 
 ### 3.3 外部服务集成
 
-#### 3.3.1 PayPal Webhook 服务端
+#### 3.3.1 捐款链上化（原 PayPal Webhook — v3.3 已整体移除）
 
-- [ ] 服务端接收 PayPal webhook（`payment.completed`）
-- [ ] 调用 PayPal API 回查交易真实性
-- [ ] 提取 donor 地址、金额、paypalTxId、payer_id
-- [ ] 计算 `paypalAccountHash = keccak256(payer_id)`
-- [ ] 调用 `donation.mintDonation(donor, amount, paypalTxId, paypalAccountHash)`
-- [ ] 服务端地址被授予 `donation.MINTER_ROLE`（Deploy.s.sol 已配置 PAYPAL_SERVER）
-- [ ] 金额单位：USD 6 decimals（$10 = 10000000）
+> **v3.6 校准**：`mintDonation` / `settleDonation` / `grantMinterRole` /
+> `MINTER_ROLE` / `PAYPAL_SERVER` 均已从合约与部署脚本删除。
+> 捐款改为纯链上：前端 `approve` USDC → `donation.donateAndMint(amount)`，
+> 合约内完成 USDC transferFrom + 铸 NFT + 铸道环。**无需任何服务端。**
+
+- [x] ~~PayPal webhook 服务端（已移除）~~
+- [ ] USDC `approve` 前端 UI（DonationModal 接入 ERC20 approve 流程）
+- [ ] `donateAndMint` 交易失败提示与重试
+- [ ] BSC 主网 Binance-Peg USDC 地址部署后复核（18 decimals）
 
 #### 3.3.2 IPFS 存储
 
@@ -208,12 +203,15 @@ myth analyze contracts/src/AetherGovernance.sol
 - [ ] 将 CID 作为 `ipfsHash` 传入 `createProposal`
 - [ ] 环境变量 `NEXT_PUBLIC_IPFS_GATEWAY`
 
-#### 3.3.3 USDC 结算
+#### 3.3.3 USDC 到账核对（原 settleDonation 流程 — v3.3 已移除）
 
-- [ ] Safe 多签发起 USDC 转账（donor → treasury）
-- [ ] 转账确认后调用 `donation.settleDonation(tokenId, usdcAmount)`
-- [ ] USDC 合约地址（BSC Binance-Peg）：`0x8AC76a51cc950d9822D68b83fE1Ad97B32Cd580d`
-- [ ] 金额精度：18 decimals（Binance-Peg USDC/USDT）
+> **v3.6 校准**：USDC 在 `donateAndMint` 内实时 `transferFrom` 到 treasury，
+> 不存在链下结算与 Safe 手动转账环节。
+
+- [x] ~~Safe 多签手动 USDC 转账 + settleDonation（已移除）~~
+- [ ] 部署后在 BscScan 复核 treasury 收款地址与 Safe 一致
+- [ ] `DonationMinted` 事件与 USDC 转账日志逐笔对账（≥ $1000 告警）
+- [ ] USDC 地址通过 `donation.setUsdcToken(<USDC>)` 配置（ADMIN_ROLE）
 
 ### 3.4 前端待处理
 
@@ -225,7 +223,7 @@ myth analyze contracts/src/AetherGovernance.sol
   - tier 标签（14 级显示）
   - proposal 状态流转图（12 状态）
   - election 阶段指示器（4 阶段 + PartiallyFilled）
-- [ ] `pnpm build` 成功验证（沙箱仅验证 tsc --noEmit 0 错误）
+- [x] `npm run build` 成功验证（v3.6 沙箱：`eslint .` 0 问题 / `tsc` 0 错误 / 生产构建通过）
 - [ ] 钱包连接与交易签名流程端到端测试
 
 ### 3.5 合约体积监控
@@ -311,7 +309,7 @@ v3 合约不可升级（无 proxy）。若需修复严重 bug：
 | 🔴 阻断主网 | 合约 High | 11 | 11 | ✅ 完成 |
 | 🟠 部署前 | 合约 Medium | 12 | 11 | ✅ 完成（M2 设计决策保留） |
 | 🟠 部署前 | 集成测试补充 | 4 类 | 1 类（H10 主链路） | ⚠️ 部分完成 |
-| 🟡 主网前 | forge test 执行 | 1 | 0 | ⏳ 待执行 |
+| 🟡 主网前 | forge test 执行 | 1 | 1 | ✅ v3.6 完成（93/93） |
 | 🟡 主网前 | 静态分析 | 3 | 0 | ⏳ 待执行 |
 | 🟡 主网前 | 外部服务集成 | 3 | 0 | ⏳ 待执行 |
 | 🟡 主网前 | 前端待处理 | 5 | 0 | ⏳ 待执行 |
@@ -332,9 +330,30 @@ v3 合约不可升级（无 proxy）。若需修复严重 bug：
 8. ✅ **修复 H5-H8/M9-M12**：Deploy/Genesis 脚本完整修复
 9. ✅ **修复 H10**：端到端集成测试已编写
 10. ✅ **修复 H11**：权重重归一化 1666 BPS/院 + 5000 BPS 公民
-11. ⏳ **本地执行 `forge test -vvv`** 验证全部测试（需 Foundry 环境）
+11. ✅ **`forge test` 93/93 全绿**（v3.6，Foundry 1.8.1；修复 1 个测试断言 bug）
 12. ⏳ **创建 Safe 多签** 并完成 BSC 测试网部署
-13. ⏳ **真实环境执行 `pnpm build`** + UI 组件适配 v3 枚举
+13. ⏳ **UI 组件适配 v3 枚举**（`npm run build` 已在沙箱验证通过）
+14. ✅ **v3.6 API 安全加固（P4）**：限流 / purpose 白名单 / 时间窗口 / 500 去 detail（见下节）
+15. ✅ **v3.6 杂项收尾**：WC ProjectId 去硬编码、双锁文件清理、lint+typecheck 脚本落地
+
+---
+
+## 附录、v3.6 API 安全加固与工程收尾（2026-08-29）
+
+| # | 位置 | 问题 | 修复 |
+|---|---|---|---|
+| 1 | `src/app/api/donations/record/route.ts` | 无限流，可被脚本轰炸 | 每 IP 10 次/分钟（实例内固定窗口 + `Retry-After`） |
+| 2 | 同上 | `purpose` 任意字符串入库/回显 | 白名单（unrestricted / ai-framework / self-organizing-net）+ 64 字符上限 |
+| 3 | 同上 | 无时间窗口，可回灌任意旧交易 | 拒绝未来区块（±5 分钟容差）与超 30 天旧交易 |
+| 4 | record + citizens 两条路由 | 500 响应回传 `detail: String(err)`（可泄露 SQL/连接串） | 细节只进 `console.error`，响应仅通用错误 |
+| 5 | `src/components/providers/WagmiProvider.tsx` | WalletConnect ProjectId 硬编码回退值（他人配额、不可审计） | 仅读环境变量；生产缺配置构建 fail-fast，开发降级告警 |
+| 6 | 仓库根目录 | `package-lock.json` 与 `pnpm-lock.yaml` 双锁并存（Vercel 包管理器识别歧义） | 删 pnpm 锁，`packageManager: npm@10.9.4`，文档命令统一 npm |
+| 7 | `package.json` | 缺 lint / typecheck / test 脚本 | 补三脚本（Next 16 移除 `next lint`，改 eslint CLI + 原生扁平配置） |
+| 8 | 8 个组件/文件 | react-hooks v6 新规则 25 错误 18 警告（set-state-in-effect / purity / any / 未用变量） | `useSyncExternalStore` 替代 mount 检测、按目标键派生 loading 态、`<Link>` 替代 `<a href="/">`、全部清理 |
+
+> 限流实现说明：`src/lib/rateLimit.ts` 为**实例内**固定窗口计数（Vercel serverless 多实例
+> 各自独立），能挡单实例高频刷，属预启动阶段最佳努力兜底；流量上来后需换
+> Upstash Redis（跨实例共享）或 Vercel WAF。
 
 ---
 

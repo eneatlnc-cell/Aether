@@ -14,7 +14,7 @@ import { waitForTransactionReceipt } from "@wagmi/core";
 import type { Address } from "viem";
 import { useToast } from "@/components/ui/Toast";
 import { useTranslations } from "next-intl";
-import { PREFERRED_ASSET, type AssetCode, type DonationPurpose } from "@/lib/fundFlowData";
+import { PREFERRED_ASSET, type DonationPurpose } from "@/lib/fundFlowData";
 import {
   AetherDonationABI,
   AetherRingABI,

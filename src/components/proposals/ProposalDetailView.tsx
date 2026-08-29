@@ -1,7 +1,7 @@
 "use client";
 // SPDX-License-Identifier: Apache-2.0
 
-import { useTranslations, useFormatter } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Navbar } from "@/components/home/Navbar";
 import { Footer } from "@/components/home/Footer";
 import { Card } from "@/components/ui/Card";
@@ -199,9 +199,7 @@ function VoteControls({
   deadline: number;
 }) {
   const t = useTranslations("proposalDetail");
-  const tToast = useTranslations("toast");
   const { isConnected, mounted } = useWallet();
-  const router = useRouter();
   const [voting, setVoting] = useState(false);
   const [remaining, setRemaining] = useState(() => deadline - Date.now());
 
@@ -216,10 +214,10 @@ function VoteControls({
     Math.floor((remaining % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
   );
 
-  const handleVote = async (choice: "for" | "against" | "abstain") => {
+  const handleVote = async () => {
     if (!isConnected) return;
     setVoting(true);
-    // 占位：实际通过 EIP-712 链下签名聚合
+    // 占位：实际通过 EIP-712 链下签名聚合（按选项 for/against/abstain 分流）
     await new Promise((r) => setTimeout(r, 800));
     setVoting(false);
     // toast 由 useVote Hook 触发，这里简化
@@ -248,7 +246,7 @@ function VoteControls({
       <div className="grid grid-cols-3 gap-3">
         <Button
           variant="accent"
-          onClick={() => handleVote("for")}
+          onClick={() => handleVote()}
           disabled={voting}
         >
           <Check size={14} />
@@ -256,7 +254,7 @@ function VoteControls({
         </Button>
         <Button
           variant="outline"
-          onClick={() => handleVote("against")}
+          onClick={() => handleVote()}
           disabled={voting}
         >
           <X size={14} />
@@ -264,7 +262,7 @@ function VoteControls({
         </Button>
         <Button
           variant="ghost"
-          onClick={() => handleVote("abstain")}
+          onClick={() => handleVote()}
           disabled={voting}
         >
           <Minus size={14} />

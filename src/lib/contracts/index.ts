@@ -1,11 +1,8 @@
 // SPDX-License-Identifier: Apache-2.0
 // Aether DAO 合约地址索引
 // 部署后自动更新此处（或用环境变量）
+// ABI 在文件末尾通过 `export { ... } from` 直接再导出
 
-import { AetherRingABI } from "./AetherRing.abi";
-import { AetherGovernanceABI } from "./AetherGovernance.abi";
-import { AetherElectionABI } from "./AetherElection.abi";
-import { AetherDonationABI } from "./AetherDonation.abi";
 import {
   getContracts,
   getSafeWalletAddress,

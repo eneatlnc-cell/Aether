@@ -17,8 +17,8 @@ export function Navbar() {
   const [donationOpen, setDonationOpen] = useState(false);
   const generateReceipt = useDonationReceipt();
 
-  const handleDownloadReceipt = (result: DonationResult) => {
-    generateReceipt(result);
+  const handleDownloadReceipt = async (result: DonationResult) => {
+    await generateReceipt(result);
   };
 
   return (

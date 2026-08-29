@@ -2,7 +2,6 @@
 // SPDX-License-Identifier: Apache-2.0
 
 import { type ButtonHTMLAttributes, type ReactNode } from "react";
-import { Loader2 } from "lucide-react";
 
 type Variant = "accent" | "outline" | "ghost";
 

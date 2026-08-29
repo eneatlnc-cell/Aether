@@ -1,7 +1,7 @@
 "use client";
 // SPDX-License-Identifier: Apache-2.0
 
-import { useTranslations, useFormatter } from "next-intl";
+import { useTranslations } from "next-intl";
 import { Link } from "@/i18n/navigation";
 import { Card } from "@/components/ui/Card";
 import { StatusDot } from "@/components/ui/StatusDot";
@@ -106,7 +106,6 @@ function VoteStat({
 }
 
 function Countdown({ deadline, label }: { deadline: number; label: string }) {
-  const format = useFormatter();
   const [now, setNow] = useState(() => Date.now());
 
   useEffect(() => {
