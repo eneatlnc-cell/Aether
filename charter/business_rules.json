@@ -1,0 +1,24 @@
+{
+  "ir_rules": {
+    "COMPUTE_SUM": {
+      "pattern": "sum",
+      "ir_template": "KDA_SUM",
+      "min_credit": 5,
+      "task_type": "arithmetic",
+      "immutable": false
+    },
+    "HAVIX_CORE": {
+      "pattern": ".*",
+      "ir_template": "RETURN",
+      "min_credit": 0,
+      "task_type": "core",
+      "immutable": true
+    }
+  },
+  "external_apis": {},
+  "internal_apis": {},
+  "allowed_task_types": [
+    "arithmetic",
+    "core"
+  ]
+}

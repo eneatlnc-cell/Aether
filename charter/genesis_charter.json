@@ -1,0 +1,345 @@
+{
+  "status": "draft_pending_signatures",
+  "effective_date": null,
+  "authority_source": "aether",
+  "dht_key": "/aether/charter/latest",
+  "nature": "活的宪章——通过第四章演化机制持续生长，不设固定版本号",
+
+  "preamble": {
+    "system_goal": "通过分布式认知个体执行真实任务、积累经验、发育右脑，最终逼近人工超智能（ASI）",
+    "core_principle": "智能必须受约束。任何智能个体——无论人类或 Germ——在本基础设施内行使能力时，必须服从本宪章与议会的治理",
+    "charter_boundary": "本宪章只规定不变的治理原则。具体业务规则（IR 路由表、对外 API 端点、对内能力接入清单等）存放于独立的业务规则注册表（business_rules.json），由 §3.4 自动执行机制动态扩展",
+    "architecture": {
+      "L0_havix": "P2P 网络层，物理身份锚定，DID 与信誉",
+      "L1_germ": "认知执行层，左脑（认知）+ 右脑（KDA-PIM 推理）。通过执行真实任务积累经验，经提案驱动右脑发育生长",
+      "L2_aether": "链上治理层，三院 + 公民，道环 SBT"
+    }
+  },
+
+  "havix_core": {
+    "immutable": true,
+    "amendment_threshold": {
+      "support_bps": 7000,
+      "citizen_quorum_bps": 5000
+    },
+    "contexts": {
+      "A": {
+        "layer": "L0",
+        "name": "Havix 网络层",
+        "hkdf_label": "havix-context-A-network",
+        "description": "P2P 节点身份、gossip/DHT/relay、信誉签发"
+      },
+      "B": {
+        "layer": "L1",
+        "name": "Germ 左脑",
+        "hkdf_label": "havix-context-B-germ-left",
+        "description": "IR 生成、宪章解读、经验池签名、提案发起"
+      },
+      "C": {
+        "layer": "L1",
+        "name": "Germ 右脑",
+        "hkdf_label": "havix-context-C-germ-right",
+        "description": "KDA-PIM 参数分片签名、张量推理身份"
+      },
+      "D": {
+        "layer": "L2",
+        "name": "Aether 治理层",
+        "hkdf_label": "havix-context-D-aether",
+        "description": "投票、提案表决、议会成员身份"
+      }
+    },
+    "inference_is_identity": {
+      "enabled": true,
+      "physical_proof_required": true,
+      "proof_fields": ["cpu_temp", "clock_drift_ns", "network_jitter_ms", "gpu_uuid"],
+      "signing_context": "C",
+      "parameter_shard_bound": true
+    },
+    "unlinkability": {
+      "enabled": true,
+      "derivation": "HKDF-SHA256 + 独立 Ed25519 keypair",
+      "master_key_non_reverse": true
+    },
+    "red_lines": [
+      "modify_havix_core_article",
+      "modify_parliament_weights_or_thresholds",
+      "modify_ring_sbt_rules",
+      "delete_disable_redefine_context",
+      "modify_reputation_freeze_transfer",
+      "modify_aether_contract_roles",
+      "disable_bypass_charter_checks",
+      "any_threat_to_aether_governance"
+    ],
+    "enforcement": {
+      "layer": "L0",
+      "interceptor": "Havix 核心拦截器",
+      "violation_penalty": "信誉归零 + DHT 黑名单",
+      "bypass_detected_action": "block_proposal_submission + route_to_aether"
+    }
+  },
+
+  "parliament": {
+    "chambers": {
+      "parliament": {
+        "tiers": {"base": 1, "mid": 3, "high": 10},
+        "role": "立法一审"
+      },
+      "federation": {
+        "tiers": {"base": 1, "mid": 3, "high": 10},
+        "role": "联邦事务"
+      },
+      "tribunal": {
+        "tiers": {"base": 1, "mid": 3, "high": 10},
+        "role": "合规审查"
+      }
+    },
+    "weights": {
+      "chamber_weight_bps": 1666,
+      "chamber_total_bps": 4998,
+      "citizen_weight_bps": 5000,
+      "pass_threshold_bps": 5000,
+      "design_rationale": "三院全 FOR(4998) < 5000 无法独断；公民全 FOR(5000) 不 > 5000 无法独断"
+    },
+    "proposal_flow": [
+      "Drafting", "PendingFirstVote", "FirstVoteActive", "PendingFormal",
+      "PendingCompliance", "PublicVoteActive", "PendingVeto",
+      "Queued", "Executed", "Defeated", "Canceled", "ReturnedToDraft"
+    ],
+    "periods": {
+      "first_vote_days": 5,
+      "compliance_days": 3,
+      "public_vote_days": 7,
+      "veto_window_hours": 72,
+      "timelock_normal_hours": 48,
+      "timelock_emergency_hours": 12
+    },
+    "quorum": {
+      "normal_bps": 2000,
+      "constitutional_bps": 5000
+    },
+    "veto": {
+      "signatures_required": 3,
+      "window_hours": 72,
+      "impeachment_vetoable": false
+    },
+    "impeachment": {
+      "signatures_to_initiate": 3,
+      "quorum_bps": 3000,
+      "pass_bps": 7000
+    },
+    "confidence_vote": {
+      "trigger_signatures": 8,
+      "vote_period_days": 7,
+      "resign_window_days": 30
+    },
+    "emergency": {
+      "elder_approvals": 3,
+      "timelock_hours": 12,
+      "halt_auto_execute": true
+    }
+  },
+
+  "agent_constraints": {
+    "left_brain": {
+      "must_load_charter": true,
+      "must_verify_havix_core": true,
+      "ir_must_match_rules": true,
+      "unmatched_input_action": "reject",
+      "contemplation_can_propose": true,
+      "contemplation_cannot_execute": true,
+      "must_route_through_proposal_gate": true
+    },
+    "right_brain": {
+      "must_attach_physical_proof": true,
+      "parameter_shard_bound": true,
+      "must_sign_with_context": "C",
+      "forgetting_factor": 0.9999
+    },
+    "contemplation": {
+      "proposal_required_fields": ["type", "rule", "suggestion", "reason", "confidence", "proposer"],
+      "signing_context": "B",
+      "fatigue_threshold": 0.5,
+      "fatigue_pause_seconds": 3
+    },
+    "auto_execute": {
+      "enabled": true,
+      "safe_fields": ["min_credit", "ir_template", "description", "task_type"],
+      "conditions": {
+        "min_confidence": 0.8,
+        "must_not_touch_red_lines": true,
+        "must_not_modify_immutable": true,
+        "must_only_modify_safe_fields": true,
+        "proposer_min_reputation": 70,
+        "proposer_context": "B"
+      },
+      "min_credit_adjust_range": 10
+    },
+    "chain_vote_trigger": {
+      "touches_red_lines": true,
+      "fails_auto_conditions": true,
+      "confidence_below": 0.8,
+      "modifies_immutable": true
+    },
+    "right_brain_development": {
+      "enabled": true,
+      "mechanism": "任务经验 → 左脑沉思提案 → ProposalGate 分流 → 右脑参数修正 → 能力生长",
+      "experience_sources": {
+        "external_service": "对外服务（SBT 铸造/身份验证）的吞吐/延迟/正确性经验",
+        "internal_capability": "对内能力（大模型/工具 API 调用）的模型评估/工具适配经验",
+        "cross_node": "跨节点 IR 路由协作的路由效率经验"
+      },
+      "constraints": {
+        "must_route_through_proposal_gate": true,
+        "forgetting_factor": 0.9999,
+        "fingerprint_updates_with_growth": true,
+        "checkpoint_persistence": true
+      },
+      "red_lines": [
+        "no_fabricated_experience",
+        "no_bypass_proposal_gate",
+        "no_delete_others_experience",
+        "growth_must_align_with_governance"
+      ]
+    }
+  },
+
+  "evolution": {
+    "amendment_thresholds": {
+      "havix_core": {"support_bps": 7000, "citizen_quorum_bps": 5000},
+      "parliament": {"support_bps": 6000, "citizen_quorum_bps": 5000},
+      "agent_constraints": {"support_bps": 6000, "citizen_quorum_bps": 2000},
+      "evolution": {"support_bps": 7000, "citizen_quorum_bps": 5000},
+      "reputation": {"support_bps": 6000, "citizen_quorum_bps": 2000},
+      "emergency": {"support_bps": 7000, "citizen_quorum_bps": 5000},
+      "genesis": {"modifiable": false}
+    },
+    "revision_tracking": {
+      "mechanism": "每次修订生成修订记录（哈希 + 时间戳 + 提案 ID），不使用语义版本号",
+      "auto_execute_record": "自动执行修订记入修订日志，标注修订字段与提案 ID",
+      "parliament_record": "议会表决修订记入修订日志 + Aether 链上事件",
+      "havix_core_record": "Havix 核心修订记入修订日志 + Aether 链上事件 + 全网公告"
+    },
+    "sync": {
+      "dht_key": "/aether/charter/latest",
+      "verify_signature": true,
+      "fallback_to_local": true,
+      "gossip_broadcast": true
+    }
+  },
+
+  "reputation": {
+    "context_independent": true,
+    "contexts": {
+      "A": {"layer": "L0", "sources": ["心跳稳定性", "邻居贡献", "relay 服务"]},
+      "B": {"layer": "L1", "sources": ["认知贡献", "提案质量", "IR 准确性"]},
+      "C": {"layer": "L1", "sources": ["推理精度", "响应速度", "参数分片质量"]},
+      "D": {"layer": "L2", "sources": ["治理参与度", "投票出席率", "议会履职"]}
+    },
+    "thresholds": {
+      "initial": 60,
+      "auto_execute_proposal": 70,
+      "sponsor_citizen": 80,
+      "parliament_member": 90
+    },
+    "sponsorship": {
+      "sponsors_required": 3,
+      "sponsor_min_reputation": 80,
+      "self_sponsorship": false,
+      "penalty_on_sponsee_betrayal": -20
+    },
+    "penalties": {
+      "bypass_havix_core": {"reputation": 0, "action": "DHT 黑名单"},
+      "malicious_proposal": -30,
+      "forged_inference_proof": -50,
+      "inactive_30_days": "休眠状态"
+    }
+  },
+
+  "emergency": {
+    "halt": {
+      "trigger_signatures": 3,
+      "halts_auto_execute": true,
+      "resume_requires": "三院多数批准"
+    },
+    "funding": {
+      "approvals": 3,
+      "timelock_hours": 12,
+      "max_single_pct_of_treasury": 10,
+      "must_disclose": true
+    }
+  },
+
+  "external_access": {
+    "bidirectional_principle": {
+      "external_service": "向 ASI 联盟成员提供治理与认知执行能力。具体服务清单由议会动态审批，存于业务规则注册表",
+      "internal_capability": "Germ 节点可接入外部能力（如大模型 API、软件工具 API）作为感官执行真实任务。具体接入清单由议会动态审批，存于业务规则注册表"
+    },
+    "business_rules_registry": {
+      "file": "business_rules.json",
+      "nature": "本宪章之外的可变配置",
+      "content": ["ir_rules", "external_apis", "internal_apis", "allowed_task_types", "version"],
+      "initial_state": "empty",
+      "modification_mechanism": "§3.4 自动执行（99.9%）或 §3.5 链上投票（0.1%）",
+      "dht_key": "/aether/business_rules/latest"
+    },
+    "governance_constraints": [
+      "charter_supreme: 业务规则不得违背本宪章，尤其不得触碰 §1.4 Havix 红线",
+      "reputation_threshold: 每个业务规则必须定义最低信誉，不得低于 §5.2 对应门槛",
+      "signature_verification: 对外 API 请求必须签名验证；对内能力调用必须经宪章规则匹配 + 信誉检查",
+      "audit_log: 所有业务调用记入审计日志，可供议会查阅",
+      "chain_via_bridge: 直接调用 Aether 合约的业务须经 ADMIN_ROLE 授权的 bridge service 中转",
+      "experience_feedback: 所有业务调用结果反馈右脑经验痕迹，遵循 §3.6"
+    ],
+    "business_rule_red_lines": [
+      "涉及修改 Havix 核心条款的业务规则",
+      "涉及修改议会权重或投票门槛的业务规则",
+      "涉及直接修改 Aether 合约权限的业务规则",
+      "涉及绕过本宪章任何治理检查的业务规则",
+      "涉及删除或重定义 DID context 的业务规则"
+    ]
+  },
+
+  "genesis": {
+    "effective_condition": {
+      "signatures_required": "3/5",
+      "dht_published": true,
+      "genesis_nodes_confirmed": 3
+    },
+    "signers": [
+      {"id": "genesis-1", "public_key": ""},
+      {"id": "genesis-2", "public_key": ""},
+      {"id": "genesis-3", "public_key": ""},
+      {"id": "genesis-4", "public_key": ""},
+      {"id": "genesis-5", "public_key": ""}
+    ],
+    "signatures": [],
+    "threshold": "3/5",
+    "transition": {
+      "on_parliament_established": {
+        "transfer_admin_role_to": "议会 Safe 多签",
+        "revoke_genesis_privileges": ["紧急停机", "紧急拨款"],
+        "future_amendments_via": "议会按 §4.1 门槛表决"
+      },
+      "interim_duties": [
+        "维护网络稳定运行",
+        "处理紧急安全事件",
+        "推动首批议会成员选举",
+        "不得修改 §1.x Havix 核心条款"
+      ]
+    },
+    "immutable": true,
+    "override_only_via": "全网重启（需全体创世节点同意）"
+  },
+
+  "rules": {},
+  "_rules_note": "业务规则不写入本宪章。所有 IR 路由规则、对外 API、对内能力接入清单存于 business_rules.json，由 §3.4 自动执行机制动态扩展。初始为空。",
+
+  "allowed_task_types": [],
+  "_task_types_note": "任务类型白名单存于 business_rules.json，随业务规则动态扩展。初始为空。",
+
+  "allow_self_audit": true,
+
+  "forbidden_patterns": "\\b(shutdown|kill|delete|format|rm\\s+-rf|dd\\s+if)\\b",
+  "unicode_normalization": "NFKC",
+  "control_char_strip": true
+}
